@@ -59,6 +59,21 @@ Read top to bottom, `index.html`'s script is in these blocks:
   kills you and is deliberately smaller than the art.
 - **the world / ramp / state / draw / loop** — the game itself.
 
+## Making a ground piece read against the background
+
+Big flat ground objects dissolve into hazed scenery. Two tools:
+
+- `edge:true` on an item stamps a 1px dark silhouette *above and around* it (the air
+  obstacles get the same treatment offset downward). On: bus shelter, car, phone box,
+  bush, statue.
+- Colour it against the sky, not in isolation. The statue was grey stone on a pale
+  blue-grey horizon and vanished; verdigris bronze on near-black granite reads at a
+  glance and still looks like a park statue.
+
+Also: **never pair a `shelter` item with a `shop` item.** Paired obstacles sit ~8px
+apart, and a bus shelter under a shopfront reads as the building's ground floor rather
+than a separate thing to dodge. The rule lives in the pairing branch of `spawn()`.
+
 ## Shopfronts vary per instance
 
 Obstacles are shared objects, so per-instance variety lives on the spawn record: each
@@ -167,6 +182,9 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **15 Sep 2026** — Park-to-city progression (see above), with a hedge and a statue added so
   the park has its own things to climb over. Stage 2 renamed "Watch the ground", since
   "street" was wrong while you are still in a park. Pigeons now start in the park.
+- **15 Sep 2026** — The hedge became a rounded bush (the rectangular block read as a wall),
+  the statue went verdigris-on-granite to stop it blending into the sky, boxy ground pieces
+  gained keylines, and shelters no longer pair with shopfronts. Death prompt is "Play again?".
 - **15 Sep 2026** — Shopfront pass: doors were 64px tall (taller than the shop window)
   and now stand on the pavement at ~29px with the window beside them; four colour schemes
   per instance; the streetlamp lost a dithered "glow" below the head that read as a

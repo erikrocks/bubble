@@ -167,7 +167,7 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
     <span class="newbest" id="ov-newbest" hidden>New best</span>
     <span class="medal" id="ov-medal" hidden>First corner</span>
     <p class="sub" id="ov-best">best 0.0 m</p>
-    <span class="kbd">Hold to blow another</span>
+    <span class="kbd">Play again?</span>
   </div>
   <dl class="hud">
     <div><dt>Distance</dt><dd id="h-dist">0.0 m</dd></div>
@@ -275,6 +275,8 @@ var C={};
     hedge:"#4a7a45",hedgeL:"#6a9c5c",hedgeD:"#2f5730",
     fleaf:"#7d9c74",fleafL:"#9cb890",fleafD:"#5d7a58",ftrunk:"#7a6a58",
     stone:"#b9bcc0",stoneL:"#d6d9dd",stoneD:"#8d9095",
+    bronze:"#4f9c7a",bronzeL:"#79c9a2",bronzeD:"#2d6b52",
+    granite:"#635d57",graniteL:"#877f77",graniteD:"#403b36",
     carR:"#c2453c",carRL:"#e0675c",carRD:"#8a2a23",tyre:"#22252d",hub:"#9aa2ae",
     phone:"#b8322c",phoneL:"#d6564e",phoneD:"#7d1d18",
     dress:"#5f76c9",dressL:"#8a9ce0",hoodie:"#4a8a52",hoodieL:"#6cab72",
@@ -614,34 +616,34 @@ var GROUPS=[
      p.rect(x+3,y+5,5,1,C.cream); p.hl(x+1,b,9,C.shadow);}}
 ]},
 {id:"shelter",cls:"ground",name:"Tall on the ground",blurb:"The pieces that force you UP. Everything else on the sidewalk can be cleared by a lazy hover \u2014 these cannot.",items:[
-  {id:"hedge",name:"Hedge",w:40,h:27,cw:38,park:true,
-   note:"A clipped hedge. The park's answer to a wall \u2014 wide, tall enough to matter, and soft enough to read as scenery until you hit it.",
-   draw:function(p,x,b){var y=b-27;
-     p.rect(x,y+4,40,23,C.hedge);
-     for(var j=0;j<23;j++)for(var i=0;i<40;i++){
-       var q=bay(x+i,y+4+j);
-       if(q<0.18) p.px(x+i,y+4+j,C.hedgeL);
-       else if(q>0.82) p.px(x+i,y+4+j,C.hedgeD);
+  {id:"hedge",name:"Bush",w:38,h:26,cw:34,park:true,edge:true,
+   note:"A big round shrub. Soft-edged enough to read as park scenery, solid enough to stop you.",
+   draw:function(p,x,b){
+     p.rect(x+4,b-11,30,11,C.hedge);
+     p.blob(x+11,b-13,9,8,C.hedge,C.hedgeL,C.hedgeD);
+     p.blob(x+27,b-14,9,8,C.hedge,C.hedgeL,C.hedgeD);
+     p.blob(x+19,b-18,11,8,C.hedge,C.hedgeL,C.hedgeD);
+     for(var j=0;j<11;j++)for(var i=0;i<30;i++){
+       var q=bay(x+4+i,b-11+j);
+       if(q<0.16) p.px(x+4+i,b-11+j,C.hedgeL);
+       else if(q>0.86) p.px(x+4+i,b-11+j,C.hedgeD);
      }
-     for(var i2=0;i2<40;i2++){
-       var t=2+((i2*7)%3);
-       p.vl(x+i2,y+4-t+1,t,C.hedge);
-       p.px(x+i2,y+4-t,C.hedgeL);
-     }
-     p.hl(x,y+26,40,C.hedgeD); p.hl(x,b,40,C.shadow);}},
-  {id:"statue",name:"Statue",w:16,h:36,cw:12,park:true,
-   note:"Somebody on a plinth. Tall and narrow \u2014 the park's version of the phone box.",
+     p.hl(x+4,b-1,30,C.hedgeD); p.hl(x+3,b,32,C.shadow);}},
+  {id:"statue",name:"Statue",w:16,h:36,cw:12,park:true,edge:true,
+   note:"Verdigris bronze on a dark granite plinth \u2014 green and near-black so it reads against a pale sky rather than dissolving into it.",
    draw:function(p,x,b){var y=b-36;
-     p.rect(x+1,b-4,14,4,C.stone); p.hl(x+1,b-4,14,C.stoneL);
-     p.rect(x+3,b-14,10,10,C.stone); p.hl(x+3,b-14,10,C.stoneL); p.vl(x+3,b-13,9,C.stoneL);
-     p.rect(x+4,b-16,8,2,C.stoneD);
-     p.rect(x+6,y+8,5,12,C.stone); p.vl(x+6,y+9,11,C.stoneL);
-     p.rect(x+6,y+2,5,6,C.stone); p.hl(x+7,y+2,3,C.stoneL); p.px(x+7,y+4,C.stoneD);
-     p.rect(x+4,y+9,2,8,C.stoneD);
-     p.rect(x+11,y+5,2,6,C.stone); p.px(x+12,y+4,C.stoneL);
-     p.rect(x+6,y+20,2,6,C.stoneD); p.rect(x+9,y+20,2,6,C.stone);
+     p.rect(x+1,b-4,14,4,C.granite); p.hl(x+1,b-4,14,C.graniteL); p.hl(x+1,b-1,14,C.graniteD);
+     p.rect(x+3,b-15,10,11,C.granite); p.vl(x+3,b-14,10,C.graniteL); p.vl(x+12,b-14,10,C.graniteD);
+     p.rect(x+4,b-17,8,2,C.graniteL); p.hl(x+4,b-17,8,C.graniteD);
+     p.rect(x+5,b-12,6,2,C.graniteD);
+     p.rect(x+6,y+8,5,12,C.bronze); p.vl(x+6,y+9,11,C.bronzeL); p.vl(x+10,y+9,11,C.bronzeD);
+     p.rect(x+6,y+2,5,6,C.bronze); p.hl(x+7,y+2,3,C.bronzeL); p.px(x+7,y+4,C.bronzeD);
+     p.px(x+9,y+4,C.bronzeD); p.hl(x+6,y+7,5,C.bronzeD);
+     p.rect(x+4,y+9,2,9,C.bronze); p.vl(x+4,y+10,7,C.bronzeD);
+     p.rect(x+11,y+4,2,7,C.bronze); p.px(x+12,y+3,C.bronzeL);
+     p.rect(x+6,y+20,2,6,C.bronzeD); p.rect(x+9,y+20,2,6,C.bronze);
      p.hl(x+1,b,14,C.shadow);}},
-  {id:"busstop",name:"Bus shelter",w:46,h:38,cw:44,city:true,
+  {id:"busstop",name:"Bus shelter",w:46,h:38,cw:44,city:true,edge:true,
    note:"Tallest thing standing on the sidewalk. Takes over half the screen height, so you have to actually climb for it.",
    draw:function(p,x,b){var y=b-38;
      p.rect(x,y,46,4,C.steel); p.hl(x,y,46,C.concL); p.hl(x,y+3,46,C.ironD);
@@ -653,7 +655,7 @@ var GROUPS=[
      p.rect(x+8,b-9,2,9,C.iron); p.rect(x+30,b-9,2,9,C.iron);
      p.rect(x+4,y+6,10,5,C.signBand); p.hl(x+5,y+8,8,C.cream);
      p.hl(x,b,46,C.shadow);}},
-  {id:"car",name:"Parked car",w:44,h:26,cw:42,city:true,
+  {id:"car",name:"Parked car",w:44,h:26,cw:42,city:true,edge:true,
    note:"Wide and mid-height. Cheap to clear on its own, brutal when a branch is sitting over it.",
    draw:function(p,x,b){var y=b-26;
      p.rect(x+11,y+2,22,10,C.carR); p.hl(x+13,y+2,18,C.carRL);
@@ -668,7 +670,7 @@ var GROUPS=[
          p.px(x+o+dx,b-4+dy,d<1.9?C.hub:C.tyre);}
      });
      p.hl(x+2,b,40,C.shadow);}},
-  {id:"phonebox",name:"Phone box",w:14,h:34,cw:14,city:true,
+  {id:"phonebox",name:"Phone box",w:14,h:34,cw:14,city:true,edge:true,
    note:"Narrow but tall. Easy to slip past if you spot it early, a wall if you don't.",
    draw:function(p,x,b){var y=b-34;
      p.rect(x,y+3,14,31,C.phone); p.hl(x,y+3,14,C.phoneL); p.vl(x,y+4,30,C.phoneL);
@@ -857,6 +859,7 @@ var RULES={ceiling:"soft",birds:true};
 var on={bench:["slat","scroll"],post:["hydrant","meter","bollard"],bin:["trash","mailbox","newsbox"],
         shelter:["hedge","statue","busstop","car","phonebox"],
         tree:["leafy"],shop:["striped"],pole:["lamp","traffic"]};
+GROUPS.forEach(function(g){ g.items.forEach(function(it){ it.gid=g.id; }); });
 var DEFAULT_ON=JSON.parse(JSON.stringify(on));
 var kidsOn=KIDS.map(function(k){return k.id;});
 
@@ -1112,7 +1115,9 @@ function spawn(){
     var pairChance=0.30+Math.min(0.25,(G.run-2400)/12000), paired=false;
     if(rnd()<pairChance){
       var gi=pickFor("ground",true), ai=pickFor("air",true);
-      if(gi&&ai){
+      /* a bus shelter parked under a shopfront reads as part of the building -
+         two big boxy things sharing an edge. Keep them apart. */
+      if(gi&&ai&&!(gi.gid==="shelter"&&ai.gid==="shop")){
         if((WALKY-gi.h)-depthOf(ai)>=34){
           G.obs.push({cls:"ground",it:gi,x:G.nextX,v:Math.floor(rnd()*97)});
           G.obs.push({cls:"air",it:ai,x:G.nextX-8,v:Math.floor(rnd()*97)});
@@ -1260,7 +1265,14 @@ function drawWorld(t){
   if(mix<0.995){ gp.setA(1-mix); drawVerge(gp,G.world); gp.setA(1); }
   G.obs.forEach(function(o){
     var sx=Math.round(o.x-G.world);
-    if(o.cls==="ground"){ o.it.draw(gp,sx,WALKY); return; }
+    if(o.cls==="ground"){
+      if(o.it.edge){
+        gp.force=C.edge; gp.oy=-1; o.it.draw(gp,sx,WALKY,GW,o.v||0);
+        gp.force=null; gp.oy=0;
+      }
+      o.it.draw(gp,sx,WALKY,GW,o.v||0);
+      return;
+    }
     var ax=o.it.w?sx:0;
     gp.force=C.edge; gp.oy=1; o.it.draw(gp,ax,0,GW,o.v||0); gp.force=null; gp.oy=0;
     o.it.draw(gp,ax,0,GW,o.v||0);
