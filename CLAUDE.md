@@ -59,6 +59,24 @@ Read top to bottom, `index.html`'s script is in these blocks:
   kills you and is deliberately smaller than the art.
 - **the world / ramp / state / draw / loop** — the game itself.
 
+## Park to city
+
+A run walks out of a park and into the city. `cityMix(distance)` is 0 before 1000px,
+1 after 2100px, and slides between — and it drives **both** the scenery and the
+furniture, so the change of place and the change of difficulty are one event:
+
+- Items carry `park:true` (hedge, statue) or `city:true` (hydrant, meter, mailbox,
+  paper box, bus shelter, car, phone box, every shopfront, traffic signal). Untagged
+  items — benches, wire bin, bollard, trees, streetlamp — belong to both and never
+  leave. `pickFor()` weights the pool by the mix, so city things fade in as
+  `mix²` (slow at first, then all at once) and park things fade out slightly faster
+  than they arrive.
+- The horizon cross-fades from `drawTreeline()` to `drawSkyline()`, and
+  `drawVerge()` lays grass along the path edge at `1 - mix`.
+- **The park needs its own tall pieces** or the "forces you upward" rule breaks before
+  the city arrives — that is what the hedge and the statue are for. If you ever make
+  the shelter group city-only again, the park becomes hoverable.
+
 ## Tuning
 
 `P` holds the physics ("Twitchy": gravity 180, wind 420, drag 4.6, size effect 1.35,
@@ -116,3 +134,6 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **15 Sep 2026** — Stage 3 renamed "Let's go!". Added a Fullscreen button (Android/desktop
   only, hides itself on iPhone), a web app manifest for Add to Home Screen, and app icons
   rendered straight from `drawBubbleE` at 512px rather than drawn by hand.
+- **15 Sep 2026** — Park-to-city progression (see above), with a hedge and a statue added so
+  the park has its own things to climb over. Stage 2 renamed "Watch the ground", since
+  "street" was wrong while you are still in a park. Pigeons now start in the park.
