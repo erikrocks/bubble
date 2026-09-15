@@ -65,7 +65,10 @@ Big flat ground objects dissolve into hazed scenery. Two tools:
 
 - `edge:true` on an item stamps a 1px dark silhouette *above and around* it (the air
   obstacles get the same treatment offset downward). On: bus shelter, car, phone box,
-  bush, statue.
+  bush, statue. **Careful with a full-width ground-shadow row on an `edge:true` item**:
+  the keyline pass draws it one row up, and if the art does not cover that row it
+  becomes a dark bar floating under the object. That is what happened to the car, which
+  sits on wheels with a gap beneath it; its shadow is now just two contact points.
 - Colour it against the sky, not in isolation. The statue was grey stone on a pale
   blue-grey horizon and vanished; verdigris bronze on near-black granite reads at a
   glance and still looks like a park statue.

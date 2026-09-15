@@ -669,7 +669,10 @@ var GROUPS=[
          var d=Math.hypot(dx,dy); if(d>4.2) continue;
          p.px(x+o+dx,b-4+dy,d<1.9?C.hub:C.tyre);}
      });
-     p.hl(x+2,b,40,C.shadow);}},
+     /* no ground-shadow row here: the car sits on wheels, so with edge:true the
+        keyline pass has nothing over that row and it reads as a bar under the car */
+     p.px(x+9,b,C.shadow); p.px(x+10,b,C.shadow);
+     p.px(x+33,b,C.shadow); p.px(x+34,b,C.shadow);}},
   {id:"phonebox",name:"Phone box",w:14,h:34,cw:14,city:true,edge:true,
    note:"Narrow but tall. Easy to slip past if you spot it early, a wall if you don't.",
    draw:function(p,x,b){var y=b-34;
