@@ -84,13 +84,13 @@ canvas{display:block; width:100%; height:auto; image-rendering:pixelated; touch-
 .banner.show{opacity:1}
 .rotate{display:none; margin:0 0 12px; padding:10px 12px; border:1px solid var(--accent);
   border-radius:2px; color:var(--accent); font-size:13px; background:var(--surface)}
-@media (max-width:860px) and (orientation:portrait){ .rotate{display:block} }
+@media (max-width:860px) and (orientation:portrait) and (pointer:coarse){ .rotate{display:block} }
 .frame:fullscreen{background:#0b0e1a; border:0; border-radius:0; display:flex;
   flex-direction:column; justify-content:center}
-.frame:fullscreen canvas{max-height:78vh}
+.frame:fullscreen canvas{width:100%; height:auto; max-height:100vh}
 .frame:-webkit-full-screen{background:#0b0e1a; border:0; border-radius:0; display:flex;
   flex-direction:column; justify-content:center}
-.frame:-webkit-full-screen canvas{max-height:78vh}
+.frame:-webkit-full-screen canvas{width:100%; height:auto; max-height:100vh}
 .tools{display:flex; gap:6px; align-items:center; padding:9px 12px}
 .tools button{font:500 12px/1 "Instrument Sans",sans-serif; color:var(--ink2); background:var(--surface);
   border:1px solid var(--line2); border-radius:2px; padding:7px 10px; cursor:pointer; white-space:nowrap}
@@ -837,7 +837,7 @@ function toggle(gid,iid){
    and slides between - it weights which furniture turns up AND what the horizon
    looks like, so the change of scenery and the change of difficulty are the same
    event rather than two things that happen to coincide. */
-var PARK_END=1000, CITY_START=2100;
+var PARK_END=1500, CITY_START=2800;
 function cityMix(d){ return Math.max(0,Math.min(1,(d-PARK_END)/(CITY_START-PARK_END))); }
 
 /* the tall pieces are what force you upward; they join once the player
@@ -855,7 +855,10 @@ function pickFor(cls,tall){
   var mix=cityMix(G.run), pool=poolFor(cls,tall), w=[], tot=0, i;
   for(i=0;i<pool.length;i++){
     var it=pool[i];
-    var q=it.city?mix*mix:(it.park?Math.max(0,1-mix*1.15):1);
+    /* park-only pieces are weighted up while you are in the park: there are only
+       two of them against everything else, and the window is short enough that at
+       even odds you could finish a whole run without meeting one. */
+    var q=it.city?mix*mix:(it.park?Math.max(0,1-mix*1.15)*1.8:1);
     w.push(q); tot+=q;
   }
   if(tot<=0.001){
@@ -1334,30 +1337,53 @@ btnSound.addEventListener("click",function(){
 });
 btnPause.addEventListener("click",function(){ togglePause(); });
 
-/* Fullscreen + landscape lock. Works on Android and desktop; iPhone Safari has no
-   Fullscreen API for non-video elements, so the button hides itself there and the
-   Home Screen route (manifest + apple-mobile-web-app-capable) is the answer instead. */
+/* Fullscreen + landscape lock. Some embedders (and iPhone Safari, which has no
+   Fullscreen API for non-video elements at all) refuse this. When that happens the
+   button SAYS so rather than doing nothing, and it tries the document root as a
+   fallback before giving up, because some hosts only allow the root element. */
 var btnFull=document.getElementById("btn-full");
-var fsReq=frame.requestFullscreen||frame.webkitRequestFullscreen;
-if(fsReq){
+var elFS=frame.requestFullscreen||frame.webkitRequestFullscreen;
+var rootFS=document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen;
+if(elFS||rootFS){
   btnFull.hidden=false;
   btnFull.addEventListener("click",function(){
     var doc=document;
     if(doc.fullscreenElement||doc.webkitFullscreenElement){
-      (doc.exitFullscreen||doc.webkitExitFullscreen).call(doc);
+      var ex=doc.exitFullscreen||doc.webkitExitFullscreen;
+      if(ex) ex.call(doc);
       return;
     }
-    var r=fsReq.call(frame,{navigationUI:"hide"});
-    var lock=function(){
+    var done=false;
+    function lock(){
+      done=true;
       if(screen.orientation&&screen.orientation.lock){
         try{ var q=screen.orientation.lock("landscape"); if(q&&q.catch) q.catch(function(){}); }catch(e){}
       }
-    };
-    if(r&&r.then) r.then(lock).catch(function(){}); else lock();
+    }
+    function blocked(){
+      if(done) return; done=true;
+      btnFull.textContent="Not allowed here";
+      btnFull.title="This browser blocked fullscreen. On iPhone, use Share \u2192 Add to Home Screen instead.";
+      setTimeout(function(){ btnFull.textContent="Fullscreen"; },2400);
+    }
+    function attempt(el,req,next){
+      if(!req){ (next||blocked)(); return; }
+      try{
+        var r=req.call(el,{navigationUI:"hide"});
+        if(r&&r.then){ r.then(lock).catch(function(){ (next||blocked)(); }); }
+        else setTimeout(function(){
+          if(doc.fullscreenElement||doc.webkitFullscreenElement) lock(); else (next||blocked)();
+        },140);
+      }catch(e){ (next||blocked)(); }
+    }
+    attempt(frame,elFS,function(){ attempt(document.documentElement,rootFS,null); });
   });
-  document.addEventListener("fullscreenchange",function(){
-    btnFull.textContent=document.fullscreenElement?"Exit fullscreen":"Fullscreen";
-    game.focus();
+  ["fullscreenchange","webkitfullscreenchange"].forEach(function(ev){
+    document.addEventListener(ev,function(){
+      var on=!!(document.fullscreenElement||document.webkitFullscreenElement);
+      btnFull.textContent=on?"Exit fullscreen":"Fullscreen";
+      game.focus();
+    });
   });
 }
 
@@ -1442,6 +1468,15 @@ seg(document.getElementById("seg-birds"),
    plain localStorage: best distance, medals, tune, rules and rotation,
    per browser. Wrapped because private windows can throw on access. */
 var STORE_KEY="bubble.v1", saveTimer=null;
+/* the obstacle roster as it stood before `known` was recorded - do not extend it */
+var LEGACY_ITEMS=["slat","scroll","stone","hydrant","meter","bollard","trash","mailbox",
+  "newsbox","busstop","car","phonebox","leafy","bare","blossom","striped","steel","sign",
+  "lamp","traffic"];
+function allItemIds(){
+  var out=[];
+  GROUPS.forEach(function(g){ g.items.forEach(function(it){ out.push(it.id); }); });
+  return out;
+}
 function readStore(){
   try{ return JSON.parse(localStorage.getItem(STORE_KEY)||"{}")||{}; }catch(e){ return {}; }
 }
@@ -1450,7 +1485,7 @@ function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(flushSave,50
 function flushSave(){
   writeStore({
     tune:Object.assign({},P), rules:Object.assign({},RULES),
-    rotation:JSON.parse(JSON.stringify(on)),
+    rotation:JSON.parse(JSON.stringify(on)), known:allItemIds(),
     best:Math.round(G.best), runs:STATS.runs,
     bestMedal:STATS.bestMedal?STATS.bestMedal.name:null,
     sound:soundOn, savedAt:new Date().toISOString()
@@ -1476,9 +1511,27 @@ function saveBest(){ queueSave(); }
     if(d.rules.ceiling) RULES.ceiling=d.rules.ceiling;
     if(typeof d.rules.birds==="boolean") RULES.birds=d.rules.birds;
   }
-  if(d.rotation) Object.keys(on).forEach(function(k){
-    if(Array.isArray(d.rotation[k])&&d.rotation[k].length) on[k]=d.rotation[k].slice();
-  });
+  /* A saved rotation only records what existed when it was saved. Anything added
+     since must default ON, or new obstacles are invisible to returning players -
+     which is exactly what happened to the hedge and the statue. `known` is the
+     item list at save time; an item is off only if it was known and left out. */
+  if(d.rotation){
+    /* Saves made before `known` existed have no item list, so fall back to the
+       roster as it stood then: anything absent from BOTH is new, and new things
+       default on. Without this, every obstacle added from here on would be
+       invisible to anyone who had ever opened the tuning drawer. */
+    var known=Array.isArray(d.known)?d.known:LEGACY_ITEMS;
+    GROUPS.forEach(function(gr){
+      var stored=d.rotation[gr.id];
+      if(!Array.isArray(stored)) return;
+      var keep=[];
+      gr.items.forEach(function(it){
+        var wasKnown=known.indexOf(it.id)>=0;
+        if(stored.indexOf(it.id)>=0||!wasKnown) keep.push(it.id);
+      });
+      if(keep.length) on[gr.id]=keep;
+    });
+  }
   syncOptionUI();
   hudTick();
 })();

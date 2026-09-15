@@ -77,6 +77,23 @@ furniture, so the change of place and the change of difficulty are one event:
   the city arrives — that is what the hedge and the statue are for. If you ever make
   the shelter group city-only again, the park becomes hoverable.
 
+## Adding an obstacle without it being invisible
+
+`localStorage` holds the player's rotation as a list of item ids that are ON. A list
+saved before your new obstacle existed does not mention it, and the naive read —
+"replace the group with the stored list" — therefore switches it OFF for everyone who
+has ever opened the tuning drawer. That is exactly what happened to the hedge and the
+statue: shipped, tagged, weighted, and never seen.
+
+The load path now saves a `known` roster alongside the rotation and treats **absent
+from `known` as new, therefore on**. `LEGACY_ITEMS` is the roster from before `known`
+was recorded; leave it alone. Add new obstacles freely — but if you change how the
+rotation is stored, keep that rule or the next addition disappears too.
+
+Worth knowing: a park-only piece also has a narrow window (tall pieces start at 800px,
+the park ends at `PARK_END`), so park items carry a 1.8x weight. At 1.0 they showed up
+in well under half of runs.
+
 ## Tuning
 
 `P` holds the physics ("Twitchy": gravity 180, wind 420, drag 4.6, size effect 1.35,
@@ -137,3 +154,9 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **15 Sep 2026** — Park-to-city progression (see above), with a hedge and a statue added so
   the park has its own things to climb over. Stage 2 renamed "Watch the ground", since
   "street" was wrong while you are still in a park. Pigeons now start in the park.
+- **15 Sep 2026** — Erik never saw the hedge or the statue. Two causes, both fixed: saved
+  rotations switched them off (see "Adding an obstacle" above) and the park ended at 1000px
+  while tall pieces only start at 800px, leaving a 200px window. Park now runs to 1500px,
+  city from 2800px, park pieces weighted 1.8x — they now appear in 95% of runs to 60m.
+  Fullscreen also got a root-element fallback and now reports "Not allowed here" instead of
+  failing silently, because some embedders refuse the request and the button looked dead.
