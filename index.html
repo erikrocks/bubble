@@ -179,7 +179,7 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
   <dl class="hud">
     <div><dt>Distance</dt><dd id="h-dist">0.0 m</dd></div>
     <div><dt>Best</dt><dd id="h-best">0.0 m</dd></div>
-    <div style="flex:1.3 1 140px"><dt>Stage</dt><dd class="stg" id="h-stage">Just float</dd></div>
+    <div style="flex:1.3 1 140px"><dt>Zone</dt><dd class="stg" id="h-stage">Park</dd></div>
     <div><dt>Diameter</dt><dd id="h-dia">8 px</dd></div>
     <div><dt>Speed</dt><dd id="h-speed">60 px/s</dd></div>
   </dl>
@@ -279,6 +279,11 @@ var C={};
     blonde:"#e0be62",blondeD:"#b8963f",black:"#22252f",brown:"#6b4f33",
     plum:"#8a5fb0",plumL:"#ae84d2",plumD:"#5f3d80",
     grass:"#6d9a55",grassL:"#8cb86c",grassD:"#4c7340",
+    sea:"#2a6d9e",seaL:"#4a92c2",seaD:"#17496f",foam:"#e6f3fa",pier:"#5d4c3c",
+    deck:"#b08a5e",deckL:"#c9a577",deckD:"#7d5f3c",
+    gull:"#d8dde4",gullL:"#f2f5f8",gullD:"#8f98a6",
+    candyA:"#e05a6a",candyB:"#f7efe2",mint:"#5ec9b4",neon:"#ff7bd0",neonD:"#b03d8c",
+    kiosk:"#c9563f",kioskD:"#94351f",kioskL:"#e07a5f",
     hedge:"#4a7a45",hedgeL:"#6a9c5c",hedgeD:"#2f5730",
     fleaf:"#7d9c74",fleafL:"#9cb890",fleafD:"#5d7a58",ftrunk:"#7a6a58",
     stone:"#b9bcc0",stoneL:"#d6d9dd",stoneD:"#8d9095",
@@ -584,13 +589,13 @@ var GROUPS=[
      p.hl(x,b,30,C.shadow);}}
 ]},
 {id:"post",cls:"ground",name:"Post",blurb:"Narrow and tall. Cheap to dodge but easy to clip when you are already busy.",items:[
-  {id:"hydrant",name:"Fire hydrant",w:9,h:14,cw:9,city:true,note:"Squat, red, iconic. Short enough that a lazy hover clears it.",
+  {id:"hydrant",name:"Fire hydrant",w:9,h:14,cw:9,zones:["city"],note:"Squat, red, iconic. Short enough that a lazy hover clears it.",
    draw:function(p,x,b){var y=b-14;
      p.rect(x+1,y+4,7,10,C.red); p.vl(x+2,y+5,8,C.redL);
      p.rect(x+2,y+2,5,2,C.redL); p.px(x+4,y+1,C.redL);
      p.hl(x+1,y+6,7,C.redD); p.rect(x,y+8,1,2,C.redD); p.rect(x+8,y+8,1,2,C.redD);
      p.hl(x,b-1,9,C.redD); p.hl(x,b,9,C.shadow);}},
-  {id:"meter",name:"Parking meter",w:7,h:19,cw:7,city:true,note:"Thin pole with a head on top. Nearly twice the hydrant's height in the same footprint.",
+  {id:"meter",name:"Parking meter",w:7,h:19,cw:7,zones:["city"],note:"Thin pole with a head on top. Nearly twice the hydrant's height in the same footprint.",
    draw:function(p,x,b){var y=b-19;
      p.rect(x+2,y+7,3,12,C.iron); p.vl(x+2,y+7,12,C.ironL);
      p.rect(x+1,y+1,5,6,C.ironD); p.rect(x+2,y+2,3,3,C.glass); p.px(x+2,y+2,C.glassD);
@@ -609,13 +614,13 @@ var GROUPS=[
      for(var i2=2;i2<10;i2++) if(bay(i2,3)<0.5) p.px(x+i2,y+3,C.cream);
      p.hl(x,y+1,12,C.ironL); p.hl(x,y+2,12,C.ironD);
      p.hl(x+1,b,10,C.shadow);}},
-  {id:"mailbox",name:"Mailbox",w:14,h:16,cw:13,city:true,note:"Rounded blue box on legs. The most colorful ground piece — good for a landmark.",
+  {id:"mailbox",name:"Mailbox",w:14,h:16,cw:13,zones:["city"],note:"Rounded blue box on legs. The most colorful ground piece — good for a landmark.",
    draw:function(p,x,b){var y=b-16;
      p.rect(x+3,y+12,2,4,C.ironD); p.rect(x+9,y+12,2,4,C.ironD);
      p.rect(x+1,y+3,12,9,C.blue); p.rect(x+2,y+1,10,2,C.blueL); p.hl(x+4,y,6,C.blueL);
      p.vl(x+2,y+4,7,C.blueL); p.rect(x+4,y+4,6,1,C.ironD);
      p.hl(x+1,y+9,12,C.cream); p.hl(x+1,b,12,C.shadow);}},
-  {id:"newsbox",name:"Paper box",w:11,h:14,cw:11,city:true,note:"Vending box with a glass front. Squarer silhouette — reads as man-made.",
+  {id:"newsbox",name:"Paper box",w:11,h:14,cw:11,zones:["city"],note:"Vending box with a glass front. Squarer silhouette — reads as man-made.",
    draw:function(p,x,b){var y=b-14;
      p.rect(x+2,y+11,2,3,C.ironD); p.rect(x+7,y+11,2,3,C.ironD);
      p.rect(x+1,y+1,9,10,C.red); p.hl(x+1,y+1,9,C.redL);
@@ -623,7 +628,7 @@ var GROUPS=[
      p.rect(x+3,y+5,5,1,C.cream); p.hl(x+1,b,9,C.shadow);}}
 ]},
 {id:"shelter",cls:"ground",name:"Tall on the ground",blurb:"The pieces that force you UP. Everything else on the sidewalk can be cleared by a lazy hover \u2014 these cannot.",items:[
-  {id:"hedge",name:"Boxwood",w:38,h:27,cw:30,park:true,edge:true,
+  {id:"hedge",name:"Boxwood",w:38,h:27,cw:30,zones:["park"],edge:true,
    note:"A clipped boxwood ball on a short trunk. The tightest silhouette in the park \u2014 it reads as planted rather than wild, and the round mass is unmistakably solid.",
    draw:function(p,x,b){
      p.rect(x+17,b-7,4,7,C.bark); p.vl(x+17,b-6,6,C.barkD);
@@ -638,7 +643,7 @@ var GROUPS=[
        if(bay(qx,qy)<0.2) p.px(qx,qy,C.hedgeL);
      }
      p.hl(x+6,b,26,C.shadow);}},
-  {id:"statue",name:"Statue",w:16,h:36,cw:12,park:true,edge:true,
+  {id:"statue",name:"Statue",w:16,h:36,cw:12,zones:["park"],edge:true,
    note:"Verdigris bronze on a dark granite plinth \u2014 green and near-black so it reads against a pale sky rather than dissolving into it.",
    draw:function(p,x,b){var y=b-36;
      p.rect(x+1,b-4,14,4,C.granite); p.hl(x+1,b-4,14,C.graniteL); p.hl(x+1,b-1,14,C.graniteD);
@@ -652,7 +657,23 @@ var GROUPS=[
      p.rect(x+11,y+4,2,7,C.bronze); p.px(x+12,y+3,C.bronzeL);
      p.rect(x+6,y+20,2,6,C.bronzeD); p.rect(x+9,y+20,2,6,C.bronze);
      p.hl(x+1,b,14,C.shadow);}},
-  {id:"busstop",name:"Bus shelter",w:46,h:38,cw:44,city:true,edge:true,
+{id:"fries",name:"Fry stand",w:44,h:34,cw:42,zones:["boardwalk"],edge:true,
+   note:"A boardwalk food stand with a sign board on the roof. The walk's tall piece \u2014 without it the boardwalk is hoverable.",
+   draw:function(p,x,b){var y=b-34;
+     p.rect(x+7,y,30,9,C.kiosk); p.hl(x+7,y,30,C.kioskL); p.hl(x+7,y+8,30,C.kioskD);
+     p.rect(x+11,y+3,8,3,C.candyB); p.rect(x+22,y+3,11,3,C.candyB);
+     p.rect(x+3,y+9,38,25,C.candyB); p.vl(x+3,y+10,24,C.gullL);
+     for(var i=0;i<38;i++){
+       var band=((i/5)|0)%2;
+       p.vl(x+3+i,y+10,4,band?C.candyB:C.kiosk);
+       p.px(x+3+i,y+14,band?C.walkD:C.kioskD);
+     }
+     p.rect(x+8,y+16,28,9,C.glassD); p.rect(x+9,y+17,26,7,C.glass);
+     p.hl(x+9,y+20,26,C.glassD);
+     p.rect(x+2,y+25,40,3,C.deckD); p.hl(x+2,y+25,40,C.deckL);
+     p.rect(x+5,y+28,4,6,C.deckD); p.rect(x+35,y+28,4,6,C.deckD);
+     p.hl(x+2,b,40,C.shadow);}},
+  {id:"busstop",name:"Bus shelter",w:46,h:38,cw:44,zones:["city"],edge:true,
    note:"Tallest thing standing on the sidewalk. Takes over half the screen height, so you have to actually climb for it.",
    draw:function(p,x,b){var y=b-38;
      p.rect(x,y,46,4,C.steel); p.hl(x,y,46,C.concL); p.hl(x,y+3,46,C.ironD);
@@ -664,7 +685,7 @@ var GROUPS=[
      p.rect(x+8,b-9,2,9,C.iron); p.rect(x+30,b-9,2,9,C.iron);
      p.rect(x+4,y+6,10,5,C.signBand); p.hl(x+5,y+8,8,C.cream);
      p.hl(x,b,46,C.shadow);}},
-  {id:"car",name:"Parked car",w:44,h:26,cw:42,city:true,edge:true,
+  {id:"car",name:"Parked car",w:44,h:26,cw:42,zones:["city"],edge:true,
    note:"Wide and mid-height. Cheap to clear on its own, brutal when a branch is sitting over it.",
    draw:function(p,x,b){var y=b-26;
      p.rect(x+11,y+2,22,10,C.carR); p.hl(x+13,y+2,18,C.carRL);
@@ -682,7 +703,7 @@ var GROUPS=[
         keyline pass has nothing over that row and it reads as a bar under the car */
      p.px(x+9,b,C.shadow); p.px(x+10,b,C.shadow);
      p.px(x+33,b,C.shadow); p.px(x+34,b,C.shadow);}},
-  {id:"phonebox",name:"Phone box",w:14,h:34,cw:14,city:true,edge:true,
+  {id:"phonebox",name:"Phone box",w:14,h:34,cw:14,zones:["city"],edge:true,
    note:"Narrow but tall. Easy to slip past if you spot it early, a wall if you don't.",
    draw:function(p,x,b){var y=b-34;
      p.rect(x,y+3,14,31,C.phone); p.hl(x,y+3,14,C.phoneL); p.vl(x,y+4,30,C.phoneL);
@@ -692,6 +713,83 @@ var GROUPS=[
        p.rect(x+2+c2*6,y+6+r2*9,5,7,C.glass);
      p.vl(x+7,y+5,26,C.phoneD); p.hl(x+1,y+31,12,C.phoneD);
      p.hl(x,b,14,C.shadow);}}
+]},
+{id:"walk",cls:"ground",name:"On the boardwalk",blurb:"Boardwalk clutter \u2014 low and mid-height things that set the rhythm between the big stuff.",items:[
+  {id:"railing",name:"Deck railing",w:40,h:13,cw:38,zones:["boardwalk"],
+   note:"A run of railing along the sea edge. Low enough to be rhythm rather than threat.",
+   draw:function(p,x,b){var y=b-13;
+     p.rect(x+2,y+2,3,11,C.deckD); p.rect(x+35,y+2,3,11,C.deckD); p.rect(x+18,y+4,3,9,C.deckD);
+     p.rect(x,y,40,3,C.deckL); p.hl(x,y,40,C.candyB); p.hl(x,y+2,40,C.deckD);
+     p.rect(x,y+6,40,2,C.deck); p.hl(x,y+7,40,C.deckD);
+     p.hl(x,b,40,C.shadow);}},
+  {id:"cart",name:"Ice cream cart",w:24,h:22,cw:22,zones:["boardwalk"],
+   note:"Parked cart with a striped parasol. The boardwalk's splash of colour at ground level.",
+   draw:function(p,x,b){var y=b-22;
+     [5,19].forEach(function(o){
+       for(var dy=-3;dy<=3;dy++)for(var dx=-3;dx<=3;dx++){
+         var d=Math.hypot(dx,dy); if(d>3.2) continue;
+         p.px(x+o+dx,b-3+dy,d<1.4?C.hub:C.tyre);}
+     });
+     p.rect(x+2,b-13,20,10,C.candyB); p.hl(x+2,b-13,20,C.gullL);
+     p.rect(x+2,b-10,20,2,C.candyA); p.hl(x+2,b-4,20,C.gullD);
+     p.rect(x+3,y+5,2,8,C.iron); p.rect(x+19,y+5,2,8,C.iron);
+     for(var i=0;i<22;i++){
+       var band=((i/3)|0)%2;
+       p.vl(x+1+i,y+1,4,band?C.candyB:C.candyA);
+       p.px(x+1+i,y+5,band?C.walkD:C.redD);
+     }
+     p.px(x+11,y,C.mint); p.px(x+11,y-1,C.mint);
+     p.hl(x+2,b,20,C.shadow);}},
+  {id:"scope",name:"Coin telescope",w:10,h:24,cw:9,zones:["boardwalk"],
+   note:"A viewer pointed out to sea. Narrow, tall, and easy to clip when you are watching something else.",
+   draw:function(p,x,b){var y=b-24;
+     p.rect(x+3,b-15,4,15,C.iron); p.vl(x+3,b-14,13,C.ironL);
+     p.rect(x+1,b-3,8,3,C.ironD); p.rect(x+2,b-1,6,1,C.ironD);
+     p.rect(x+1,y+3,8,5,C.ironD); p.hl(x+1,y+3,8,C.ironL);
+     p.rect(x+7,y+1,3,4,C.iron); p.px(x+9,y+1,C.glass);
+     p.px(x+2,y+9,C.amber);
+     p.hl(x+1,b,8,C.shadow);}}
+]},
+{id:"pier",cls:"air",name:"Over the boardwalk",blurb:"What hangs above a boardwalk: strings of flags and the arcade's sign.",items:[
+  {id:"bunting",name:"Bunting",w:0,d:17,boxes:[{dx:0,w:0,d:17}],zones:["boardwalk"],
+   note:"Pennants strung the whole width between poles. You cannot go around it \u2014 only under. Shallow on purpose.",
+   bg:function(p,x,wy){
+     p.rect(x+4,4,4,wy-4,C.deckD); p.vl(x+4,5,wy-5,C.deck);
+     p.rect(x+1,3,10,2,C.deck); p.hl(x+1,3,10,C.deckL);
+     p.rect(x+2,wy-3,8,3,C.deckD);},
+   draw:function(p,x,b,W){
+     var wide=W||p.W, COLS=[C.candyA,C.mint,C.neon,C.candyB];
+     for(var i=0;i<wide;i++){
+       var u=i/wide, sag=Math.sin(u*Math.PI)*7;
+       p.px(i,4+sag,C.deckD);
+       p.px(i,5+sag,withA(C.deckD,110));
+     }
+     for(var k=0;k*13<wide+13;k++){
+       var fx=k*13+3, u2=fx/wide, sg=Math.sin(u2*Math.PI)*7;
+       var col=COLS[k%4], top=Math.round(5+sg);
+       for(var r=0;r<7;r++){
+         var half=Math.max(0,3-Math.floor(r*0.5));
+         for(var q=-half;q<=half;q++) p.px(fx+q,top+r,col);
+         p.px(fx-half,top+r,r<2?col:C.edge);
+       }
+     }}},
+  {id:"arcade",name:"Arcade sign",w:42,d:26,boxes:[{dx:11,w:20,d:26},{dx:1,w:30,d:6}],zones:["boardwalk"],
+   note:"A neon sign hung off the arcade front. Deep and narrow \u2014 the boardwalk's version of the hanging shop sign.",
+   bg:function(p,x,wy){
+     p.rect(x,0,42,wy,C.deck);
+     for(var y=0;y<wy;y+=4){ p.hl(x,y,42,C.deckD); }
+     for(var y2=0;y2<wy;y2+=4) p.hl(x,y2+1,42,C.deckL);
+     p.rect(x+4,wy-40,34,26,C.glassD); p.rect(x+5,wy-39,32,24,C.glass);
+     p.vl(x+20,wy-39,24,C.glassD); p.hl(x+5,wy-28,32,C.glassD);
+     p.rect(x+4,wy-14,34,3,C.deckD); p.hl(x+4,wy-14,34,C.deckL);
+     p.rect(x+14,wy-11,14,11,C.kiosk); p.vl(x+14,wy-10,10,C.kioskL);},
+   draw:function(p,x){
+     p.rect(x+1,2,4,4,C.ironD); p.hl(x+1,4,28,C.iron); p.hl(x+1,5,28,C.ironD);
+     p.vl(x+13,6,3,C.ironD); p.vl(x+28,6,3,C.ironD);
+     p.rect(x+11,9,20,16,C.ironD); p.rect(x+12,10,18,14,C.neonD);
+     p.rect(x+14,12,14,3,C.neon); p.rect(x+14,17,10,3,C.neon);
+     p.px(x+12,10,C.neon); p.px(x+29,10,C.neon); p.px(x+12,23,C.neon); p.px(x+29,23,C.neon);
+     p.hl(x+11,25,20,C.ironD);}}
 ]},
 {id:"tree",cls:"air",name:"Tree",blurb:"Rooted in the sidewalk, trunk hazed back behind the play line, canopy hanging into it. The deepest things in the level.",items:[
   {id:"leafy",name:"Leafy bough",w:54,d:32,boxes:[{dx:2,w:50,d:32}],
@@ -754,7 +852,7 @@ var GROUPS=[
        if(bay(qx,qy)<0.18) p.px(qx,qy,C.blossomL);}}}
 ]},
 {id:"shop",cls:"air",name:"Shopfront",blurb:"A building behind the sidewalk, with the only solid part sticking out over your head.",items:[
-  {id:"striped",name:"Striped awning",w:58,d:20,city:true,boxes:[{dx:0,w:58,d:20}],
+  {id:"striped",name:"Striped awning",w:58,d:20,zones:["city"],boxes:[{dx:0,w:58,d:20}],
    note:"Brick shopfront with the awning overhanging past the wall on both sides. The stripes are the loudest thing in the level — use it as a landmark.",
    bg:function(p,x,wy,W,v){
      var sk=shopOf(v);
@@ -784,7 +882,7 @@ var GROUPS=[
        if(i%6===0) p.vl(x+i,11,hgt,dk);
      }
      p.hl(x,20,58,withA(C.ironD,110));}},
-  {id:"steel",name:"Glass canopy",w:50,d:14,city:true,boxes:[{dx:1,w:48,d:14}],
+  {id:"steel",name:"Glass canopy",w:50,d:14,zones:["city"],boxes:[{dx:1,w:48,d:14}],
    note:"Modern storefront, shallow steel canopy. The gentlest ceiling on the sheet — the right one to introduce first.",
    bg:function(p,x,wy,W,v){
      var sk=shopOf(v);
@@ -802,7 +900,7 @@ var GROUPS=[
      p.rect(x+6,12,2,2,C.steel); p.rect(x+42,12,2,2,C.steel);
      for(var i=2;i<48;i+=6) p.px(x+i,12,C.ironD);
      p.hl(x+1,13,48,withA(C.ironD,120));}},
-  {id:"sign",name:"Hanging sign",w:40,d:24,city:true,boxes:[{dx:10,w:16,d:24},{dx:2,w:26,d:6}],
+  {id:"sign",name:"Hanging sign",w:40,d:24,zones:["city"],boxes:[{dx:10,w:16,d:24},{dx:2,w:26,d:6}],
    note:"Narrow bracket, deep board. Small hitbox for how far down it reaches — the sneaky one.",
    bg:function(p,x,wy,W,v){
      var sk=shopOf(v);
@@ -839,7 +937,7 @@ var GROUPS=[
      p.rect(x+34,6,5,4,C.iron); p.hl(x+34,6,5,C.ironL);
      p.rect(x+8,13,10,3,C.iron); p.hl(x+8,13,10,C.ironL); p.hl(x+8,15,10,C.ironD);
      p.rect(x+9,16,8,2,C.lampOn); p.hl(x+10,18,6,C.lampGlow);}},
-{id:"traffic",name:"Traffic signal",w:36,d:24,city:true,boxes:[{dx:0,w:32,d:7},{dx:16,w:11,d:24}],
+{id:"traffic",name:"Traffic signal",w:36,d:24,zones:["city"],boxes:[{dx:0,w:32,d:7},{dx:16,w:11,d:24}],
    note:"Mast arm out over the street with the signal hanging off the end. Deep and narrow — forces a real dip, not a nudge.",
    bg:function(p,x,wy){
      p.rect(x+29,4,4,wy-4,C.iron); p.vl(x+29,4,wy-4,C.ironL); p.vl(x+32,4,wy-4,C.ironD);
@@ -869,7 +967,8 @@ var RULES={ceiling:"soft",birds:true};
 
 /* his saved rotation */
 var on={bench:["slat","scroll"],post:["hydrant","meter","bollard"],bin:["trash","mailbox","newsbox"],
-        shelter:["hedge","statue","busstop","car","phonebox"],
+        shelter:["hedge","statue","fries","busstop","car","phonebox"],
+        walk:["railing","cart","scope"], pier:["bunting","arcade"],
         tree:["leafy"],shop:["striped"],pole:["lamp","traffic"]};
 GROUPS.forEach(function(g){ g.items.forEach(function(it){ it.gid=g.id; }); });
 var DEFAULT_ON=JSON.parse(JSON.stringify(on));
@@ -882,12 +981,51 @@ function toggle(gid,iid){
   else on[gid].push(iid);
   return true;
 }
-/* The run walks from a park into the city. `cityMix` is 0 in the park, 1 downtown,
-   and slides between - it weights which furniture turns up AND what the horizon
-   looks like, so the change of scenery and the change of difficulty are the same
-   event rather than two things that happen to coincide. */
-var PARK_END=1500, CITY_START=2800;
-function cityMix(d){ return Math.max(0,Math.min(1,(d-PARK_END)/(CITY_START-PARK_END))); }
+/* The run walks through a sequence of places. The same weights drive which
+   furniture turns up AND what the horizon looks like, so the change of scenery and
+   the change of difficulty are one event rather than two that coincide. */
+var ZONES=[{id:"park",from:0,name:"Park"},{id:"city",from:2100,name:"City"},
+           {id:"boardwalk",from:4200,name:"Boardwalk"}];
+var FADE=1100;
+/* How present a zone is at this distance: ramps in over FADE before its own start,
+   holds, then ramps out over FADE before the next one starts. Two zones overlap
+   during a handover, which is what makes the change of place feel like walking
+   rather than cutting. */
+function zoneW(i,d){
+  var z=ZONES[i], nxt=ZONES[i+1], w=1;
+  if(i>0){
+    var inS=z.from-FADE;
+    if(d<=inS) return 0;
+    if(d<z.from) w=(d-inS)/FADE;
+  }
+  if(nxt){
+    if(d>=nxt.from) return 0;
+    var outS=nxt.from-FADE;
+    if(d>outS) w=Math.min(w,(nxt.from-d)/FADE);
+  }
+  return w;
+}
+function zw(id,d){
+  for(var i=0;i<ZONES.length;i++) if(ZONES[i].id===id) return zoneW(i,d);
+  return 0;
+}
+function zoneName(id){
+  for(var i=0;i<ZONES.length;i++) if(ZONES[i].id===id) return ZONES[i].name;
+  return id;
+}
+function zoneAt(d){
+  var best=0,bi=0;
+  for(var i=0;i<ZONES.length;i++){ var w=zoneW(i,d); if(w>best){ best=w; bi=i; } }
+  return ZONES[bi].id;
+}
+/* an item with no `zones` belongs everywhere; one that names zones is boosted
+   while it is home, or it drowns in the always-present furniture */
+function itemW(it,d){
+  if(!it.zones) return 1;
+  var w=0;
+  for(var i=0;i<it.zones.length;i++){ var q=zw(it.zones[i],d); if(q>w) w=q; }
+  return w*w*1.9;
+}
 
 /* the tall pieces are what force you upward; they join once the player
    has had a stage of "just go up" to learn on */
@@ -901,17 +1039,10 @@ function poolFor(cls,tall){
 }
 /* weighted by where you are: park things thin out, city things arrive */
 function pickFor(cls,tall){
-  var mix=cityMix(G.run), pool=poolFor(cls,tall), w=[], tot=0, i;
-  for(i=0;i<pool.length;i++){
-    var it=pool[i];
-    /* park-only pieces are weighted up while you are in the park: there are only
-       two of them against everything else, and the window is short enough that at
-       even odds you could finish a whole run without meeting one. */
-    var q=it.city?mix*mix:(it.park?Math.max(0,1-mix*1.15)*1.8:1);
-    w.push(q); tot+=q;
-  }
+  var d=G.run, pool=poolFor(cls,tall), w=[], tot=0, i;
+  for(i=0;i<pool.length;i++){ var q=itemW(pool[i],d); w.push(q); tot+=q; }
   if(tot<=0.001){
-    for(i=0;i<pool.length;i++){ if(!pool[i].park) return pool[i]; }
+    for(i=0;i<pool.length;i++){ if(!pool[i].zones) return pool[i]; }
     return pool.length?pool[0]:null;
   }
   var r=rnd()*tot;
@@ -974,6 +1105,49 @@ function drawVerge(p,off){
     if(bay(wx,3)<0.3) p.px(x,WALKY-1,C.grassL);
     if(bay(wx,7)<0.18) p.px(x,WALKY+2,C.grassD);
   }
+}
+function drawSea(p,off){
+  var top=WALKY-34;
+  p.rect(0,top,GW,WALKY-top,C.sea);
+  p.hl(0,top,GW,C.foam);          /* the horizon itself, the line that says "water" */
+  p.hl(0,top+1,GW,C.seaL);
+  for(var y=top;y<WALKY;y++){
+    var band=(y-top)/(WALKY-top);
+    for(var x=0;x<GW;x++){
+      var wx=Math.floor(x+off);
+      if(bay(wx,y)<0.12+band*0.2) p.px(x,y,C.seaL);
+      else if(bay(wx,y+2)>0.9) p.px(x,y,C.seaD);
+    }
+  }
+  for(var i=0;i<26;i++){
+    var sx=Math.round(((i*47+hash(i)*30)-off*0.6)%(GW+40))-20;
+    var sy=top+3+Math.floor(hash(i+9)*24);
+    p.hl(sx,sy,3+Math.floor(hash(i+3)*4),C.foam);
+  }
+  /* a pier and a far-off wheel, promising what comes next */
+  var px2=Math.round((600-off*0.5)%(GW*3))-40;
+  if(px2>-80&&px2<GW+40){
+    p.rect(px2,top-3,58,3,C.pier);
+    for(var k=0;k<7;k++) p.rect(px2+4+k*8,top,2,7,C.pier);
+  }
+}
+function drawDeck(p,off){
+  for(var x=0;x<GW;x++){
+    var wx=Math.floor(x+off);
+    p.px(x,WALKY,C.deckL); p.px(x,WALKY+1,C.deck);
+    for(var y=WALKY+2;y<GH;y++) p.px(x,y,C.deck);
+    if(((wx%9)+9)%9===0){ for(var y2=WALKY;y2<GH;y2++) p.px(x,y2,C.deckD); }
+    if(((wx%9)+9)%9===4&&bay(wx,3)<0.5) p.px(x,WALKY+3,C.deckD);
+  }
+  p.hl(0,GH-2,GW,C.deckD); p.hl(0,GH-1,GW,C.deckD);
+}
+function drawGull(p,x,y,f){
+  p.rect(x+2,y+2,7,3,C.gull); p.hl(x+2,y+2,7,C.gullL); p.hl(x+2,y+4,7,C.gullD);
+  p.rect(x,y+1,3,3,C.gullL); p.px(x,y+1,C.gullD); p.px(x+1,y+2,C.edge);
+  p.px(x-1,y+3,C.beak); p.px(x-2,y+3,C.beak);
+  p.rect(x+9,y+2,3,2,C.gullD); p.px(x+11,y+1,C.edge);
+  if(f){ p.rect(x+3,y-2,5,3,C.gullL); p.hl(x+3,y-2,5,C.gull); p.px(x+7,y-2,C.edge); }
+  else { p.rect(x+3,y+5,5,2,C.gull); p.hl(x+3,y+6,5,C.gullD); p.px(x+7,y+6,C.edge); }
 }
 function drawSkyline(p,off){
   var per=46, first=Math.floor(off/per)-1;
@@ -1084,12 +1258,12 @@ var STATS={runs:0,bestMedal:null};
 /* ================= state ================= */
 var G={phase:"title",R:R_MIN,y:0,x:0,v:0,hold:false,world:0,obs:[],parts:[],birds:[],
        run:0,best:0,seed:7,nextX:0,campY:0,campT:0,clip:0,kid:null,deadT:0,armed:true,
-       prev:null,stage:0,bannerT:0,attract:0,sq:0,sqV:0,birdT:0};
+       prev:null,stage:0,zone:null,zoneDelay:0,bannerT:0,attract:0,sq:0,sqV:0,birdT:0};
 function rnd(){ G.seed=(G.seed*1664525+1013904223)&0x7fffffff; return G.seed/0x7fffffff; }
 function startRun(){
   G.kid=rollKid(); G.phase="ready"; G.R=R_MIN; G.y=wandY(); G.x=WAND_X-2+R_MIN;
   G.v=0; G.world=0; G.obs=[]; G.birds=[]; G.parts=[]; G.run=0; G.clip=0; G.campY=G.y; G.campT=0;
-  G.seed=(Math.random()*2147483647)|0; G.nextX=GW+120; G.deadT=0; G.stage=0; G.bannerT=0;
+  G.seed=(Math.random()*2147483647)|0; G.nextX=GW+120; G.deadT=0; G.stage=0; G.zone=null; G.zoneDelay=0; G.bannerT=0;
   G.sq=0; G.sqV=0; G.birdT=7+Math.random()*7;
   ov.title.hidden=true; ov.ready.hidden=false; ov.dead.hidden=true; ov.pause.hidden=true;
   banner.classList.remove("show");
@@ -1293,8 +1467,15 @@ function step(dt){
     if(Math.hypot((bd.x+4)-G.x,(bd.y+3)-G.y)<G.R*0.8+3){ pop("bird"); return; }
   }
   G.world+=P.s*dt; G.run+=P.s*dt;
-  var st=stageAt(G.run);
-  if(st!==G.stage){ G.stage=st; if(st>0){ showBanner(STAGES[st].name.toUpperCase()); Snd.stage(); } }
+  G.stage=stageAt(G.run);
+  /* the banner names where you are, not which difficulty step fired - and it waits
+     a beat after the handover so it lands once the new place is actually on screen */
+  var zn=zoneAt(G.run);
+  if(zn!==G.zone){ G.zone=zn; G.zoneDelay=1.0; }
+  if(G.zoneDelay>0){
+    G.zoneDelay-=dt;
+    if(G.zoneDelay<=0){ showBanner(zoneName(G.zone).toUpperCase()); Snd.stage(); }
+  }
   while(G.nextX-G.world<GW+70) spawn();
   for(var i=G.obs.length-1;i>=0;i--){
     var o=G.obs[i];
@@ -1308,14 +1489,16 @@ function step(dt){
 function drawWorld(t){
   gimg.data.set(skyBase);
   gp.setA(0.55); drawClouds(gp,G.world*0.12); gp.setA(1);
-  var mix=cityMix(G.run);
-  if(mix<0.995){ gp.setFade(0.5); gp.setA(1-mix*0.9); drawTreeline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
-  if(mix>0.005){ gp.setFade(0.62); gp.setA(mix); drawSkyline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
+  var wPark=zw("park",G.run), wCity=zw("city",G.run), wWalk=zw("boardwalk",G.run);
+  if(wWalk>0.005){ gp.setFade(0.18); gp.setA(wWalk); drawSea(gp,G.world*0.25); gp.setA(1); gp.setFade(0); }
+  if(wPark>0.005){ gp.setFade(0.5); gp.setA(wPark); drawTreeline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
+  if(wCity>0.005){ gp.setFade(0.62); gp.setA(wCity); drawSkyline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
   gp.setFade(0.5);
   G.obs.forEach(function(o){ if(o.cls==="air"&&o.it.bg) o.it.bg(gp,Math.round(o.x-G.world),WALKY,GW,o.v||0); });
   gp.setFade(0);
   drawWalk(gp,GW,GH,WALKY,G.world);
-  if(mix<0.995){ gp.setA(1-mix); drawVerge(gp,G.world); gp.setA(1); }
+  if(wWalk>0.005){ gp.setA(wWalk); drawDeck(gp,G.world); gp.setA(1); }
+  if(wPark>0.005){ gp.setA(wPark); drawVerge(gp,G.world); gp.setA(1); }
   G.obs.forEach(function(o){
     var sx=Math.round(o.x-G.world);
     if(o.cls==="ground"){
@@ -1337,7 +1520,8 @@ function drawWorld(t){
         gp.px(dx,0,withA(hexc("#ff2d6f"),Math.round(70+185*danger)));
     }
   }
-  G.birds.forEach(function(b){ drawDove(gp,b.x,b.y,b.f); });
+  var gulls=zw("boardwalk",G.run)>0.5;
+  G.birds.forEach(function(b){ (gulls?drawGull:drawDove)(gp,b.x,b.y,b.f); });
   if(G.phase==="title"){
     var dx2=((t*26)%(GW+80))-40, dy2=34+Math.sin(t*0.8)*16;
     drawBubble(gimg.data,GW,GH,dx2,dy2,11,t);
@@ -1388,12 +1572,12 @@ var hud={d:document.getElementById("h-dist"),b:document.getElementById("h-best")
 function hudTick(){
   if(G.phase==="title"){
     hud.d.textContent="0.0 m"; hud.b.textContent=(G.best/60).toFixed(1)+" m";
-    hud.s.textContent="Title"; hud.dia.textContent="\u2014"; hud.sp.textContent="\u2014";
+    hud.s.textContent="\u2014"; hud.dia.textContent="\u2014"; hud.sp.textContent="\u2014";
     return;
   }
   hud.d.textContent=(G.run/60).toFixed(1)+" m";
   hud.b.textContent=(G.best/60).toFixed(1)+" m";
-  hud.s.textContent=STAGES[stageAt(G.run)].name;
+  hud.s.textContent=zoneName(zoneAt(G.run));
   hud.dia.textContent=(G.R*2).toFixed(0)+" px";
   hud.sp.textContent=Math.round(speedAt(G.run))+" px/s";
   hud.d.style.color=G.clip>0?"var(--accent)":"";

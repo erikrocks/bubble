@@ -122,25 +122,37 @@ it is a death. Three rules keep that honest, all in the `RULES.birds` block:
 Verified by simulation: holding station takes zero hits at every radius from 5 to 20,
 while doing nothing still drives you into the bird placed below you.
 
-## Park to city
+## Zones
 
-A run walks out of a park and into the city. `cityMix(distance)` is 0 before 1000px,
-1 after 2100px, and slides between — and it drives **both** the scenery and the
-furniture, so the change of place and the change of difficulty are one event:
+A run walks through a sequence of places. `ZONES` lists them with the distance each
+begins; `zoneW(i,d)` ramps a zone in over `FADE` before its start, holds it, then ramps
+it out over `FADE` before the next begins, so two zones overlap during a handover.
 
-- Items carry `park:true` (hedge, statue) or `city:true` (hydrant, meter, mailbox,
-  paper box, bus shelter, car, phone box, every shopfront, traffic signal). Untagged
-  items — benches, wire bin, bollard, trees, streetlamp — belong to both and never
-  leave. `pickFor()` weights the pool by the mix, so city things fade in as
-  `mix²` (slow at first, then all at once) and park things fade out slightly faster
-  than they arrive.
-- The horizon cross-fades from `drawTreeline()` to `drawSkyline()`, and
-  `drawVerge()` lays grass along the path edge at `1 - mix`.
-- **The park needs its own tall pieces** or the "forces you upward" rule breaks before
-  the city arrives — that is what the hedge and the statue are for. If you ever make
-  the shelter group city-only again, the park becomes hoverable.
+| Zone | From | Reached at |
+|---|---|---|
+| Park | 0 | start |
+| City | 2100 | ~26 m |
+| Boardwalk | 4200 | ~61 m |
 
-## Adding an obstacle without it being invisible
+The same weights drive **both** the furniture and the horizon, so the change of place
+and the change of difficulty are one event rather than two that coincide.
+
+- Items carry `zones:["park"]` etc. Untagged items — benches, wire bin, bollard, trees,
+  streetlamp — belong everywhere and are the thread that makes it one continuous street.
+  `itemW` squares the zone weight and multiplies by 1.9, so a zone's own furniture
+  arrives late and then dominates, instead of trickling in.
+- Horizon: `drawTreeline` / `drawSkyline` / `drawSea`, each drawn at its zone's weight.
+  Ground: `drawVerge` (grass) and `drawDeck` (planks) overlay the pavement the same way.
+- Birds: gulls replace pigeons once the boardwalk outweighs everything else.
+- **Every zone needs its own tall ground piece** or that stretch becomes hoverable —
+  park has the boxwood and statue, city has the shelter/car/phone box, boardwalk has the
+  fry stand. They all live in the `shelter` group, which is what the `tall` gate reads.
+
+A banner names the zone **one second after** the handover, not at it, so it lands once
+the new place is actually on screen. Difficulty stages still exist and still drive
+spawning, but they are no longer announced — `STAGES` is internal now.
+
+## Adding an obstacle without it being invisible## Adding an obstacle without it being invisible
 
 `localStorage` holds the player's rotation as a list of item ids that are ON. A list
 saved before your new obstacle existed does not mention it, and the naive read —
@@ -222,6 +234,11 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **15 Sep 2026** — Birds made size-aware (see above) after big bubbles turned out to be
   unable to dodge them at all, and the camping rule stopped punishing a size that cannot
   physically move fast.
+- **15 Sep 2026** — Boardwalk added as a third zone, which meant generalising the single
+  park/city slider into a `ZONES` list. New furniture: deck railing, ice cream cart, coin
+  telescope, fry stand (the walk's tall piece), bunting and an arcade sign. Sea horizon,
+  plank decking, gulls instead of pigeons. Banners now name the zone a second after you
+  enter it rather than announcing difficulty stages.
 - **15 Sep 2026** — The park bush is a clipped boxwood ball on a trunk, picked by Erik from
   five candidates (round shrub, boxwood, flowering, grass tuft, trimmed hedge) after two
   earlier attempts were rejected. Its item id is still `hedge` so saved rotations keep working.
