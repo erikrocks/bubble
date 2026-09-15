@@ -59,6 +59,19 @@ Read top to bottom, `index.html`'s script is in these blocks:
   kills you and is deliberately smaller than the art.
 - **the world / ramp / state / draw / loop** — the game itself.
 
+## Shopfronts vary per instance
+
+Obstacles are shared objects, so per-instance variety lives on the spawn record: each
+gets `v`, a small random number, passed as the last argument to `draw()` and `bg()`.
+`shopOf(v)` maps it to one of four schemes in `SHOPS` — brick, awning stripe and sign
+board together. **Both** `draw` and `bg` need `v` forwarded; when only `draw` had it,
+every awning was a different colour on an identical building and the variety looked
+broken rather than absent.
+
+Pick brick colours further apart than looks right in isolation: background scenery is
+mixed 50% toward the sky, which halves every difference. The first set was subtle
+enough to read as one building repeated.
+
 ## Park to city
 
 A run walks out of a park and into the city. `cityMix(distance)` is 0 before 1000px,
@@ -154,6 +167,12 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **15 Sep 2026** — Park-to-city progression (see above), with a hedge and a statue added so
   the park has its own things to climb over. Stage 2 renamed "Watch the ground", since
   "street" was wrong while you are still in a park. Pigeons now start in the park.
+- **15 Sep 2026** — Shopfront pass: doors were 64px tall (taller than the shop window)
+  and now stand on the pavement at ~29px with the window beside them; four colour schemes
+  per instance; the streetlamp lost a dithered "glow" below the head that read as a
+  rendering artifact. Camping rule generalised — holding *any* height within 14px for
+  2.6s sends a pigeon at you, not just the top third. Best distance promoted to its own
+  line on the title screen.
 - **15 Sep 2026** — Erik never saw the hedge or the statue. Two causes, both fixed: saved
   rotations switched them off (see "Adding an obstacle" above) and the park ended at 1000px
   while tall pieces only start at 800px, leaving a 200px window. Park now runs to 1500px,

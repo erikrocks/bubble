@@ -73,6 +73,8 @@ canvas{display:block; width:100%; height:auto; image-rendering:pixelated; touch-
 .overlay .sub{font-family:"JetBrains Mono",monospace; font-size:13px; color:#b9c4dd}
 .title{font-family:"Silkscreen",monospace; font-size:clamp(30px,8vw,62px); letter-spacing:.06em; margin:0;
   color:#fff; text-shadow:0 3px 0 #b02a68, 0 6px 14px rgba(0,0,0,.45)}
+.tbest{font-family:"Silkscreen",monospace; font-size:clamp(13px,3vw,21px); letter-spacing:.08em;
+  color:#ffd9ec; margin:0; text-shadow:0 2px 0 rgba(0,0,0,.4)}
 .titlesub{font-family:"JetBrains Mono",monospace; font-size:13px; color:#cfd9ef; margin:0}
 .medal{font-family:"Silkscreen",monospace; font-size:12px; letter-spacing:.08em; color:#ffe79a;
   border:1px solid rgba(255,231,154,.5); border-radius:2px; padding:5px 9px}
@@ -145,6 +147,7 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
   <canvas id="game" tabindex="0"></canvas>
   <div class="overlay clear" id="ov-title">
     <p class="title">BUBBLE</p>
+    <p class="tbest" id="t-best" hidden>BEST 0.0 m</p>
     <p class="titlesub" id="t-stats">Hold to blow a bubble</p>
     <span class="kbd">Hold anywhere to start</span>
   </div>
@@ -257,6 +260,12 @@ var C={};
     brick:"#9c6a5a",brickD:"#7a5044",mortar:"#b89285",
     doorW:"#6b4a33",steel:"#8c949e",signBand:"#2f5d6d",signL2:"#4c8296",
     gold:"#d9b45a",poleW:"#7a5c3e",
+    brickA:"#b8553f",brickAD:"#8a3a29", brickB:"#d2bd98",brickBD:"#a8926c",
+    brickC:"#68707f",brickCD:"#4d5361", brickD2:"#6d8f6b",brickD2D:"#4c6b4b",
+    awnA:"#b3423a",awnAD:"#74241f", awnB:"#3f7a5a",awnBD:"#265240",
+    awnC:"#3a5da8",awnCD:"#233c73", awnD:"#c08a24",awnDD:"#8a6014",
+    bandA:"#2f5d6d",bandAL:"#4c8296", bandB:"#5a4a72",bandBL:"#7d6a99",
+    bandC:"#6d3a3a",bandCL:"#94595a", bandD:"#2f6d4f",bandDL:"#4c9673",
     skin:"#e8b88a",skinD:"#c2915f",hair:"#4a3524",
     skin2:"#f2d3b0",skin2D:"#d2a87e",skin3:"#a9713f",skin3D:"#82522a",
     skin4:"#6e4527",skin4D:"#4e2f19",
@@ -501,11 +510,22 @@ function drawWalk(p,W,H,top,off){
    bg() draws that support hazed back toward the sky, draw() draws the
    solid part, boxes[] is what actually kills you.
    Ground items anchor at y=walk; air items hang from y=0.            */
-function bricks(p,x,w,h,wy){
-  p.rect(x,0,w,wy,C.brick);
+/* four shopfront schemes, chosen per instance so a street of shops does not
+   read as the same shop four times */
+var SHOPS=[
+ {br:"brickA",brD:"brickAD",aw:"awnA",awD:"awnAD",bd:"bandA",bdL:"bandAL"},
+ {br:"brickB",brD:"brickBD",aw:"awnB",awD:"awnBD",bd:"bandB",bdL:"bandBL"},
+ {br:"brickC",brD:"brickCD",aw:"awnC",awD:"awnCD",bd:"bandC",bdL:"bandCL"},
+ {br:"brickD2",brD:"brickD2D",aw:"awnD",awD:"awnDD",bd:"bandD",bdL:"bandDL"}
+];
+function shopOf(v){ return SHOPS[(v||0)%SHOPS.length]; }
+function bricks(p,x,w,h,wy,sk){
+  sk=sk||SHOPS[0];
+  var face=C[sk.br], dark=C[sk.brD];
+  p.rect(x,0,w,wy,face);
   for(var y=0;y<wy;y+=3){
-    p.hl(x,y,w,C.brickD);
-    for(var i=((y/3)&1)?0:4;i<w;i+=8) p.vl(x+i,y+1,2,C.brickD);
+    p.hl(x,y,w,dark);
+    for(var i=((y/3)&1)?0:4;i<w;i+=8) p.vl(x+i,y+1,2,dark);
   }
   p.rect(x,0,w,1,C.mortar);
 }
@@ -722,23 +742,29 @@ var GROUPS=[
 {id:"shop",cls:"air",name:"Shopfront",blurb:"A building behind the sidewalk, with the only solid part sticking out over your head.",items:[
   {id:"striped",name:"Striped awning",w:58,d:20,city:true,boxes:[{dx:0,w:58,d:20}],
    note:"Brick shopfront with the awning overhanging past the wall on both sides. The stripes are the loudest thing in the level — use it as a landmark.",
-   bg:function(p,x,wy){
-     bricks(p,x+2,54,wy,wy);
-     p.rect(x+5,1,48,6,C.signBand); p.hl(x+5,1,48,C.signL2);
+   bg:function(p,x,wy,W,v){
+     var sk=shopOf(v);
+     bricks(p,x+2,54,wy,wy,sk);
+     p.rect(x+5,1,48,6,C[sk.bd]); p.hl(x+5,1,48,C[sk.bdL]);
      for(var i=0;i<6;i++) p.rect(x+10+i*7,3,4,2,C.gold);
-     p.rect(x+7,30,24,26,C.glassD); p.rect(x+8,31,22,24,C.glass);
-     p.vl(x+19,31,24,C.glassD); p.hl(x+8,42,22,C.glassD);
-     p.rect(x+6,56,26,2,C.conc);
-     p.rect(x+37,28,14,wy-28,C.doorW); p.rect(x+38,30,12,10,C.glassD);
-     p.px(x+48,46,C.gold);
-     p.rect(x+35,26,18,2,C.brickD);},
-   draw:function(p,x){
+     /* street level: window and door both stand on the pavement */
+     p.rect(x+6,wy-40,26,26,C[sk.brD]);
+     p.rect(x+7,wy-39,24,24,C.glassD); p.rect(x+8,wy-38,22,22,C.glass);
+     p.vl(x+19,wy-38,22,C.glassD); p.hl(x+8,wy-27,22,C.glassD);
+     p.rect(x+6,wy-14,26,3,C.conc); p.hl(x+6,wy-14,26,C.concL);
+     p.rect(x+36,wy-30,16,30,C[sk.brD]);
+     p.rect(x+37,wy-29,14,29,C.doorW); p.vl(x+37,wy-28,27,C.wood);
+     p.rect(x+39,wy-26,10,9,C.glassD); p.hl(x+39,wy-26,10,C.glass);
+     p.px(x+49,wy-14,C.gold);
+     p.rect(x+35,wy-32,18,2,C[sk.brD]);},
+   draw:function(p,x,b,W,v){
+     var sk=shopOf(v);
      p.rect(x,9,58,2,C.ironD);
      for(var i=0;i<58;i++){
-       var band=((i/6)|0)%2, col=band?C.cream:C.red, dk=band?C.walkD:C.redD;
+       var band=((i/6)|0)%2, col=band?C.cream:C[sk.aw], dk=band?C.walkD:C[sk.awD];
        var hgt=7+Math.round(Math.sin((i/57)*Math.PI)*1.6);
        p.vl(x+i,11,hgt,col);
-       p.hl(x+i,11,1,band?C.cream:C.redL);
+       p.hl(x+i,11,1,band?C.cream:C[sk.aw]);
        p.px(x+i,11+hgt,dk);
        if(((i>>1)&1)===0) p.px(x+i,11+hgt+1,col); else p.px(x+i,11+hgt+1,dk);
        if(i%6===0) p.vl(x+i,11,hgt,dk);
@@ -746,14 +772,17 @@ var GROUPS=[
      p.hl(x,20,58,withA(C.ironD,110));}},
   {id:"steel",name:"Glass canopy",w:50,d:14,city:true,boxes:[{dx:1,w:48,d:14}],
    note:"Modern storefront, shallow steel canopy. The gentlest ceiling on the sheet — the right one to introduce first.",
-   bg:function(p,x,wy){
+   bg:function(p,x,wy,W,v){
+     var sk=shopOf(v);
      p.rect(x,0,50,wy,C.conc);
      for(var y=0;y<wy;y+=6) p.hl(x,y,50,C.concD);
-     p.rect(x+3,20,44,34,C.glassD);
-     for(var i=0;i<4;i++){ p.rect(x+4+i*11,21,9,32,C.glass); p.vl(x+4+i*11,21,32,C.glassD); }
-     p.hl(x+3,36,44,C.glassD);
-     p.rect(x+2,54,46,2,C.steel);
-     p.rect(x+18,3,16,5,C.signBand);},
+     p.rect(x+3,wy-46,44,42,C.glassD);
+     for(var i=0;i<4;i++){ p.rect(x+4+i*11,wy-45,9,40,C.glass); p.vl(x+4+i*11,wy-45,40,C.glassD); }
+     p.hl(x+3,wy-26,44,C.glassD);
+     p.rect(x+16,wy-24,14,24,C.glass); p.vl(x+16,wy-24,24,C.steel); p.vl(x+29,wy-24,24,C.steel);
+     p.px(x+27,wy-12,C.gold);
+     p.rect(x+2,wy-4,46,4,C.steel); p.hl(x+2,wy-4,46,C.concL);
+     p.rect(x+16,3,18,6,C[sk.bd]); p.hl(x+16,3,18,C[sk.bdL]);},
    draw:function(p,x){
      p.rect(x+1,9,48,3,C.steel); p.hl(x+1,9,48,C.concL); p.hl(x+1,11,48,C.ironD);
      p.rect(x+6,12,2,2,C.steel); p.rect(x+42,12,2,2,C.steel);
@@ -761,16 +790,23 @@ var GROUPS=[
      p.hl(x+1,13,48,withA(C.ironD,120));}},
   {id:"sign",name:"Hanging sign",w:40,d:24,city:true,boxes:[{dx:10,w:16,d:24},{dx:2,w:26,d:6}],
    note:"Narrow bracket, deep board. Small hitbox for how far down it reaches — the sneaky one.",
-   bg:function(p,x,wy){
-     bricks(p,x,40,wy,wy);
-     p.rect(x+4,30,18,24,C.glassD); p.rect(x+5,31,16,22,C.glass);
-     p.hl(x+5,42,16,C.glassD);
-     p.rect(x+25,28,12,wy-28,C.doorW); p.px(x+35,44,C.gold);
-     p.rect(x+3,20,34,2,C.brickD);},
-   draw:function(p,x){
+   bg:function(p,x,wy,W,v){
+     var sk=shopOf(v);
+     bricks(p,x,40,wy,wy,sk);
+     p.rect(x+3,wy-38,20,24,C[sk.brD]);
+     p.rect(x+4,wy-37,18,22,C.glassD); p.rect(x+5,wy-36,16,20,C.glass);
+     p.hl(x+5,wy-26,16,C.glassD);
+     p.rect(x+4,wy-14,20,3,C.conc); p.hl(x+4,wy-14,20,C.concL);
+     p.rect(x+25,wy-29,13,29,C[sk.brD]);
+     p.rect(x+26,wy-28,11,28,C.doorW); p.vl(x+26,wy-27,26,C.wood);
+     p.rect(x+28,wy-25,7,8,C.glassD);
+     p.px(x+35,wy-13,C.gold);
+     p.rect(x+3,wy-31,34,2,C[sk.brD]);},
+   draw:function(p,x,b,W,v){
+     var sk=shopOf(v);
      p.rect(x+2,2,4,4,C.ironD); p.hl(x+2,4,24,C.iron); p.hl(x+2,5,24,C.ironD);
      p.px(x+25,6,C.iron); p.vl(x+12,6,3,C.ironD); p.vl(x+23,6,3,C.ironD);
-     p.rect(x+10,9,16,14,C.sign); p.hl(x+10,9,16,C.signL); p.vl(x+10,9,14,C.signL);
+     p.rect(x+10,9,16,14,C[sk.bd]); p.hl(x+10,9,16,C[sk.bdL]); p.vl(x+10,9,14,C[sk.bdL]);
      p.hl(x+10,22,16,C.ironD);
      p.rect(x+13,12,10,2,C.cream); p.rect(x+13,16,7,2,C.cream);}}
 ]},
@@ -788,9 +824,7 @@ var GROUPS=[
      arc.forEach(function(q){ p.px(x+q[0],q[1],C.ironL); });
      p.rect(x+34,6,5,4,C.iron); p.hl(x+34,6,5,C.ironL);
      p.rect(x+8,13,10,3,C.iron); p.hl(x+8,13,10,C.ironL); p.hl(x+8,15,10,C.ironD);
-     p.rect(x+9,16,8,2,C.lampOn); p.hl(x+10,18,6,C.lampGlow);
-     for(var i=0;i<14;i++){var qx=x+6+i,qy=19+((i*3)%2);
-       if(bay(qx,qy)<0.4) p.px(qx,qy,withA(C.lampGlow,120));}}},
+     p.rect(x+9,16,8,2,C.lampOn); p.hl(x+10,18,6,C.lampGlow);}},
 {id:"traffic",name:"Traffic signal",w:36,d:24,city:true,boxes:[{dx:0,w:32,d:7},{dx:16,w:11,d:24}],
    note:"Mast arm out over the street with the signal hanging off the end. Deep and narrow — forces a real dip, not a nudge.",
    bg:function(p,x,wy){
@@ -1034,12 +1068,12 @@ var STATS={runs:0,bestMedal:null};
 
 /* ================= state ================= */
 var G={phase:"title",R:R_MIN,y:0,x:0,v:0,hold:false,world:0,obs:[],parts:[],birds:[],
-       run:0,best:0,seed:7,nextX:0,highT:0,clip:0,kid:null,deadT:0,armed:true,
+       run:0,best:0,seed:7,nextX:0,campY:0,campT:0,clip:0,kid:null,deadT:0,armed:true,
        prev:null,stage:0,bannerT:0,attract:0,sq:0,sqV:0,birdT:0};
 function rnd(){ G.seed=(G.seed*1664525+1013904223)&0x7fffffff; return G.seed/0x7fffffff; }
 function startRun(){
   G.kid=rollKid(); G.phase="ready"; G.R=R_MIN; G.y=wandY(); G.x=WAND_X-2+R_MIN;
-  G.v=0; G.world=0; G.obs=[]; G.birds=[]; G.parts=[]; G.run=0; G.highT=0; G.clip=0;
+  G.v=0; G.world=0; G.obs=[]; G.birds=[]; G.parts=[]; G.run=0; G.clip=0; G.campY=G.y; G.campT=0;
   G.seed=(Math.random()*2147483647)|0; G.nextX=GW+120; G.deadT=0; G.stage=0; G.bannerT=0;
   G.sq=0; G.sqV=0; G.birdT=7+Math.random()*7;
   ov.title.hidden=true; ov.ready.hidden=false; ov.dead.hidden=true; ov.pause.hidden=true;
@@ -1066,7 +1100,7 @@ function showBanner(text){
 /* ================= level ================= */
 function addFrom(cls,x,tall){
   var it=pickFor(cls,tall); if(!it) return;
-  G.obs.push({cls:cls,it:it,x:x});
+  G.obs.push({cls:cls,it:it,x:x,v:Math.floor(rnd()*97)});
 }
 function spawn(){
   var st=stageAt(G.run), sp;
@@ -1080,8 +1114,8 @@ function spawn(){
       var gi=pickFor("ground",true), ai=pickFor("air",true);
       if(gi&&ai){
         if((WALKY-gi.h)-depthOf(ai)>=34){
-          G.obs.push({cls:"ground",it:gi,x:G.nextX});
-          G.obs.push({cls:"air",it:ai,x:G.nextX-8});
+          G.obs.push({cls:"ground",it:gi,x:G.nextX,v:Math.floor(rnd()*97)});
+          G.obs.push({cls:"air",it:ai,x:G.nextX-8,v:Math.floor(rnd()*97)});
           paired=true;
         }
       }
@@ -1180,10 +1214,16 @@ function step(dt){
         Snd.bird();
       }
     }
-    if(G.y<GH*0.3) G.highT+=dt; else G.highT=Math.max(0,G.highT-dt*0.7);
-    if(G.highT>2.0&&G.birds.length<2){
-      G.highT=0;
-      G.birds.push({x:GW+8,y:Math.max(2,Math.min(GH*0.55,G.y-4+(rnd()-0.5)*10)),vx:-(P.s+45),f:0,ft:0});
+    /* Camping: hold ANY one height long enough and one gets sent for you. Normal
+       flying drifts far more than this, so it only fires when you are genuinely
+       parked - and the bird needs a second and a half to arrive, so it is a nudge
+       to move rather than a snipe. */
+    if(Math.abs(G.y-G.campY)>14){ G.campY=G.y; G.campT=0; }
+    else G.campT+=dt;
+    if(G.campT>2.6&&G.birds.length<2){
+      G.campT=0; G.campY=G.y;
+      G.birds.push({x:GW+8,y:Math.max(2,Math.min(WALKY-10,G.y-3+(rnd()-0.5)*8)),
+                    vx:-(P.s+48),f:0,ft:0});
       Snd.bird();
     }
   }
@@ -1214,7 +1254,7 @@ function drawWorld(t){
   if(mix<0.995){ gp.setFade(0.5); gp.setA(1-mix*0.9); drawTreeline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
   if(mix>0.005){ gp.setFade(0.62); gp.setA(mix); drawSkyline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
   gp.setFade(0.5);
-  G.obs.forEach(function(o){ if(o.cls==="air"&&o.it.bg) o.it.bg(gp,Math.round(o.x-G.world),WALKY); });
+  G.obs.forEach(function(o){ if(o.cls==="air"&&o.it.bg) o.it.bg(gp,Math.round(o.x-G.world),WALKY,GW,o.v||0); });
   gp.setFade(0);
   drawWalk(gp,GW,GH,WALKY,G.world);
   if(mix<0.995){ gp.setA(1-mix); drawVerge(gp,G.world); gp.setA(1); }
@@ -1222,8 +1262,8 @@ function drawWorld(t){
     var sx=Math.round(o.x-G.world);
     if(o.cls==="ground"){ o.it.draw(gp,sx,WALKY); return; }
     var ax=o.it.w?sx:0;
-    gp.force=C.edge; gp.oy=1; o.it.draw(gp,ax,0,GW); gp.force=null; gp.oy=0;
-    o.it.draw(gp,ax,0,GW);
+    gp.force=C.edge; gp.oy=1; o.it.draw(gp,ax,0,GW,o.v||0); gp.force=null; gp.oy=0;
+    o.it.draw(gp,ax,0,GW,o.v||0);
   });
   if(G.phase==="fly"&&RULES.ceiling!=="hard"&&G.clip>0){
     var danger=Math.min(1,G.clip/(G.R*0.667));
@@ -1266,8 +1306,14 @@ var banner=document.getElementById("banner");
 var tStats=document.getElementById("t-stats");
 function refreshTitleStats(){
   if(!tStats) return;
-  if(!STATS.runs){ tStats.textContent="Hold to blow a bubble"; return; }
-  tStats.textContent="best "+(G.best/60).toFixed(1)+" m \u00b7 "+STATS.runs+" run"+(STATS.runs===1?"":"s")+
+  var tb=document.getElementById("t-best");
+  if(!STATS.runs&&!G.best){
+    if(tb) tb.hidden=true;
+    tStats.textContent="Hold to blow a bubble";
+    return;
+  }
+  if(tb){ tb.hidden=false; tb.textContent="BEST "+(G.best/60).toFixed(1)+" m"; }
+  tStats.textContent=STATS.runs+" run"+(STATS.runs===1?"":"s")+
     (STATS.bestMedal?" \u00b7 "+STATS.bestMedal.name:"");
 }
 var hud={d:document.getElementById("h-dist"),b:document.getElementById("h-best"),
