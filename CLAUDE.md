@@ -122,6 +122,124 @@ it is a death. Three rules keep that honest, all in the `RULES.birds` block:
 Verified by simulation: holding station takes zero hits at every radius from 5 to 20,
 while doing nothing still drives you into the bird placed below you.
 
+## Zones, and the route
+
+The run is a **round trip that repeats**: out to the sea, then back through the same
+places in reverse, then out again. Endless without endless content, and it gives the
+crossing a job — the turnaround — rather than being a dead end.
+
+```
+ROUTE = park, city, boardwalk, beach, sea, beach, boardwalk, city   (then repeat)
+```
+
+The first park leg is `FIRST` long (the tutorial); every leg after is `LEG`. `legW(i,d)`
+ramps a leg in over `FADE` before its start and out over `FADE` before the next, so two
+legs overlap during a handover. A place appears more than once on the route, so
+`zw(id,d)` takes the strongest active leg with that id.
+
+| Leg | Place | Reached |
+|---|---|---|
+| 0 | Park | 0 m |
+| 1 | City | 45 m |
+| 2 | Boardwalk | 78 m |
+| 3 | Beach | 112 m |
+| 4 | The crossing | 145 m |
+| 5-7 | Beach, Boardwalk, City | back the other way |
+| 8 | Park | 278 m, then the cycle repeats |
+
+The same weights drive **both** the furniture and the horizon, so the change of place and
+the change of difficulty are one event rather than two that coincide.
+
+- Items carry `zones:["park"]` etc. Untagged items — benches, bins, bollards, trees,
+  streetlamps — belong everywhere on land, and `itemW` returns `1 - zw("sea")` for them,
+  so nothing from the land is left floating during the crossing. `itemW` squares a zoned
+  item's weight and multiplies by 1.9, so a place's own furniture arrives late and then
+  dominates rather than trickling in.
+- Horizon: `drawTreeline` / `drawSkyline` / `drawSea`. Ground: `drawVerge`, `drawDeck`,
+  `drawSand`, `drawWater`, each overlaid at its zone's weight.
+- Birds: bluejay in the park, pigeon downtown, gull on the boardwalk and the coast.
+- **Every zone needs its own tall ground piece** or that stretch becomes hoverable — park
+  has the boxwood and statue, city the shelter/car/phone box, boardwalk the fry stand,
+  beach the lifeguard chair, the crossing the lighthouse rock. All live in the `shelter`
+  group, which is what the `tall` gate reads.
+
+`zoneAt(d)` returns the leg you have entered, not whichever weighs most: the scenery
+fades in early on purpose so a place appears before you reach it. A banner names it one
+second after that start.
+
+The later legs sit past most runs, so the tuning drawer has a **Start in** control that
+begins a run at a place's first appearance purely to look at it. Those runs set `PREVIEW`
+and record no score, medal or run count.
+
+## Who's blowing
+
+A row of kid portraits under the game picks the character, or "Anyone" for a random kid
+each run. It persists as `kid` in `localStorage`. Vivian asked for this, and only ever
+plays as Pigtails.
+
+## Making a ground piece read against the background## Making a ground piece read against the background
+
+Big flat ground objects dissolve into hazed scenery. Two tools:
+
+- `edge:true` on an item stamps a 1px dark silhouette *above and around* it (the air
+  obstacles get the same treatment offset downward). On: bus shelter, car, phone box,
+  bush, statue. **Careful with a full-width ground-shadow row on an `edge:true` item**:
+  the keyline pass draws it one row up, and if the art does not cover that row it
+  becomes a dark bar floating under the object. That is what happened to the car, which
+  sits on wheels with a gap beneath it; its shadow is now just two contact points.
+- Colour it against the sky, not in isolation. The statue was grey stone on a pale
+  blue-grey horizon and vanished; verdigris bronze on near-black granite reads at a
+  glance and still looks like a park statue.
+
+Also: **never pair a `shelter` item with a `shop` item.** Paired obstacles sit ~8px
+apart, and a bus shelter under a shopfront reads as the building's ground floor rather
+than a separate thing to dodge. The rule lives in the pairing branch of `spawn()`.
+
+## Shopfronts vary per instance
+
+Obstacles are shared objects, so per-instance variety lives on the spawn record: each
+gets `v`, a small random number, passed as the last argument to `draw()` and `bg()`.
+`shopOf(v)` maps it to one of four schemes in `SHOPS` — brick, awning stripe and sign
+board together. **Both** `draw` and `bg` need `v` forwarded; when only `draw` had it,
+every awning was a different colour on an identical building and the variety looked
+broken rather than absent.
+
+Pick brick colours further apart than looks right in isolation: background scenery is
+mixed 50% toward the sky, which halves every difference. The first set was subtle
+enough to read as one building repeated.
+
+## The launch flow
+
+`title -> ready -> blow -> armed -> fly -> dead`
+
+**`armed` is the important one.** Releasing the blow no longer launches: the bubble sits
+on the wand at whatever size you stopped at, indefinitely, and the *next* press launches
+it — and that same press counts as your first gust of wind. Sizing and launching are two
+decisions now, which matters most on touch, where the old flow made you release and
+re-grab inside about a second or the bubble hit the pavement.
+
+Death restarts straight into blowing on one press (no separate "press to restart"), with
+a 0.45s guard so the press that killed you cannot restart you.
+
+## Birds have to scale with the bubble
+
+A 40px bubble falls at 15 px/s. In the ~1.6s a bird takes to cross the screen it can
+move 18px — less than its own radius — so a bird aimed at its height is not a dodge,
+it is a death. Three rules keep that honest, all in the `RULES.birds` block:
+
+- `clearLane(want)` returns a height at least `R*0.82 + CLEAR` from the player, trying
+  the far side if the near one clamps, and **returns null rather than spawning an
+  unfair bird** when neither side has room.
+- The camp threshold is `termFall(R) * 0.35` — a third of a second of that bubble's own
+  free-fall — not a flat pixel count. Patience stretches with size too. A flat 14px
+  asked a big bubble for a third of its whole manoeuvring budget.
+- Bird flight bobs as `y0 + sin(x)*2.2`, **not** `y += sin(x)*0.28`. The second form
+  integrates, so birds random-walked several pixels off their lane and ate the
+  clearance; that alone was killing hovering players.
+
+Verified by simulation: holding station takes zero hits at every radius from 5 to 20,
+while doing nothing still drives you into the bird placed below you.
+
 ## Zones
 
 A run walks through a sequence of places. `ZONES` lists them with the distance each
@@ -277,6 +395,10 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   telescope, fry stand (the walk's tall piece) and an arcade sign. Sea horizon,
   plank decking, gulls instead of pigeons. Banners now name the zone a second after you
   enter it rather than announcing difficulty stages.
+- **15 Sep 2026** — The route became a repeating round trip (Erik's idea): out to the sea
+  and back through every place in reverse. Added the crossing itself — open water underfoot,
+  buoy, moored dinghy, lighthouse rock, low cloud and a rain squall. Added a character
+  select row, because Vivian only wants to play as the pigtails girl.
 - **15 Sep 2026** — Fixed hitboxes that did not match their art. Ground items can now be
   described as stacked bands; the fry stand, car and umbrella were killing players in empty
   sky beside their narrow upper halves.
