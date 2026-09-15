@@ -166,8 +166,11 @@ distinct: the **palm** is a tree (weave past it), the **kite** is narrow and dee
 only the kite body solid and its string drawn as background, and the **pier** is wide and
 low so you have to commit to going under rather than around.
 
-A banner names the zone **one second after** the handover, not at it, so it lands once
-the new place is actually on screen. Difficulty stages still exist and still drive
+`zoneAt(d)` returns the zone whose **nominal start** you have passed, not whichever
+zone weighs most. Those differ: the scenery cross-fade begins `FADE` early so a place
+appears on the horizon before you reach it, and weight-based naming announced the city
+nine seconds before its start. The banner names the zone **one second after** that
+nominal start. Difficulty stages still exist and still drive
 spawning, but they are no longer announced — `STAGES` is internal now.
 
 ## Adding an obstacle without it being invisible## Adding an obstacle without it being invisible
@@ -257,6 +260,11 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   telescope, fry stand (the walk's tall piece) and an arcade sign. Sea horizon,
   plank decking, gulls instead of pigeons. Banners now name the zone a second after you
   enter it rather than announcing difficulty stages.
+- **15 Sep 2026** — Four fixes: the palm trunk was drawn bottom-up while leaning, so its
+  top landed 6px off the fronds (it now draws from the crown down); the boardwalk railing
+  stopped being a spawnable 40px obstacle and became a continuous rail in the deck scenery;
+  cars pick one of five colours per instance; and zone naming moved from weight-based to
+  nominal starts, which was announcing the city nine seconds early.
 - **15 Sep 2026** — Beach added as a fourth zone: lifeguard chair (its tall piece), umbrella,
   volleyball net, cooler, palm fronds, kite and a pier you fly under, over sand with a taller
   sea behind. Gulls carry over from the boardwalk. Added the Start-in preview control, since

@@ -297,6 +297,10 @@ var C={};
     bronze:"#4f9c7a",bronzeL:"#79c9a2",bronzeD:"#2d6b52",
     granite:"#635d57",graniteL:"#877f77",graniteD:"#403b36",
     carR:"#c2453c",carRL:"#e0675c",carRD:"#8a2a23",tyre:"#22252d",hub:"#9aa2ae",
+    carB:"#3d6aa8",carBL:"#6a95cf",carBD:"#27477a",
+    carC:"#d8cbb0",carCL:"#f0e8d6",carCD:"#a1957c",
+    carG:"#3f7a5a",carGL:"#6aa886",carGD:"#275540",
+    carK:"#4a4f58",carKL:"#767d89",carKD:"#2c3038",
     phone:"#b8322c",phoneL:"#d6564e",phoneD:"#7d1d18",
     dress:"#5f76c9",dressL:"#8a9ce0",hoodie:"#4a8a52",hoodieL:"#6cab72",
     stripeA:"#2f8a8a",stripeB:"#f2e8d5",cap:"#e07a3a",capD:"#b45c26",
@@ -709,12 +713,16 @@ var GROUPS=[
      p.hl(x,b,46,C.shadow);}},
   {id:"car",name:"Parked car",w:44,h:26,cw:42,zones:["city"],edge:true,
    note:"Wide and mid-height. Cheap to clear on its own, brutal when a branch is sitting over it.",
-   draw:function(p,x,b){var y=b-26;
-     p.rect(x+11,y+2,22,10,C.carR); p.hl(x+13,y+2,18,C.carRL);
+   draw:function(p,x,b,W,v){
+     var y=b-26, CARS=[["carR","carRL","carRD"],["carB","carBL","carBD"],
+                       ["carC","carCL","carCD"],["carG","carGL","carGD"],
+                       ["carK","carKL","carKD"]];
+     var sk=CARS[(v||0)%CARS.length], body=C[sk[0]], lite=C[sk[1]], dark=C[sk[2]];
+     p.rect(x+11,y+2,22,10,body); p.hl(x+13,y+2,18,lite);
      p.rect(x+13,y+4,8,6,C.glass); p.rect(x+23,y+4,8,6,C.glass);
      p.vl(x+13,y+4,6,C.glassD); p.vl(x+23,y+4,6,C.glassD);
-     p.rect(x+2,y+12,40,10,C.carR); p.hl(x+2,y+12,40,C.carRL); p.hl(x+2,y+21,40,C.carRD);
-     p.rect(x+1,y+15,1,5,C.carRD); p.rect(x+42,y+15,1,5,C.carRD);
+     p.rect(x+2,y+12,40,10,body); p.hl(x+2,y+12,40,lite); p.hl(x+2,y+21,40,dark);
+     p.rect(x+1,y+15,1,5,dark); p.rect(x+42,y+15,1,5,dark);
      p.rect(x+3,y+16,2,2,C.cream); p.rect(x+39,y+16,2,2,C.stop);
      [10,34].forEach(function(o){
        for(var dy=-4;dy<=4;dy++)for(var dx=-4;dx<=4;dx++){
@@ -769,13 +777,6 @@ var GROUPS=[
      p.hl(x+1,b,14,C.shadow);}}
 ]},
 {id:"walk",cls:"ground",name:"On the boardwalk",blurb:"Boardwalk clutter \u2014 low and mid-height things that set the rhythm between the big stuff.",items:[
-  {id:"railing",name:"Deck railing",w:40,h:13,cw:38,zones:["boardwalk"],
-   note:"A run of railing along the sea edge. Low enough to be rhythm rather than threat.",
-   draw:function(p,x,b){var y=b-13;
-     p.rect(x+2,y+2,3,11,C.deckD); p.rect(x+35,y+2,3,11,C.deckD); p.rect(x+18,y+4,3,9,C.deckD);
-     p.rect(x,y,40,3,C.deckL); p.hl(x,y,40,C.candyB); p.hl(x,y+2,40,C.deckD);
-     p.rect(x,y+6,40,2,C.deck); p.hl(x,y+7,40,C.deckD);
-     p.hl(x,b,40,C.shadow);}},
   {id:"cart",name:"Ice cream cart",w:24,h:22,cw:22,zones:["boardwalk"],
    note:"Parked cart with a striped parasol. The boardwalk's splash of colour at ground level.",
    draw:function(p,x,b){var y=b-22;
@@ -808,15 +809,18 @@ var GROUPS=[
   {id:"palm",name:"Palm fronds",w:46,d:27,boxes:[{dx:3,w:40,d:27}],zones:["beach"],
    note:"The beach's tree. Leaning trunk in the sand, fronds spraying out over you.",
    bg:function(p,x,wy){
-     var tx=x+27;
-     for(var j=0;j<wy-24;j++){
-       var lean=Math.round(j*0.09);
-       p.px(tx+lean,wy-1-j,C.palm); p.px(tx+1+lean,wy-1-j,C.palm); p.px(tx+2+lean,wy-1-j,C.palmD);
-       if(j%4===0) p.px(tx+lean,wy-1-j,C.palmD);
+     /* drawn from the crown DOWN so the top always meets the fronds at tx; drawing it
+        bottom-up meant the lean pushed the top off by however tall the screen was */
+     var tx=x+26, top=12, foot=0;
+     for(var j=0;top+j<wy;j++){
+       var lean=Math.round(j*0.10); foot=lean;
+       var yy=top+j;
+       p.px(tx+lean,yy,C.palm); p.px(tx+1+lean,yy,C.palm); p.px(tx+2+lean,yy,C.palmD);
+       if(j%4===0) p.px(tx+lean,yy,C.palmD);
      }
-     p.rect(tx-3,wy-3,10,3,C.palm); p.hl(tx-4,wy-1,12,C.palmD);},
+     p.rect(tx+foot-3,wy-3,10,3,C.palm); p.hl(tx+foot-4,wy-1,12,C.palmD);},
    draw:function(p,x){
-     var cx=x+27, cy=8;
+     var cx=x+26, cy=10;
      [[-1,0.75],[-1,0.25],[1,0.3],[1,0.8],[0,-0.15]].forEach(function(f){
        var dir=f[0], drop=f[1];
        for(var i=0;i<22;i++){
@@ -1066,7 +1070,7 @@ var PREVIEW=0;
 /* his saved rotation */
 var on={bench:["slat","scroll"],post:["hydrant","meter","bollard"],bin:["trash","mailbox","newsbox"],
         shelter:["hedge","statue","fries","guardchair","busstop","car","phonebox"],
-        walk:["railing","cart","scope"], pier:["arcade"],
+        walk:["cart","scope"], pier:["arcade"],
         sandy:["umbrella","net","cooler"], overbeach:["palm","kite","pierdeck"],
         tree:["leafy"],shop:["striped"],pole:["lamp","traffic"]};
 GROUPS.forEach(function(g){ g.items.forEach(function(it){ it.gid=g.id; }); });
@@ -1112,10 +1116,13 @@ function zoneName(id){
   for(var i=0;i<ZONES.length;i++) if(ZONES[i].id===id) return ZONES[i].name;
   return id;
 }
+/* Which zone you are IN. Deliberately the nominal start, not whichever zone happens
+   to weigh most: the scenery cross-fades early so you see a place coming before you
+   reach it, and the banner should land when you arrive, not when it appears on the
+   horizon. Weight-based selection announced the city nine seconds early. */
 function zoneAt(d){
-  var best=0,bi=0;
-  for(var i=0;i<ZONES.length;i++){ var w=zoneW(i,d); if(w>best){ best=w; bi=i; } }
-  return ZONES[bi].id;
+  for(var i=ZONES.length-1;i>=0;i--) if(d>=ZONES[i].from) return ZONES[i].id;
+  return ZONES[0].id;
 }
 /* an item with no `zones` belongs everywhere; one that names zones is boosted
    while it is home, or it drowns in the always-present furniture */
@@ -1242,6 +1249,15 @@ function drawSand(p,off){
   p.hl(0,GH-2,GW,C.sandD); p.hl(0,GH-1,GW,C.sandD);
 }
 function drawDeck(p,off){
+  /* a boardwalk's rail runs the length of it. Spawning 40px chunks of railing as
+     obstacles looked like a fence someone had smashed, so it is scenery now. */
+  for(var x=0;x<GW;x++){
+    var rx=Math.floor(x+off);
+    p.px(x,WALKY-9,C.deckL); p.px(x,WALKY-8,C.deck);
+    if(((rx%5)+5)%5===0) p.px(x,WALKY-8,C.deckD);
+    p.px(x,WALKY-5,C.deck);
+    if(((rx%14)+14)%14===0){ for(var ry=WALKY-9;ry<WALKY;ry++) p.px(x,ry,C.deckD); }
+  }
   for(var x=0;x<GW;x++){
     var wx=Math.floor(x+off);
     p.px(x,WALKY,C.deckL); p.px(x,WALKY+1,C.deck);
