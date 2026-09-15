@@ -90,6 +90,19 @@ Pick brick colours further apart than looks right in isolation: background scene
 mixed 50% toward the sky, which halves every difference. The first set was subtle
 enough to read as one building repeated.
 
+## The launch flow
+
+`title -> ready -> blow -> armed -> fly -> dead`
+
+**`armed` is the important one.** Releasing the blow no longer launches: the bubble sits
+on the wand at whatever size you stopped at, indefinitely, and the *next* press launches
+it — and that same press counts as your first gust of wind. Sizing and launching are two
+decisions now, which matters most on touch, where the old flow made you release and
+re-grab inside about a second or the bubble hit the pavement.
+
+Death restarts straight into blowing on one press (no separate "press to restart"), with
+a 0.45s guard so the press that killed you cannot restart you.
+
 ## Birds have to scale with the bubble
 
 A 40px bubble falls at 15 px/s. In the ~1.6s a bird takes to cross the screen it can
@@ -204,6 +217,8 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **15 Sep 2026** — Park-to-city progression (see above), with a hedge and a statue added so
   the park has its own things to climb over. Stage 2 renamed "Watch the ground", since
   "street" was wrong while you are still in a park. Pigeons now start in the park.
+- **15 Sep 2026** — Added the `armed` state: blow, let go, the bubble waits on the wand,
+  tap to launch. The launch press doubles as the first wind input.
 - **15 Sep 2026** — Birds made size-aware (see above) after big bubbles turned out to be
   unable to dodge them at all, and the camping rule stopped punishing a size that cannot
   physically move fast.

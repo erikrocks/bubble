@@ -84,6 +84,12 @@ canvas{display:block; width:100%; height:auto; image-rendering:pixelated; touch-
   font-family:"Silkscreen",monospace; font-size:clamp(13px,2.6vw,20px); letter-spacing:.1em; color:#fff;
   text-shadow:0 2px 0 rgba(0,0,0,.45); opacity:0; transition:opacity .25s}
 .banner.show{opacity:1}
+.launch{position:absolute; left:0; right:0; bottom:16%; text-align:center; pointer-events:none;
+  font-family:"Silkscreen",monospace; font-size:clamp(10px,2.1vw,15px); letter-spacing:.12em;
+  color:#fff; text-shadow:0 2px 0 rgba(0,0,0,.55); opacity:0; transition:opacity .2s; margin:0}
+.launch.show{opacity:1; animation:launchpulse 1.1s ease-in-out infinite}
+@keyframes launchpulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.launch.show{animation:none}}
 .rotate{display:none; margin:0 0 12px; padding:10px 12px; border:1px solid var(--accent);
   border-radius:2px; color:var(--accent); font-size:13px; background:var(--surface)}
 @media (max-width:860px) and (orientation:portrait) and (pointer:coarse){ .rotate{display:block} }
@@ -139,7 +145,7 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
 <div class="sheet">
 <div class="masthead">
   <h1>Bubble</h1>
-  <p class="tagline"><b>Hold</b> to blow, let go to launch, <b>hold again</b> for wind. Big is slow, small is twitchy.<br><span style="font-size:12.5px;color:var(--ink3);font-family:'JetBrains Mono',monospace">226 &times; 104 &middot; 19.5:9, phone in landscape</span></p>
+  <p class="tagline"><b>Hold</b> to blow, let go to size it up, <b>tap to launch</b>, then hold for wind. Big is slow, small is twitchy.<br><span style="font-size:12.5px;color:var(--ink3);font-family:'JetBrains Mono',monospace">226 &times; 104 &middot; 19.5:9, phone in landscape</span></p>
 </div>
 
 <p class="rotate">Turn your phone sideways &mdash; Bubble is built for landscape.</p>
@@ -153,7 +159,7 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
   </div>
   <div class="overlay" id="ov-ready" hidden>
     <h2>Hold to blow</h2>
-    <p>The longer you hold, the bigger the bubble. Big ones drift and forgive; small ones drop like a stone and turn on a dime. Hold too long and it pops on the wand.</p>
+    <p>Hold to blow &mdash; the longer you hold, the bigger it gets. Let go and it waits on the wand, so you can take your time. <b>Tap again to launch.</b> Big ones drift and forgive; small ones drop like a stone and turn on a dime.</p>
     <span class="kbd">Space or click &amp; hold</span>
   </div>
   <div class="overlay" id="ov-pause" hidden>
@@ -161,6 +167,7 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
     <span class="kbd">P or Esc to resume</span>
   </div>
   <div class="banner" id="banner"></div>
+  <p class="launch" id="launch-hint">Tap to launch</p>
   <div class="overlay" id="ov-dead" hidden>
     <h2 id="ov-cause">Popped</h2>
     <p class="big" id="ov-dist">0.0 m</p>
@@ -1084,6 +1091,7 @@ function startRun(){
   G.sq=0; G.sqV=0; G.birdT=7+Math.random()*7;
   ov.title.hidden=true; ov.ready.hidden=false; ov.dead.hidden=true; ov.pause.hidden=true;
   banner.classList.remove("show");
+  if(hint) hint.classList.remove("show");
 }
 function toTitle(){
   G.phase="title"; G.attract=0; G.world=0; G.obs=[]; G.birds=[]; G.parts=[];
@@ -1091,6 +1099,7 @@ function toTitle(){
   G.nextX=-30;
   for(var i=0;i<8;i++) spawn();
   ov.title.hidden=false; ov.ready.hidden=true; ov.dead.hidden=true; ov.pause.hidden=true;
+  if(hint) hint.classList.remove("show");
   refreshTitleStats();
 }
 function togglePause(){
@@ -1198,14 +1207,19 @@ function step(dt){
     return;
   }
   if(G.phase==="dead"){ G.deadT+=dt; if(G.deadT>0.45) ov.dead.hidden=false; return; }
-  if(G.phase==="ready"||G.phase==="blow"){
+  if(G.phase==="ready"||G.phase==="blow"||G.phase==="armed"){
     if(G.phase==="blow"){
       if(G.hold){
         G.R+=P.inf*dt*(1-0.45*(G.R-R_MIN)/(R_MAX-R_MIN));
         Snd.blowAt(G.R);
         if(G.R>=R_MAX){ pop("over"); return; }
       }
-      else if(G.R>R_MIN+0.5){ G.phase="fly"; G.v=-6; Snd.blowStop(); Snd.launch(); }
+      else if(G.R>R_MIN+0.5){
+        /* sized and sitting on the wand - launching is its own press now, so
+           picking a size and choosing when to go are two decisions, not one */
+        G.phase="armed"; Snd.blowStop();
+        if(hint) hint.classList.add("show");
+      }
     }
     G.x=WAND_X-2+G.R;
     G.y=Math.min(wandY(),WALKY-G.R-3);
@@ -1352,6 +1366,7 @@ var ov={title:document.getElementById("ov-title"),ready:document.getElementById(
         cause:document.getElementById("ov-cause"),medal:document.getElementById("ov-medal"),
         newbest:document.getElementById("ov-newbest")};
 var banner=document.getElementById("banner");
+var hint=document.getElementById("launch-hint");
 var tStats=document.getElementById("t-stats");
 function refreshTitleStats(){
   if(!tStats) return;
@@ -1387,7 +1402,13 @@ function press(){
   Snd.init();
   if(G.phase==="paused"){ togglePause(); return; }
   if(G.phase==="title"){ startRun(); }
-  if(G.phase==="dead"){ if(G.deadT>0.45) startRun(); return; }
+  if(G.phase==="dead"){ if(G.deadT<=0.45) return; startRun(); }
+  if(G.phase==="armed"){
+    G.phase="fly"; G.v=-6; Snd.launch();
+    if(hint) hint.classList.remove("show");
+    G.hold=true; Snd.wind(true);      /* the launch press is also your first gust */
+    return;
+  }
   if(G.phase==="ready"){ G.phase="blow"; ov.ready.hidden=true; Snd.blowStart(); }
   G.hold=true;
   if(G.phase==="fly") Snd.wind(true);
