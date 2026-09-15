@@ -1402,7 +1402,7 @@ function press(){
   Snd.init();
   if(G.phase==="paused"){ togglePause(); return; }
   if(G.phase==="title"){ startRun(); }
-  if(G.phase==="dead"){ if(G.deadT<=0.45) return; startRun(); }
+  if(G.phase==="dead"){ if(G.deadT>0.45) startRun(); return; }
   if(G.phase==="armed"){
     G.phase="fly"; G.v=-6; Snd.launch();
     if(hint) hint.classList.remove("show");
