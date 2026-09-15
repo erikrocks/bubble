@@ -99,6 +99,18 @@ canvas{display:block; width:100%; height:auto; image-rendering:pixelated; touch-
 .frame:-webkit-full-screen{background:#0b0e1a; border:0; border-radius:0; display:flex;
   flex-direction:column; justify-content:center}
 .frame:-webkit-full-screen canvas{width:100%; height:auto; max-height:100vh}
+.chars{display:flex; gap:6px; align-items:center; padding:9px 12px; flex-wrap:wrap;
+  border-top:1px solid var(--line); background:var(--surface)}
+.chars > span{font-family:"Silkscreen",monospace; font-size:9px; letter-spacing:.1em;
+  color:var(--ink3); text-transform:uppercase; margin-right:2px}
+button.who{padding:0; border:1px solid var(--line2); border-radius:3px; background:var(--sunk);
+  cursor:pointer; line-height:0; overflow:hidden}
+button.who canvas{display:block; width:46px; height:auto; image-rendering:pixelated}
+button.who[aria-pressed="true"]{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent)}
+button.who.any{line-height:1; padding:0 10px; height:56px; font:500 12px/1 "Instrument Sans",sans-serif;
+  color:var(--ink2); background:var(--surface)}
+button.who.any[aria-pressed="true"]{background:var(--accent); color:#fff}
+button.who:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 .tools{display:flex; gap:6px; align-items:center; padding:9px 12px}
 .tools button{font:500 12px/1 "Instrument Sans",sans-serif; color:var(--ink2); background:var(--surface);
   border:1px solid var(--line2); border-radius:2px; padding:7px 10px; cursor:pointer; white-space:nowrap}
@@ -183,6 +195,7 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
     <div><dt>Diameter</dt><dd id="h-dia">8 px</dd></div>
     <div><dt>Speed</dt><dd id="h-speed">60 px/s</dd></div>
   </dl>
+  <div class="chars" id="chars"><span>Who's blowing</span></div>
   <div class="tools">
     <button type="button" id="btn-sound" aria-pressed="true">Sound on</button>
     <button type="button" id="btn-pause">Pause</button>
@@ -284,6 +297,9 @@ var C={};
     sea:"#2a6d9e",seaL:"#4a92c2",seaD:"#17496f",foam:"#e6f3fa",pier:"#5d4c3c",
     deck:"#b08a5e",deckL:"#c9a577",deckD:"#7d5f3c",
     sand:"#ddc99c",sandL:"#f0e2bc",sandD:"#bda67a",
+    deep:"#1f5f8c",deepL:"#3a83b4",deepD:"#12405f",crest:"#eaf6fd",
+    buoyA:"#e0573f",buoyB:"#f2efe2",hull:"#c9c2b0",hullD:"#8e8877",
+    tower:"#f2efe6",towerR:"#cf4a3e",lamp2:"#ffe08a",rock:"#6f6a63",rockL:"#918b82",rockD:"#4a463f",
     palm:"#9c7a4e",palmD:"#6d5231",frond:"#4f9153",frondL:"#7cc072",frondD:"#2d6738",
     kiteA:"#e0573f",kiteB:"#f2b13f",kiteC:"#f7f1e4",net:"#f4f1e8",netD:"#b9b3a2",
     guard:"#d94f43",guardD:"#9e2f26",
@@ -668,7 +684,20 @@ var GROUPS=[
      p.rect(x+11,y+4,2,7,C.bronze); p.px(x+12,y+3,C.bronzeL);
      p.rect(x+6,y+20,2,6,C.bronzeD); p.rect(x+9,y+20,2,6,C.bronze);
      p.hl(x+1,b,14,C.shadow);}},
-{id:"guardchair",name:"Lifeguard chair",w:26,h:36,cw:20,zones:["beach"],edge:true,
+{id:"lighthouse",name:"Lighthouse rock",w:28,h:40,cw:18,zones:["sea"],edge:true,
+   boxes:[{dx:8,w:13,top:40,bot:12},{dx:2,w:24,top:12,bot:0}],
+   note:"The crossing's landmark and its only tall thing. Rock at the waterline, tower above \u2014 the collider follows both.",
+   draw:function(p,x,b){var y=b-40;
+     p.rect(x+2,b-12,24,12,C.rock); p.hl(x+2,b-12,24,C.rockL);
+     p.rect(x+5,b-14,18,2,C.rock); p.hl(x+5,b-14,18,C.rockL);
+     for(var i=0;i<24;i++) if(bay(x+2+i,b-6)<0.3) p.px(x+2+i,b-8+((i*3)%5),C.rockD);
+     p.rect(x+9,y+8,11,20,C.tower); p.vl(x+9,y+9,19,C.gullL); p.vl(x+19,y+9,19,C.hullD);
+     for(var k=0;k<3;k++) p.rect(x+9,y+11+k*6,11,3,C.towerR);
+     p.rect(x+8,y+5,13,3,C.ironD); p.hl(x+8,y+5,13,C.rockL);
+     p.rect(x+10,y+1,9,4,C.lamp2); p.hl(x+10,y+1,9,C.buoyB);
+     p.rect(x+9,y,11,1,C.ironD); p.px(x+14,y-2,C.ironD);
+     p.hl(x+1,b,26,C.deepD);}},
+  {id:"guardchair",name:"Lifeguard chair",w:26,h:36,cw:20,zones:["beach"],edge:true,
    note:"The beach's tall piece. Splayed legs, a seat on top and a flag \u2014 nothing else on the sand forces you up.",
    draw:function(p,x,b){var y=b-36;
      [[4,0],[20,0]].forEach(function(q){
@@ -746,6 +775,24 @@ var GROUPS=[
      p.vl(x+7,y+5,26,C.phoneD); p.hl(x+1,y+31,12,C.phoneD);
      p.hl(x,b,14,C.shadow);}}
 ]},
+{id:"atsea",cls:"ground",name:"In the water",blurb:"The crossing. Nothing stands on a floor out here, so what there is sticks up out of the swell.",items:[
+  {id:"buoy",name:"Buoy",w:14,h:17,cw:12,zones:["sea"],edge:true,
+   note:"Channel marker with a lamp on top. Low, bobbing, easy to clip if you are skimming the water.",
+   draw:function(p,x,b){var y=b-17;
+     p.rect(x+3,y+6,8,11,C.buoyA); p.vl(x+3,y+7,9,C.kiteB);
+     p.rect(x+3,y+9,8,3,C.buoyB);
+     p.rect(x+5,y+2,4,4,C.ironD); p.rect(x+6,y+3,2,2,C.lamp2);
+     p.px(x+6,y,C.ironD); p.px(x+7,y,C.ironD);
+     p.hl(x+2,b-1,10,C.deepD);}},
+  {id:"dinghy",name:"Moored dinghy",w:34,h:15,cw:32,zones:["sea"],edge:true,
+   note:"A little boat riding the swell. Wide and low \u2014 the water's version of a bench.",
+   draw:function(p,x,b){var y=b-15;
+     p.rect(x+13,y,2,9,C.wood); p.rect(x+15,y+1,6,5,C.buoyB); p.hl(x+15,y+1,6,C.gullL);
+     p.rect(x+2,y+9,30,4,C.hull); p.hl(x+2,y+9,30,C.buoyB); p.hl(x+2,y+12,30,C.hullD);
+     p.rect(x+4,y+13,26,2,C.hullD);
+     p.rect(x+6,y+10,6,2,C.wood); p.rect(x+20,y+10,6,2,C.wood);
+     p.hl(x+1,b-1,32,C.deepD);}}
+]},
 {id:"sandy",cls:"ground",name:"On the sand",blurb:"Beach clutter. The net is the one that really makes you climb.",items:[
   {id:"umbrella",name:"Beach umbrella",w:28,h:27,cw:24,zones:["beach"],edge:true,
    boxes:[{dx:0,w:28,top:27,bot:20},{dx:11,w:6,top:20,bot:0}],
@@ -807,6 +854,35 @@ var GROUPS=[
      p.rect(x+7,y+1,3,4,C.iron); p.px(x+9,y+1,C.glass);
      p.px(x+2,y+9,C.amber);
      p.hl(x+1,b,8,C.shadow);}}
+]},
+{id:"oversea",cls:"air",name:"Over the water",blurb:"Weather, mostly.",items:[
+  {id:"squall",name:"Rain squall",w:62,d:27,boxes:[{dx:6,w:50,d:27}],zones:["sea"],
+   note:"A darker bank trailing rain. Deeper than the plain cloud, and the streaks tell you how far down it reaches.",
+   draw:function(p,x){
+     [[14,8,13,6],[34,6,15,7],[50,9,12,5],[26,11,12,5]].forEach(function(q){
+       for(var yy=q[1]-q[3];yy<=q[1]+q[3];yy++)for(var xx=q[0]-q[2];xx<=q[0]+q[2];xx++){
+         var v=Math.pow((xx-q[0])/q[2],2)+Math.pow((yy-q[1])/q[3],2);
+         if(v>1) continue;
+         if(v>0.62&&bay(x+xx,yy)>0.5) continue;
+         p.px(x+xx,yy,(yy-q[1])/q[3]<-0.3?C.gullD:((v>0.55)?C.ironD:C.gullD));
+       }
+     });
+     for(var i=0;i<26;i++){
+       var rx=8+((i*17)%46), ry=15+((i*7)%9);
+       p.px(x+rx,ry,C.deepL); p.px(x+rx,ry+1,C.deepL); p.px(x+rx,ry+2,C.seaL);
+       if(i%3===0){ p.px(x+rx-1,ry+4,C.seaL); p.px(x+rx-1,ry+5,C.seaL); }
+     }}},
+  {id:"cloudbank",name:"Low cloud",w:78,d:19,boxes:[{dx:4,w:70,d:19}],zones:["sea"],
+   note:"A bank of cloud sitting low over the water. Soft-edged but solid \u2014 the crossing's ceiling.",
+   draw:function(p,x){
+     [[16,9,15,7],[38,7,17,8],[58,10,14,6],[28,12,13,6],[48,13,12,5]].forEach(function(q){
+       for(var yy=q[1]-q[3];yy<=q[1]+q[3];yy++)for(var xx=q[0]-q[2];xx<=q[0]+q[2];xx++){
+         var v=Math.pow((xx-q[0])/q[2],2)+Math.pow((yy-q[1])/q[3],2);
+         if(v>1) continue;
+         if(v>0.62&&bay(x+xx,yy)>0.5) continue;
+         p.px(x+xx,yy,(yy-q[1])/q[3]<-0.3?C.gullL:((v>0.55)?C.gullD:C.gull));
+       }
+     });}}
 ]},
 {id:"overbeach",cls:"air",name:"Over the sand",blurb:"Three ways to be made to fly low on a beach.",items:[
   {id:"palm",name:"Palm fronds",w:46,d:27,boxes:[{dx:3,w:40,d:27}],zones:["beach"],
@@ -1152,9 +1228,10 @@ var PREVIEW=0;
 
 /* his saved rotation */
 var on={bench:["slat","scroll"],post:["hydrant","meter","bollard"],bin:["trash","mailbox","newsbox"],
-        shelter:["hedge","statue","fries","guardchair","busstop","car","phonebox"],
+        shelter:["hedge","statue","fries","guardchair","lighthouse","busstop","car","phonebox"],
         walk:["cart","scope"], pier:["arcade","souvenir"],
         sandy:["umbrella","net","cooler"], overbeach:["palm","kite","pierdeck"],
+        atsea:["buoy","dinghy"], oversea:["cloudbank","squall"],
         tree:["leafy"],shop:["striped","grocer"],pole:["lamp","traffic"]};
 GROUPS.forEach(function(g){ g.items.forEach(function(it){ it.gid=g.id; }); });
 var DEFAULT_ON=JSON.parse(JSON.stringify(on));
@@ -1170,47 +1247,58 @@ function toggle(gid,iid){
 /* The run walks through a sequence of places. The same weights drive which
    furniture turns up AND what the horizon looks like, so the change of scenery and
    the change of difficulty are one event rather than two that coincide. */
-var ZONES=[{id:"park",from:0,name:"Park"},{id:"city",from:2700,name:"City"},
-           {id:"boardwalk",from:4700,name:"Boardwalk"},{id:"beach",from:6400,name:"Beach"}];
-var FADE=1100;
-/* How present a zone is at this distance: ramps in over FADE before its own start,
-   holds, then ramps out over FADE before the next one starts. Two zones overlap
-   during a handover, which is what makes the change of place feel like walking
-   rather than cutting. */
-function zoneW(i,d){
-  var z=ZONES[i], nxt=ZONES[i+1], w=1;
+/* The run is a round trip that repeats: out to the sea, then back through the same
+   places in reverse, then out again. Endless without endless content, and the sea
+   gets a job - the turnaround - instead of being a dead end. */
+var ZONE_NAMES={park:"Park",city:"City",boardwalk:"Boardwalk",beach:"Beach",sea:"The crossing"};
+var ROUTE=["park","city","boardwalk","beach","sea","beach","boardwalk","city"];
+var FIRST=2700, LEG=2000, FADE=1100;
+function legStart(i){ return i<=0?0:FIRST+(i-1)*LEG; }
+function legIndex(d){ return d<FIRST?0:1+Math.floor((d-FIRST)/LEG); }
+function legId(i){ return ROUTE[((i%ROUTE.length)+ROUTE.length)%ROUTE.length]; }
+function legW(i,d){
+  var a=legStart(i), b=legStart(i+1), w=1;
   if(i>0){
-    var inS=z.from-FADE;
+    var inS=a-FADE;
     if(d<=inS) return 0;
-    if(d<z.from) w=(d-inS)/FADE;
+    if(d<a) w=(d-inS)/FADE;
   }
-  if(nxt){
-    if(d>=nxt.from) return 0;
-    var outS=nxt.from-FADE;
-    if(d>outS) w=Math.min(w,(nxt.from-d)/FADE);
+  if(d>=b) return 0;
+  var outS=b-FADE;
+  if(d>outS) w=Math.min(w,(b-d)/FADE);
+  return w;
+}
+/* a place can be on the route more than once, so take the strongest leg that is it */
+function zw(id,d){
+  var i0=legIndex(d), w=0;
+  for(var i=Math.max(0,i0-1);i<=i0+1;i++){
+    if(legId(i)===id){ var q=legW(i,d); if(q>w) w=q; }
   }
   return w;
 }
-function zw(id,d){
-  for(var i=0;i<ZONES.length;i++) if(ZONES[i].id===id) return zoneW(i,d);
+function zoneName(id){ return ZONE_NAMES[id]||id; }
+/* Which zone you are IN: the leg you have entered, not whichever weighs most. The
+   scenery cross-fades early on purpose so a place appears before you reach it. */
+function zoneAt(d){ return legId(legIndex(d)); }
+function firstStart(id){
+  for(var i=0;i<ROUTE.length;i++) if(ROUTE[i]===id) return legStart(i);
   return 0;
 }
-function zoneName(id){
-  for(var i=0;i<ZONES.length;i++) if(ZONES[i].id===id) return ZONES[i].name;
-  return id;
-}
-/* Which zone you are IN. Deliberately the nominal start, not whichever zone happens
-   to weigh most: the scenery cross-fades early so you see a place coming before you
-   reach it, and the banner should land when you arrive, not when it appears on the
-   horizon. Weight-based selection announced the city nine seconds early. */
-function zoneAt(d){
-  for(var i=ZONES.length-1;i>=0;i--) if(d>=ZONES[i].from) return ZONES[i].id;
-  return ZONES[0].id;
-}
+var ZONES=(function(){
+  var seen={}, out=[];
+  ROUTE.forEach(function(id){
+    if(seen[id]) return;
+    seen[id]=1; out.push({id:id,name:ZONE_NAMES[id],from:firstStart(id)});
+  });
+  return out;
+})();
+
 /* an item with no `zones` belongs everywhere; one that names zones is boosted
    while it is home, or it drowns in the always-present furniture */
 function itemW(it,d){
-  if(!it.zones) return 1;
+  /* Untagged furniture belongs everywhere on land - but a streetlamp standing in open
+     water is nonsense, so it fades out exactly as the crossing fades in. */
+  if(!it.zones) return 1-zw("sea",d);
   var w=0;
   for(var i=0;i<it.zones.length;i++){ var q=zw(it.zones[i],d); if(q>w) w=q; }
   return w*w*1.9;
@@ -1255,7 +1343,13 @@ function kidSel(){
 }
 function kidX(){ return WAND_X-kidSel().anchor.dx; }
 function wandY(){ return WALKY+kidSel().anchor.dy; }
-function rollKid(){ return KIDS[Math.floor(Math.random()*KIDS.length)].id; }
+var kidPick="random";   /* "random", or an id to always play as that kid */
+function rollKid(){
+  if(kidPick!=="random"){
+    for(var i=0;i<KIDS.length;i++) if(KIDS[i].id===kidPick) return kidPick;
+  }
+  return KIDS[Math.floor(Math.random()*KIDS.length)].id;
+}
 
 /* ================= the ramp ================= */
 var STAGES=[
@@ -1328,6 +1422,19 @@ function drawSea(p,off,depth){
   if(px2>-80&&px2<GW+40){
     p.rect(px2,top-3,58,3,C.pier);
     for(var k=0;k<7;k++) p.rect(px2+4+k*8,top,2,7,C.pier);
+  }
+}
+function drawWater(p,off,t){
+  for(var x=0;x<GW;x++){
+    var wx=x+off;
+    var crest=Math.round(Math.sin(wx*0.09+t*1.6)*1.5+Math.sin(wx*0.031-t*0.9)*1.2);
+    for(var y=WALKY;y<GH;y++){
+      var d=y-WALKY;
+      p.px(x,y,d<2?C.deepL:(d<6?C.deep:C.deepD));
+    }
+    p.px(x,WALKY+crest,C.crest);
+    p.px(x,WALKY+1+crest,C.deepL);
+    if(bay(Math.floor(wx),5)<0.1) p.px(x,WALKY+4+crest,C.crest);
   }
 }
 function drawSand(p,off){
@@ -1743,11 +1850,12 @@ function step(dt){
 function drawWorld(t){
   gimg.data.set(skyBase);
   gp.setA(0.55); drawClouds(gp,G.world*0.12); gp.setA(1);
-  var wPark=zw("park",G.run), wCity=zw("city",G.run), wWalk=zw("boardwalk",G.run), wBeach=zw("beach",G.run);
-  var wSea=Math.max(wWalk,wBeach);
+  var wPark=zw("park",G.run), wCity=zw("city",G.run), wWalk=zw("boardwalk",G.run),
+      wBeach=zw("beach",G.run), wCross=zw("sea",G.run);
+  var wSea=Math.max(wWalk,Math.max(wBeach,wCross));
   if(wSea>0.005){
     gp.setFade(0.18); gp.setA(wSea);
-    drawSea(gp,G.world*0.25,34+wBeach*10);
+    drawSea(gp,G.world*0.25,34+wBeach*10+wCross*22);
     gp.setA(1); gp.setFade(0);
   }
   if(wPark>0.005){ gp.setFade(0.5); gp.setA(wPark); drawTreeline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
@@ -1758,6 +1866,7 @@ function drawWorld(t){
   drawWalk(gp,GW,GH,WALKY,G.world);
   if(wWalk>0.005){ gp.setA(wWalk); drawDeck(gp,G.world); gp.setA(1); }
   if(wBeach>0.005){ gp.setA(wBeach); drawSand(gp,G.world); gp.setA(1); }
+  if(wCross>0.005){ gp.setA(wCross); drawWater(gp,G.world,t); gp.setA(1); }
   if(wPark>0.005){ gp.setA(wPark); drawVerge(gp,G.world); gp.setA(1); }
   G.obs.forEach(function(o){
     var sx=Math.round(o.x-G.world);
@@ -2030,6 +2139,55 @@ seg(document.getElementById("seg-birds"),
   });
 })();
 
+/* ================= who's blowing ================= */
+(function(){
+  var host=document.getElementById("chars");
+  var PW=27, PH=30, PZ=4, PWALK=28;
+  function mk(label,id,kid){
+    var b=document.createElement("button");
+    b.type="button"; b.className="who"+(kid?"":" any");
+    b.setAttribute("aria-pressed",kidPick===id);
+    b.title=label;
+    if(kid){
+      var cv=document.createElement("canvas");
+      cv.width=PW*PZ; cv.height=PH*PZ;
+      var off=document.createElement("canvas"); off.width=PW; off.height=PH;
+      var octx=off.getContext("2d"), img=octx.createImageData(PW,PH);
+      var pp=painter(img.data,PW,PH);
+      for(var y=0;y<PH;y++)for(var x=0;x<PW;x++){
+        var v=y/PH, i=Math.floor(v*5+(bay(x,y)-0.5)*0.85);
+        pp.px(x,y,SKY[Math.max(0,Math.min(4,i))]);
+      }
+      drawWalk(pp,PW,PH,PWALK,0);
+      kid.draw(pp,4,PWALK);
+      octx.putImageData(img,0,0);
+      var ctx=cv.getContext("2d"); ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(off,0,0,cv.width,cv.height);
+      b.appendChild(cv);
+    } else b.textContent=label;
+    b.addEventListener("click",function(){
+      kidPick=id;
+      Array.prototype.forEach.call(host.querySelectorAll("button"),function(o){
+        o.setAttribute("aria-pressed",o===b);
+      });
+      if(G.phase==="title"||G.phase==="ready"||G.phase==="dead"||G.phase==="armed"){
+        G.kid=rollKid();
+      }
+      queueSave();
+    });
+    host.appendChild(b);
+    return b;
+  }
+  mk("Anyone","random",null);
+  KIDS.forEach(function(k){ mk(k.name,k.id,k); });
+  window.__syncWho=function(){
+    Array.prototype.forEach.call(host.querySelectorAll("button"),function(o,i){
+      var id=(i===0)?"random":KIDS[i-1].id;
+      o.setAttribute("aria-pressed",id===kidPick);
+    });
+  };
+})();
+
 /* ================= persistence =================
    plain localStorage: best distance, medals, tune, rules and rotation,
    per browser. Wrapped because private windows can throw on access. */
@@ -2051,7 +2209,7 @@ function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(flushSave,50
 function flushSave(){
   writeStore({
     tune:Object.assign({},P), rules:Object.assign({},RULES),
-    rotation:JSON.parse(JSON.stringify(on)), known:allItemIds(),
+    rotation:JSON.parse(JSON.stringify(on)), known:allItemIds(), kid:kidPick,
     best:Math.round(G.best), runs:STATS.runs,
     bestMedal:STATS.bestMedal?STATS.bestMedal.name:null,
     sound:soundOn, savedAt:new Date().toISOString()
@@ -2063,6 +2221,11 @@ function saveBest(){ queueSave(); }
   if(typeof d.best==="number"&&d.best>G.best) G.best=d.best;
   if(typeof d.runs==="number") STATS.runs=d.runs;
   if(d.bestMedal) MEDALS.forEach(function(m){ if(m.name===d.bestMedal) STATS.bestMedal=m; });
+  if(d.kid&&(d.kid==="random"||KIDS.some(function(k){return k.id===d.kid;}))){
+    kidPick=d.kid;
+    if(window.__syncWho) window.__syncWho();
+    G.kid=rollKid();
+  }
   if(d.sound===false){
     soundOn=false; btnSound.textContent="Sound off"; btnSound.setAttribute("aria-pressed","false");
   }
