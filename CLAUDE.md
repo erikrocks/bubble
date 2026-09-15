@@ -90,6 +90,25 @@ Pick brick colours further apart than looks right in isolation: background scene
 mixed 50% toward the sky, which halves every difference. The first set was subtle
 enough to read as one building repeated.
 
+## Birds have to scale with the bubble
+
+A 40px bubble falls at 15 px/s. In the ~1.6s a bird takes to cross the screen it can
+move 18px — less than its own radius — so a bird aimed at its height is not a dodge,
+it is a death. Three rules keep that honest, all in the `RULES.birds` block:
+
+- `clearLane(want)` returns a height at least `R*0.82 + CLEAR` from the player, trying
+  the far side if the near one clamps, and **returns null rather than spawning an
+  unfair bird** when neither side has room.
+- The camp threshold is `termFall(R) * 0.35` — a third of a second of that bubble's own
+  free-fall — not a flat pixel count. Patience stretches with size too. A flat 14px
+  asked a big bubble for a third of its whole manoeuvring budget.
+- Bird flight bobs as `y0 + sin(x)*2.2`, **not** `y += sin(x)*0.28`. The second form
+  integrates, so birds random-walked several pixels off their lane and ate the
+  clearance; that alone was killing hovering players.
+
+Verified by simulation: holding station takes zero hits at every radius from 5 to 20,
+while doing nothing still drives you into the bird placed below you.
+
 ## Park to city
 
 A run walks out of a park and into the city. `cityMix(distance)` is 0 before 1000px,
@@ -185,6 +204,9 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **15 Sep 2026** — Park-to-city progression (see above), with a hedge and a statue added so
   the park has its own things to climb over. Stage 2 renamed "Watch the ground", since
   "street" was wrong while you are still in a park. Pigeons now start in the park.
+- **15 Sep 2026** — Birds made size-aware (see above) after big bubbles turned out to be
+  unable to dodge them at all, and the camping rule stopped punishing a size that cannot
+  physically move fast.
 - **15 Sep 2026** — The hedge became a rounded bush (the rectangular block read as a wall),
   the statue went verdigris-on-granite to stop it blending into the sky, boxy ground pieces
   gained keylines, and shelters no longer pair with shopfronts. Death prompt is "Play again?".
