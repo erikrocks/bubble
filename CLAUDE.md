@@ -40,7 +40,7 @@ Read top to bottom, `index.html`'s script is in these blocks:
   `pinchDown`, which flattens the **underside** only. `drawBubble()` is a round wrapper.
   Squish comes from three places, all draw-time and none of them touching collision
   (the hitbox stays `0.82 * R`, so the visual is generous, never mean):
-  - **breathing** — a slow out-of-phase pulse, ±5.5% while blowing, ±2% in flight.
+  - **breathing** — a slow out-of-phase pulse, ±3.5% while blowing, ±1.2% in flight.
   - **wind squash** — `G.sq`, a damped spring driven by what the air is doing: +1 while
     the wind is on (wide and flat), negative while falling free (tall). It overshoots to
     ~1.2 before settling, so starting and stopping the wind *rings*.
@@ -91,4 +91,8 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **Sep 2026** — Built from a design study (bubble sprite options, a physics tuning
   bench, and an obstacle sheet) and deployed here.
 - **15 Sep 2026** — Squish added: breathing while blowing (chosen from six candidates in a
-  study artifact), and a sprung wind squash in flight with the underside pinched.
+  study artifact), and a sprung wind squash in flight with the underside pinched. Dialled
+  back on Erik's note — peak deformation is ~109% wide / 90% tall at R=15, which is the
+  level he signed off; it was nearly twice that first. Pigeons also now cross the street
+  on their own every 9-17s from stage 2, at their own height rather than aimed at the
+  player (the loiter pigeon still comes for you). Page footer removed.

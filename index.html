@@ -120,8 +120,6 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
 .rot button[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff}
 .rotgroup{margin-bottom:10px}
 .rotgroup > span{display:block; font-family:"JetBrains Mono",monospace; font-size:10.5px; color:var(--ink3); margin-bottom:4px}
-footer{margin-top:26px; color:var(--ink2); font-size:13.5px; max-width:64ch}
-footer b{color:var(--ink); font-weight:600}
 </style>
 </head>
 <body>
@@ -186,8 +184,6 @@ footer b{color:var(--ink); font-weight:600}
     </div>
   </div>
 </details>
-
-<footer><b>Running your saved set:</b> Twitchy tune, slat and scrolled benches, every post and bin, the leafy bough, the striped awning, all three poles, a random kid each run, soft ceiling with pigeons. Everything above is adjustable and remembered.</footer>
 </div>
 <script>
 (function(){
@@ -949,13 +945,13 @@ var STATS={runs:0,bestMedal:null};
 /* ================= state ================= */
 var G={phase:"title",R:R_MIN,y:0,x:0,v:0,hold:false,world:0,obs:[],parts:[],birds:[],
        run:0,best:0,seed:7,nextX:0,highT:0,clip:0,kid:null,deadT:0,armed:true,
-       prev:null,stage:0,bannerT:0,attract:0,sq:0,sqV:0};
+       prev:null,stage:0,bannerT:0,attract:0,sq:0,sqV:0,birdT:0};
 function rnd(){ G.seed=(G.seed*1664525+1013904223)&0x7fffffff; return G.seed/0x7fffffff; }
 function startRun(){
   G.kid=rollKid(); G.phase="ready"; G.R=R_MIN; G.y=wandY(); G.x=WAND_X-2+R_MIN;
   G.v=0; G.world=0; G.obs=[]; G.birds=[]; G.parts=[]; G.run=0; G.highT=0; G.clip=0;
   G.seed=(Math.random()*2147483647)|0; G.nextX=GW+120; G.deadT=0; G.stage=0; G.bannerT=0;
-  G.sq=0; G.sqV=0;
+  G.sq=0; G.sqV=0; G.birdT=7+Math.random()*7;
   ov.title.hidden=true; ov.ready.hidden=false; ov.dead.hidden=true; ov.pause.hidden=true;
   banner.classList.remove("show");
 }
@@ -1086,6 +1082,15 @@ function step(dt){
   else if(RULES.ceiling==="soft"){ if(G.clip>G.R*0.667){ pop("ceiling"); return; } }
   else if(G.y<-G.R){ pop("ceiling"); return; }
   if(RULES.birds){
+    /* street traffic: one crosses now and then at its own height, not yours */
+    G.birdT-=dt;
+    if(G.birdT<=0){
+      G.birdT=9+rnd()*8;
+      if(stageAt(G.run)>=2&&G.birds.length<2){
+        G.birds.push({x:GW+8,y:6+rnd()*(GH*0.58),vx:-(P.s+28+rnd()*26),f:0,ft:0});
+        Snd.bird();
+      }
+    }
     if(G.y<GH*0.3) G.highT+=dt; else G.highT=Math.max(0,G.highT-dt*0.7);
     if(G.highT>2.0&&G.birds.length<2){
       G.highT=0;
@@ -1141,10 +1146,10 @@ function drawWorld(t){
     drawBubble(gimg.data,GW,GH,dx2,dy2,11,t);
     drawBubble(gimg.data,GW,GH,dx2-70,dy2+22+Math.sin(t*1.3)*8,6,t);
   } else if(G.phase!=="dead"){
-    var br=(G.phase==="fly"?0.02:0.055)*Math.sin(t*5.5);   /* breathing */
-    var amp=0.10+G.R*0.004, sq=(G.phase==="fly"?G.sq:0);
+    var br=(G.phase==="fly"?0.012:0.035)*Math.sin(t*5.5);   /* breathing */
+    var amp=0.055+G.R*0.002, sq=(G.phase==="fly"?G.sq:0);
     var rx=G.R*(1+amp*sq*0.9+br), ry=G.R*(1-amp*sq-br);
-    drawBubbleE(gimg.data,GW,GH,G.x,G.y,rx,ry,t,Math.max(0,sq)*0.26);
+    drawBubbleE(gimg.data,GW,GH,G.x,G.y,rx,ry,t,Math.max(0,sq)*0.15);
   }
   if(G.phase!=="title"){
     var kx=kidX()-G.world;
