@@ -222,6 +222,9 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **15 Sep 2026** — Birds made size-aware (see above) after big bubbles turned out to be
   unable to dodge them at all, and the camping rule stopped punishing a size that cannot
   physically move fast.
+- **15 Sep 2026** — The park bush is a clipped boxwood ball on a trunk, picked by Erik from
+  five candidates (round shrub, boxwood, flowering, grass tuft, trimmed hedge) after two
+  earlier attempts were rejected. Its item id is still `hedge` so saved rotations keep working.
 - **15 Sep 2026** — The hedge became a rounded bush (the rectangular block read as a wall),
   the statue went verdigris-on-granite to stop it blending into the sky, boxy ground pieces
   gained keylines, and shelters no longer pair with shopfronts. Death prompt is "Play again?".

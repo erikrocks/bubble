@@ -623,19 +623,21 @@ var GROUPS=[
      p.rect(x+3,y+5,5,1,C.cream); p.hl(x+1,b,9,C.shadow);}}
 ]},
 {id:"shelter",cls:"ground",name:"Tall on the ground",blurb:"The pieces that force you UP. Everything else on the sidewalk can be cleared by a lazy hover \u2014 these cannot.",items:[
-  {id:"hedge",name:"Bush",w:38,h:26,cw:34,park:true,edge:true,
-   note:"A big round shrub. Soft-edged enough to read as park scenery, solid enough to stop you.",
+  {id:"hedge",name:"Boxwood",w:38,h:27,cw:30,park:true,edge:true,
+   note:"A clipped boxwood ball on a short trunk. The tightest silhouette in the park \u2014 it reads as planted rather than wild, and the round mass is unmistakably solid.",
    draw:function(p,x,b){
-     p.rect(x+4,b-11,30,11,C.hedge);
-     p.blob(x+11,b-13,9,8,C.hedge,C.hedgeL,C.hedgeD);
-     p.blob(x+27,b-14,9,8,C.hedge,C.hedgeL,C.hedgeD);
-     p.blob(x+19,b-18,11,8,C.hedge,C.hedgeL,C.hedgeD);
-     for(var j=0;j<11;j++)for(var i=0;i<30;i++){
-       var q=bay(x+4+i,b-11+j);
-       if(q<0.16) p.px(x+4+i,b-11+j,C.hedgeL);
-       else if(q>0.86) p.px(x+4+i,b-11+j,C.hedgeD);
+     p.rect(x+17,b-7,4,7,C.bark); p.vl(x+17,b-6,6,C.barkD);
+     p.rect(x+14,b-1,10,1,C.hedgeD);
+     p.blob(x+19,b-15,14,12,C.hedge,C.hedgeL,C.hedgeD);
+     for(var a=0;a<28;a++){
+       var an=a/28*Math.PI*2;
+       p.px(x+19+Math.cos(an)*13.4,b-15+Math.sin(an)*11.4,C.hedgeD);
      }
-     p.hl(x+4,b-1,30,C.hedgeD); p.hl(x+3,b,32,C.shadow);}},
+     for(var i=0;i<40;i++){
+       var qx=x+8+((i*7)%23), qy=b-24+((i*5)%17);
+       if(bay(qx,qy)<0.2) p.px(qx,qy,C.hedgeL);
+     }
+     p.hl(x+6,b,26,C.shadow);}},
   {id:"statue",name:"Statue",w:16,h:36,cw:12,park:true,edge:true,
    note:"Verdigris bronze on a dark granite plinth \u2014 green and near-black so it reads against a pale sky rather than dissolving into it.",
    draw:function(p,x,b){var y=b-36;
