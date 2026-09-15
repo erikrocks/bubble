@@ -143,7 +143,9 @@ and the change of difficulty are one event rather than two that coincide.
   arrives late and then dominates, instead of trickling in.
 - Horizon: `drawTreeline` / `drawSkyline` / `drawSea`, each drawn at its zone's weight.
   Ground: `drawVerge` (grass) and `drawDeck` (planks) overlay the pavement the same way.
-- Birds: gulls replace pigeons once the boardwalk outweighs everything else.
+- Birds: one species per zone — bluejay in the park, pigeon downtown, gull on the
+  boardwalk — picked by `zoneAt()` at draw time. Same sprite size and hitbox, so it is
+  colour and silhouette only, never a difficulty change.
 - **Every zone needs its own tall ground piece** or that stretch becomes hoverable —
   park has the boxwood and statue, city has the shelter/car/phone box, boardwalk has the
   fry stand. They all live in the `shelter` group, which is what the `tall` gate reads.
@@ -236,9 +238,13 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   physically move fast.
 - **15 Sep 2026** — Boardwalk added as a third zone, which meant generalising the single
   park/city slider into a `ZONES` list. New furniture: deck railing, ice cream cart, coin
-  telescope, fry stand (the walk's tall piece), bunting and an arcade sign. Sea horizon,
+  telescope, fry stand (the walk's tall piece) and an arcade sign. Sea horizon,
   plank decking, gulls instead of pigeons. Banners now name the zone a second after you
   enter it rather than announcing difficulty stages.
+- **15 Sep 2026** — A bird per zone: bluejay, pigeon, gull. The boardwalk bunting was cut —
+  a full-width string of pennants read as a giant banner across the screen rather than
+  scenery, the same failure mode as the power lines it replaced. Overhead on the boardwalk
+  is now the arcade sign plus the trees and lamps that carry through every zone.
 - **15 Sep 2026** — The park bush is a clipped boxwood ball on a trunk, picked by Erik from
   five candidates (round shrub, boxwood, flowering, grass tuft, trimmed hedge) after two
   earlier attempts were rejected. Its item id is still `hedge` so saved rotations keep working.

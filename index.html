@@ -282,6 +282,7 @@ var C={};
     sea:"#2a6d9e",seaL:"#4a92c2",seaD:"#17496f",foam:"#e6f3fa",pier:"#5d4c3c",
     deck:"#b08a5e",deckL:"#c9a577",deckD:"#7d5f3c",
     gull:"#d8dde4",gullL:"#f2f5f8",gullD:"#8f98a6",
+    jay:"#3f74c9",jayL:"#7aa6e8",jayD:"#27498a",jayW:"#eef3fb",
     candyA:"#e05a6a",candyB:"#f7efe2",mint:"#5ec9b4",neon:"#ff7bd0",neonD:"#b03d8c",
     kiosk:"#c9563f",kioskD:"#94351f",kioskL:"#e07a5f",
     hedge:"#4a7a45",hedgeL:"#6a9c5c",hedgeD:"#2f5730",
@@ -750,29 +751,7 @@ var GROUPS=[
      p.px(x+2,y+9,C.amber);
      p.hl(x+1,b,8,C.shadow);}}
 ]},
-{id:"pier",cls:"air",name:"Over the boardwalk",blurb:"What hangs above a boardwalk: strings of flags and the arcade's sign.",items:[
-  {id:"bunting",name:"Bunting",w:0,d:17,boxes:[{dx:0,w:0,d:17}],zones:["boardwalk"],
-   note:"Pennants strung the whole width between poles. You cannot go around it \u2014 only under. Shallow on purpose.",
-   bg:function(p,x,wy){
-     p.rect(x+4,4,4,wy-4,C.deckD); p.vl(x+4,5,wy-5,C.deck);
-     p.rect(x+1,3,10,2,C.deck); p.hl(x+1,3,10,C.deckL);
-     p.rect(x+2,wy-3,8,3,C.deckD);},
-   draw:function(p,x,b,W){
-     var wide=W||p.W, COLS=[C.candyA,C.mint,C.neon,C.candyB];
-     for(var i=0;i<wide;i++){
-       var u=i/wide, sag=Math.sin(u*Math.PI)*7;
-       p.px(i,4+sag,C.deckD);
-       p.px(i,5+sag,withA(C.deckD,110));
-     }
-     for(var k=0;k*13<wide+13;k++){
-       var fx=k*13+3, u2=fx/wide, sg=Math.sin(u2*Math.PI)*7;
-       var col=COLS[k%4], top=Math.round(5+sg);
-       for(var r=0;r<7;r++){
-         var half=Math.max(0,3-Math.floor(r*0.5));
-         for(var q=-half;q<=half;q++) p.px(fx+q,top+r,col);
-         p.px(fx-half,top+r,r<2?col:C.edge);
-       }
-     }}},
+{id:"pier",cls:"air",name:"Over the boardwalk",blurb:"What hangs out over a boardwalk.",items:[
   {id:"arcade",name:"Arcade sign",w:42,d:26,boxes:[{dx:11,w:20,d:26},{dx:1,w:30,d:6}],zones:["boardwalk"],
    note:"A neon sign hung off the arcade front. Deep and narrow \u2014 the boardwalk's version of the hanging shop sign.",
    bg:function(p,x,wy){
@@ -968,7 +947,7 @@ var RULES={ceiling:"soft",birds:true};
 /* his saved rotation */
 var on={bench:["slat","scroll"],post:["hydrant","meter","bollard"],bin:["trash","mailbox","newsbox"],
         shelter:["hedge","statue","fries","busstop","car","phonebox"],
-        walk:["railing","cart","scope"], pier:["bunting","arcade"],
+        walk:["railing","cart","scope"], pier:["arcade"],
         tree:["leafy"],shop:["striped"],pole:["lamp","traffic"]};
 GROUPS.forEach(function(g){ g.items.forEach(function(it){ it.gid=g.id; }); });
 var DEFAULT_ON=JSON.parse(JSON.stringify(on));
@@ -1140,6 +1119,17 @@ function drawDeck(p,off){
     if(((wx%9)+9)%9===4&&bay(wx,3)<0.5) p.px(x,WALKY+3,C.deckD);
   }
   p.hl(0,GH-2,GW,C.deckD); p.hl(0,GH-1,GW,C.deckD);
+}
+function drawJay(p,x,y,f){
+  p.rect(x+2,y+2,7,3,C.jay); p.hl(x+2,y+2,7,C.jayL); p.hl(x+2,y+4,7,C.jayD);
+  p.px(x+4,y+4,C.jayW); p.px(x+5,y+4,C.jayW);
+  p.rect(x,y+1,3,3,C.jay); p.px(x+1,y,C.jayL); p.px(x+2,y-1,C.jay);
+  p.px(x,y+2,C.jayW); p.px(x+1,y+2,C.edge);
+  p.px(x-1,y+3,C.edge);
+  p.px(x+3,y+2,C.edge); p.px(x+3,y+3,C.edge);
+  p.rect(x+9,y+2,3,2,C.jay); p.px(x+11,y+1,C.jayD); p.px(x+10,y+3,C.jayD);
+  if(f){ p.rect(x+3,y-1,4,3,C.jayL); p.hl(x+3,y-1,4,C.jayW); p.px(x+6,y-1,C.jayD); }
+  else { p.rect(x+3,y+5,4,2,C.jayD); p.hl(x+3,y+6,4,C.jayW); }
 }
 function drawGull(p,x,y,f){
   p.rect(x+2,y+2,7,3,C.gull); p.hl(x+2,y+2,7,C.gullL); p.hl(x+2,y+4,7,C.gullD);
@@ -1520,8 +1510,9 @@ function drawWorld(t){
         gp.px(dx,0,withA(hexc("#ff2d6f"),Math.round(70+185*danger)));
     }
   }
-  var gulls=zw("boardwalk",G.run)>0.5;
-  G.birds.forEach(function(b){ (gulls?drawGull:drawDove)(gp,b.x,b.y,b.f); });
+  var z=zoneAt(G.run);
+  var bird=(z==="boardwalk")?drawGull:((z==="park")?drawJay:drawDove);
+  G.birds.forEach(function(b){ bird(gp,b.x,b.y,b.f); });
   if(G.phase==="title"){
     var dx2=((t*26)%(GW+80))-40, dy2=34+Math.sin(t*0.8)*16;
     drawBubble(gimg.data,GW,GH,dx2,dy2,11,t);
