@@ -963,8 +963,8 @@ function toggle(gid,iid){
 /* The run walks through a sequence of places. The same weights drive which
    furniture turns up AND what the horizon looks like, so the change of scenery and
    the change of difficulty are one event rather than two that coincide. */
-var ZONES=[{id:"park",from:0,name:"Park"},{id:"city",from:2100,name:"City"},
-           {id:"boardwalk",from:4200,name:"Boardwalk"}];
+var ZONES=[{id:"park",from:0,name:"Park"},{id:"city",from:2700,name:"City"},
+           {id:"boardwalk",from:4700,name:"Boardwalk"}];
 var FADE=1100;
 /* How present a zone is at this distance: ramps in over FADE before its own start,
    holds, then ramps out over FADE before the next one starts. Two zones overlap
@@ -1042,7 +1042,7 @@ var STAGES=[
  {name:"Just float",      from:0},
  {name:"Watch the ground",from:240},
  {name:"Let's go!",       from:800},
- {name:"Mind your head",  from:1500},
+ {name:"Mind your head",  from:1250},
  {name:"Rush hour",       from:2400}
 ];
 function stageAt(d){ for(var i=STAGES.length-1;i>=0;i--) if(d>=STAGES[i].from) return i; return 0; }

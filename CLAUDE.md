@@ -131,8 +131,13 @@ it out over `FADE` before the next begins, so two zones overlap during a handove
 | Zone | From | Reached at |
 |---|---|---|
 | Park | 0 | start |
-| City | 2100 | ~26 m |
-| Boardwalk | 4200 | ~61 m |
+| City | 2700 | ~45 m |
+| Boardwalk | 4700 | ~78 m |
+
+**Zone starts and stage starts are coupled.** Overhead obstacles only exist from
+`STAGES[3]`, so if a zone's dominant stretch ends before that distance, nothing ever
+hangs over it — the park had exactly that problem and never saw a single tree. Check
+`zw(zone, STAGES[3].from)` after moving either.
 
 The same weights drive **both** the furniture and the horizon, so the change of place
 and the change of difficulty are one event rather than two that coincide.
@@ -241,6 +246,9 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   telescope, fry stand (the walk's tall piece) and an arcade sign. Sea horizon,
   plank decking, gulls instead of pigeons. Banners now name the zone a second after you
   enter it rather than announcing difficulty stages.
+- **15 Sep 2026** — Trees were allowed in the park but could never appear there: overhead
+  obstacles started at 1500px and the park stopped being dominant at 1000px. Air now starts
+  at 1250px and the city at 2700px, so a tree shows up in the park in 80% of runs.
 - **15 Sep 2026** — A bird per zone: bluejay, pigeon, gull. The boardwalk bunting was cut —
   a full-width string of pennants read as a giant banner across the screen rather than
   scenery, the same failure mode as the power lines it replaced. Overhead on the boardwalk
