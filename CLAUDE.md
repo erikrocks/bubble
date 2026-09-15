@@ -161,6 +161,14 @@ and the change of difficulty are one event rather than two that coincide.
   fry stand, beach has the lifeguard chair. They all live in the `shelter` group, which is
   what the `tall` gate reads.
 
+**One obstacle can be both a ceiling and a floor.** A box in `boxes[]` with `up:true`
+stands on the pavement (`h` tall) instead of hanging from the top (`d` deep), which is
+how the greengrocer and the souvenir stand are a shop *and* the stall outside it — you
+thread the gap between the awning and the crates. Both are `nopair:true`: they already
+make their own gap, and pairing them with a second obstacle stacks two gaps with no way
+through. `depthOf()` ignores `up` boxes so pair clearance still measures headroom only.
+Keep the gap generous — 57px against a 40px bubble is about right.
+
 The beach solves "what hangs over a beach" three ways, and they are worth keeping
 distinct: the **palm** is a tree (weave past it), the **kite** is narrow and deep with
 only the kite body solid and its string drawn as background, and the **pier** is wide and
@@ -260,6 +268,9 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   telescope, fry stand (the walk's tall piece) and an arcade sign. Sea horizon,
   plank decking, gulls instead of pigeons. Banners now name the zone a second after you
   enter it rather than announcing difficulty stages.
+- **15 Sep 2026** — Shops with something out front: the greengrocer (city) and souvenir
+  stand (boardwalk). Needed `up:true` collision boxes so a single air obstacle can also
+  own a box standing on the ground.
 - **15 Sep 2026** — Four fixes: the palm trunk was drawn bottom-up while leaning, so its
   top landed 6px off the fronds (it now draws from the crown down); the boardwalk railing
   stopped being a spawnable 40px obstacle and became a continuous rail in the deck scenery;

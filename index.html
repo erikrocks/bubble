@@ -872,6 +872,44 @@ var GROUPS=[
      for(var k=0;k<74;k+=12){ p.rect(x+k,6,3,4,C.deckD); p.rect(x+k+1,3,1,3,C.deckD); }}}
 ]},
 {id:"pier",cls:"air",name:"Over the boardwalk",blurb:"What hangs out over a boardwalk.",items:[
+{id:"souvenir",name:"Souvenir stand",w:56,d:17,zones:["boardwalk"],nopair:true,
+   boxes:[{dx:0,w:56,d:17},{dx:8,w:36,h:18,up:true}],
+   note:"Boardwalk shop with the beach-toy rack outside. Same idea as the greengrocer \u2014 duck the awning, clear the rack.",
+   bg:function(p,x,wy,W,v){
+     p.rect(x,0,56,wy,C.deck);
+     for(var y=0;y<wy;y+=4){ p.hl(x,y,56,C.deckD); p.hl(x,y+1,56,C.deckL); }
+     p.rect(x+4,1,48,6,C.mint); p.hl(x+4,1,48,C.gullL);
+     p.rect(x+6,wy-46,28,24,C.deckD);
+     p.rect(x+7,wy-45,26,22,C.glassD); p.rect(x+8,wy-44,24,20,C.glass);
+     p.vl(x+20,wy-44,20,C.glassD);
+     p.rect(x+38,wy-34,14,34,C.deckD);
+     p.rect(x+39,wy-33,12,33,C.doorW); p.rect(x+41,wy-30,8,8,C.glassD);},
+   draw:function(p,x,b,W,v){
+     var wy=WALKY;
+     p.rect(x,9,56,2,C.ironD);
+     for(var i=0;i<56;i++){
+       var band=((i/6)|0)%2, col=band?C.cream:C.candyA, dk=band?C.walkD:C.redD;
+       var hgt=6+Math.round(Math.sin((i/55)*Math.PI)*1.3);
+       p.vl(x+i,11,hgt,col); p.px(x+i,11+hgt,dk);
+       if(((i>>1)&1)===0) p.px(x+i,11+hgt+1,col); else p.px(x+i,11+hgt+1,dk);
+       if(i%6===0) p.vl(x+i,11,hgt,dk);
+     }
+     p.hl(x,17,56,withA(C.ironD,110));
+     /* the rack outside */
+     p.rect(x+10,wy-16,2,16,C.iron); p.rect(x+42,wy-16,2,16,C.iron);
+     p.rect(x+10,wy-18,34,2,C.ironD); p.rect(x+10,wy-8,34,1,C.ironD);
+     var BALLS=[C.candyA,C.mint,C.kiteB,C.blueL,C.neon];
+     for(var k=0;k<5;k++){
+       var cx=x+15+k*7, cy=wy-13;
+       for(var dy=-3;dy<=3;dy++)for(var dx=-3;dx<=3;dx++){
+         if(Math.hypot(dx,dy)>3.2) continue;
+         p.px(cx+dx,cy+dy,(dx+dy<-2)?C.cream:BALLS[k]);
+       }
+     }
+     for(var m=0;m<4;m++){
+       var bx2=x+14+m*8;
+       p.rect(bx2,wy-7,6,6,BALLS[(m+2)%5]); p.hl(bx2,wy-7,6,C.cream);
+     }}},
   {id:"arcade",name:"Arcade sign",w:42,d:26,boxes:[{dx:11,w:20,d:26},{dx:1,w:30,d:6}],zones:["boardwalk"],
    note:"A neon sign hung off the arcade front. Deep and narrow \u2014 the boardwalk's version of the hanging shop sign.",
    bg:function(p,x,wy){
@@ -981,6 +1019,48 @@ var GROUPS=[
        if(i%6===0) p.vl(x+i,11,hgt,dk);
      }
      p.hl(x,20,58,withA(C.ironD,110));}},
+{id:"grocer",name:"Greengrocer",w:58,d:18,zones:["city"],nopair:true,
+   boxes:[{dx:0,w:58,d:18},{dx:9,w:36,h:17,up:true}],
+   note:"A shop with the fruit stall out front. One obstacle that is both a ceiling and a floor \u2014 you thread the gap between the awning and the crates.",
+   bg:function(p,x,wy,W,v){
+     var sk=shopOf(v||0);
+     bricks(p,x+2,54,wy,wy,sk);
+     p.rect(x+5,1,48,6,C[sk.bd]); p.hl(x+5,1,48,C[sk.bdL]);
+     for(var i=0;i<6;i++) p.rect(x+10+i*7,3,4,2,C.gold);
+     p.rect(x+7,wy-44,26,22,C[sk.brD]);
+     p.rect(x+8,wy-43,24,20,C.glassD); p.rect(x+9,wy-42,22,18,C.glass);
+     p.vl(x+20,wy-42,18,C.glassD);
+     p.rect(x+38,wy-34,14,34,C[sk.brD]);
+     p.rect(x+39,wy-33,12,33,C.doorW); p.vl(x+39,wy-32,31,C.wood);
+     p.rect(x+41,wy-30,8,8,C.glassD);},
+   draw:function(p,x,b,W,v){
+     var sk=shopOf(v||0), wy=WALKY;
+     p.rect(x,9,58,2,C.ironD);
+     for(var i=0;i<58;i++){
+       var band=((i/6)|0)%2, col=band?C.cream:C.mint, dk=band?C.walkD:C.hedgeD;
+       var hgt=6+Math.round(Math.sin((i/57)*Math.PI)*1.4);
+       p.vl(x+i,11,hgt,col); p.hl(x+i,11,1,col);
+       p.px(x+i,11+hgt,dk);
+       if(((i>>1)&1)===0) p.px(x+i,11+hgt+1,col); else p.px(x+i,11+hgt+1,dk);
+       if(i%6===0) p.vl(x+i,11,hgt,dk);
+     }
+     p.hl(x,18,58,withA(C.ironD,110));
+     /* the stall, standing on the pavement */
+     p.rect(x+12,wy-8,3,8,C.woodD); p.rect(x+39,wy-8,3,8,C.woodD);
+     p.rect(x+9,wy-11,36,3,C.wood); p.hl(x+9,wy-11,36,C.woodL);
+     p.hl(x+9,wy-9,36,C.woodD);
+     var FRUIT=[C.red,C.amber,C.leafL,C.plum,C.blonde];
+     for(var c=0;c<3;c++){
+       var cx=x+10+c*12;
+       p.rect(cx,wy-17,11,6,C.woodD); p.hl(cx,wy-17,11,C.wood);
+       p.vl(cx,wy-16,5,C.wood); p.vl(cx+10,wy-16,5,C.wood);
+       for(var k=0;k<7;k++){
+         var fx=cx+1+((k*3)%9), fy=wy-17+((k*2)%3);
+         p.px(fx,fy,FRUIT[(c*3+k)%5]); p.px(fx+1,fy,FRUIT[(c*3+k)%5]);
+         p.px(fx,fy-1,C.cream);
+       }
+     }
+     p.rect(x+46,wy-14,6,4,C.candyB); p.hl(x+46,wy-14,6,C.walkD);}},
   {id:"steel",name:"Glass canopy",w:50,d:14,zones:["city"],boxes:[{dx:1,w:48,d:14}],
    note:"Modern storefront, shallow steel canopy. The gentlest ceiling on the sheet — the right one to introduce first.",
    bg:function(p,x,wy,W,v){
@@ -1070,9 +1150,9 @@ var PREVIEW=0;
 /* his saved rotation */
 var on={bench:["slat","scroll"],post:["hydrant","meter","bollard"],bin:["trash","mailbox","newsbox"],
         shelter:["hedge","statue","fries","guardchair","busstop","car","phonebox"],
-        walk:["cart","scope"], pier:["arcade"],
+        walk:["cart","scope"], pier:["arcade","souvenir"],
         sandy:["umbrella","net","cooler"], overbeach:["palm","kite","pierdeck"],
-        tree:["leafy"],shop:["striped"],pole:["lamp","traffic"]};
+        tree:["leafy"],shop:["striped","grocer"],pole:["lamp","traffic"]};
 GROUPS.forEach(function(g){ g.items.forEach(function(it){ it.gid=g.id; }); });
 var DEFAULT_ON=JSON.parse(JSON.stringify(on));
 var kidsOn=KIDS.map(function(k){return k.id;});
@@ -1155,7 +1235,11 @@ function pickFor(cls,tall){
   for(i=0;i<pool.length;i++){ r-=w[i]; if(r<=0) return pool[i]; }
   return pool[pool.length-1];
 }
-function depthOf(it){ var d=0; (it.boxes||[{d:it.d}]).forEach(function(b){ if(b.d>d) d=b.d; }); return d; }
+function depthOf(it){
+  var d=0;
+  (it.boxes||[{d:it.d}]).forEach(function(b){ if(!b.up&&b.d>d) d=b.d; });
+  return d;
+}
 function kidSel(){
   for(var i=0;i<KIDS.length;i++) if(KIDS[i].id===G.kid) return KIDS[i];
   return KIDS[0];
@@ -1444,7 +1528,9 @@ function spawn(){
       var gi=pickFor("ground",true), ai=pickFor("air",true);
       /* a bus shelter parked under a shopfront reads as part of the building -
          two big boxy things sharing an edge. Keep them apart. */
-      if(gi&&ai&&!(gi.gid==="shelter"&&ai.gid==="shop")){
+      /* a shop that already has a stall outside it makes its own gap; pairing it
+         with anything else stacks two gaps and there is no way through */
+      if(gi&&ai&&!ai.nopair&&!(gi.gid==="shelter"&&ai.gid==="shop")){
         if((WALKY-gi.h)-depthOf(ai)>=34){
           G.obs.push({cls:"ground",it:gi,x:G.nextX,v:Math.floor(rnd()*97)});
           G.obs.push({cls:"air",it:ai,x:G.nextX-8,v:Math.floor(rnd()*97)});
@@ -1468,7 +1554,10 @@ function hit(o){
   for(var i=0;i<bs.length;i++){
     var bx=bs[i], a0=bx.w?sx+bx.dx:0, a1=bx.w?a0+bx.w:GW;
     if(G.x+r<a0||G.x-r>a1) continue;
-    if(G.y-r<bx.d) return true;
+    /* `up` boxes stand on the pavement instead of hanging from the top, which is how
+       one obstacle can be a shop AND the stall outside it, with a gap between them */
+    if(bx.up){ if(G.y+r>WALKY-bx.h) return true; }
+    else if(G.y-r<bx.d) return true;
   }
   return false;
 }
