@@ -21,8 +21,12 @@ than by mechanism.
 
 **`index.html` is the entire game** — markup, CSS, and every sprite, in one file
 with no dependencies but Google Fonts. No build step, no framework, no image
-assets. Same rule as KUDR and the hub. Edit `index.html` directly; do not
-introduce a bundler or split it into modules without a real reason.
+assets *in the game*. Same rule as KUDR and the hub. Edit `index.html` directly; do
+not introduce a bundler or split it into modules without a real reason.
+
+The only other files are Home Screen furniture: `manifest.webmanifest` and three PNG
+icons, which were rendered from the game's own bubble sprite (see History) rather
+than drawn by hand. Nothing in the game loads them.
 
 ## How the game is put together
 
@@ -77,6 +81,19 @@ with best distance, runs and medals.
 `GH` silently re-tunes the whole game. Widening is safe; making it taller is not,
 without scaling the obstacles too.
 
+## Fullscreen on a phone
+
+Platform-split, and the button knows the difference:
+
+- **Android / desktop** — the Fullscreen button calls `requestFullscreen()` then
+  `screen.orientation.lock("landscape")`. Real fullscreen, locked sideways.
+- **iPhone Safari** — there is no Fullscreen API for non-video elements, so the button
+  hides itself. The route there is **Add to Home Screen**: `manifest.webmanifest` plus
+  `apple-mobile-web-app-capable` gives a chrome-less launch. iOS ignores the manifest's
+  `orientation`, so it cannot be *locked* — the player rotates, and their device
+  rotation lock applies. A guaranteed landscape lock on iPhone needs the native wrapper.
+- A rotate hint shows above the game on narrow portrait screens.
+
 ## Deploying
 
 Push to `main`; Pages rebuilds in about a minute. Don't trust
@@ -96,3 +113,6 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   level he signed off; it was nearly twice that first. Pigeons also now cross the street
   on their own every 9-17s from stage 2, at their own height rather than aimed at the
   player (the loiter pigeon still comes for you). Page footer removed.
+- **15 Sep 2026** — Stage 3 renamed "Let's go!". Added a Fullscreen button (Android/desktop
+  only, hides itself on iPhone), a web app manifest for Add to Home Screen, and app icons
+  rendered straight from `drawBubbleE` at 512px rather than drawn by hand.

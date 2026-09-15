@@ -14,6 +14,8 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://bubble.eriksheridan.com/">
 <title>Bubble</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%AB%A7%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -80,6 +82,15 @@ canvas{display:block; width:100%; height:auto; image-rendering:pixelated; touch-
   font-family:"Silkscreen",monospace; font-size:clamp(13px,2.6vw,20px); letter-spacing:.1em; color:#fff;
   text-shadow:0 2px 0 rgba(0,0,0,.45); opacity:0; transition:opacity .25s}
 .banner.show{opacity:1}
+.rotate{display:none; margin:0 0 12px; padding:10px 12px; border:1px solid var(--accent);
+  border-radius:2px; color:var(--accent); font-size:13px; background:var(--surface)}
+@media (max-width:860px) and (orientation:portrait){ .rotate{display:block} }
+.frame:fullscreen{background:#0b0e1a; border:0; border-radius:0; display:flex;
+  flex-direction:column; justify-content:center}
+.frame:fullscreen canvas{max-height:78vh}
+.frame:-webkit-full-screen{background:#0b0e1a; border:0; border-radius:0; display:flex;
+  flex-direction:column; justify-content:center}
+.frame:-webkit-full-screen canvas{max-height:78vh}
 .tools{display:flex; gap:6px; align-items:center; padding:9px 12px}
 .tools button{font:500 12px/1 "Instrument Sans",sans-serif; color:var(--ink2); background:var(--surface);
   border:1px solid var(--line2); border-radius:2px; padding:7px 10px; cursor:pointer; white-space:nowrap}
@@ -129,6 +140,7 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
   <p class="tagline"><b>Hold</b> to blow, let go to launch, <b>hold again</b> for wind. Big is slow, small is twitchy.<br><span style="font-size:12.5px;color:var(--ink3);font-family:'JetBrains Mono',monospace">226 &times; 104 &middot; 19.5:9, phone in landscape</span></p>
 </div>
 
+<p class="rotate">Turn your phone sideways &mdash; Bubble is built for landscape.</p>
 <div class="frame">
   <canvas id="game" tabindex="0"></canvas>
   <div class="overlay clear" id="ov-title">
@@ -164,6 +176,7 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
   <div class="tools">
     <button type="button" id="btn-sound" aria-pressed="true">Sound on</button>
     <button type="button" id="btn-pause">Pause</button>
+    <button type="button" id="btn-full" hidden>Fullscreen</button>
     <span style="font-size:12px;color:var(--ink3)">Space / tap to blow &middot; P to pause</span>
   </div>
 </div>
@@ -812,7 +825,7 @@ function rollKid(){ return KIDS[Math.floor(Math.random()*KIDS.length)].id; }
 var STAGES=[
  {name:"Just float",      from:0},
  {name:"Watch the street",from:240},
- {name:"Climb",           from:800},
+ {name:"Let's go!",       from:800},
  {name:"Mind your head",  from:1500},
  {name:"Rush hour",       from:2400}
 ];
@@ -1244,6 +1257,33 @@ btnSound.addEventListener("click",function(){
   queueSave();
 });
 btnPause.addEventListener("click",function(){ togglePause(); });
+
+/* Fullscreen + landscape lock. Works on Android and desktop; iPhone Safari has no
+   Fullscreen API for non-video elements, so the button hides itself there and the
+   Home Screen route (manifest + apple-mobile-web-app-capable) is the answer instead. */
+var btnFull=document.getElementById("btn-full");
+var fsReq=frame.requestFullscreen||frame.webkitRequestFullscreen;
+if(fsReq){
+  btnFull.hidden=false;
+  btnFull.addEventListener("click",function(){
+    var doc=document;
+    if(doc.fullscreenElement||doc.webkitFullscreenElement){
+      (doc.exitFullscreen||doc.webkitExitFullscreen).call(doc);
+      return;
+    }
+    var r=fsReq.call(frame,{navigationUI:"hide"});
+    var lock=function(){
+      if(screen.orientation&&screen.orientation.lock){
+        try{ var q=screen.orientation.lock("landscape"); if(q&&q.catch) q.catch(function(){}); }catch(e){}
+      }
+    };
+    if(r&&r.then) r.then(lock).catch(function(){}); else lock();
+  });
+  document.addEventListener("fullscreenchange",function(){
+    btnFull.textContent=document.fullscreenElement?"Exit fullscreen":"Fullscreen";
+    game.focus();
+  });
+}
 
 /* reflect loaded settings back into the controls */
 function syncOptionUI(){
