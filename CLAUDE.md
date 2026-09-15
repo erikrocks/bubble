@@ -133,6 +133,11 @@ it out over `FADE` before the next begins, so two zones overlap during a handove
 | Park | 0 | start |
 | City | 2700 | ~45 m |
 | Boardwalk | 4700 | ~78 m |
+| Beach | 6400 | ~107 m |
+
+The later zones sit past most runs, so the tuning drawer has a **Start in** control that
+begins a run at a zone's distance purely to look at it. Runs started that way set
+`PREVIEW` and record no score, no medal and no run count.
 
 **Zone starts and stage starts are coupled.** Overhead obstacles only exist from
 `STAGES[3]`, so if a zone's dominant stretch ends before that distance, nothing ever
@@ -153,7 +158,13 @@ and the change of difficulty are one event rather than two that coincide.
   colour and silhouette only, never a difficulty change.
 - **Every zone needs its own tall ground piece** or that stretch becomes hoverable —
   park has the boxwood and statue, city has the shelter/car/phone box, boardwalk has the
-  fry stand. They all live in the `shelter` group, which is what the `tall` gate reads.
+  fry stand, beach has the lifeguard chair. They all live in the `shelter` group, which is
+  what the `tall` gate reads.
+
+The beach solves "what hangs over a beach" three ways, and they are worth keeping
+distinct: the **palm** is a tree (weave past it), the **kite** is narrow and deep with
+only the kite body solid and its string drawn as background, and the **pier** is wide and
+low so you have to commit to going under rather than around.
 
 A banner names the zone **one second after** the handover, not at it, so it lands once
 the new place is actually on screen. Difficulty stages still exist and still drive
@@ -246,6 +257,10 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   telescope, fry stand (the walk's tall piece) and an arcade sign. Sea horizon,
   plank decking, gulls instead of pigeons. Banners now name the zone a second after you
   enter it rather than announcing difficulty stages.
+- **15 Sep 2026** — Beach added as a fourth zone: lifeguard chair (its tall piece), umbrella,
+  volleyball net, cooler, palm fronds, kite and a pier you fly under, over sand with a taller
+  sea behind. Gulls carry over from the boardwalk. Added the Start-in preview control, since
+  the beach begins at 107 m and nobody is going to reach it while iterating on it.
 - **15 Sep 2026** — Trees were allowed in the park but could never appear there: overhead
   obstacles started at 1500px and the park stopped being dominant at 1000px. Air now starts
   at 1250px and the city at 2700px, so a tree shows up in the park in 80% of runs.

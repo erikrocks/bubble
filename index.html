@@ -202,6 +202,8 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
       <h3>Rules</h3>
       <div class="ctl"><span>Ceiling</span><div class="seg" id="seg-ceiling"></div></div>
       <div class="ctl"><span>Pigeons</span><div class="seg" id="seg-birds"></div></div>
+      <div class="ctl"><span>Start in</span><div class="seg" id="seg-start"></div></div>
+      <p style="margin:2px 0 0;font-size:11.5px;color:var(--ink3)">Jump straight to a zone to look at it. Runs started this way don't count towards your best.</p>
       <h3 style="margin-top:18px">What shows up</h3>
       <div id="rotation"></div>
     </div>
@@ -281,6 +283,10 @@ var C={};
     grass:"#6d9a55",grassL:"#8cb86c",grassD:"#4c7340",
     sea:"#2a6d9e",seaL:"#4a92c2",seaD:"#17496f",foam:"#e6f3fa",pier:"#5d4c3c",
     deck:"#b08a5e",deckL:"#c9a577",deckD:"#7d5f3c",
+    sand:"#ddc99c",sandL:"#f0e2bc",sandD:"#bda67a",
+    palm:"#9c7a4e",palmD:"#6d5231",frond:"#4f9153",frondL:"#7cc072",frondD:"#2d6738",
+    kiteA:"#e0573f",kiteB:"#f2b13f",kiteC:"#f7f1e4",net:"#f4f1e8",netD:"#b9b3a2",
+    guard:"#d94f43",guardD:"#9e2f26",
     gull:"#d8dde4",gullL:"#f2f5f8",gullD:"#8f98a6",
     jay:"#3f74c9",jayL:"#7aa6e8",jayD:"#27498a",jayW:"#eef3fb",
     candyA:"#e05a6a",candyB:"#f7efe2",mint:"#5ec9b4",neon:"#ff7bd0",neonD:"#b03d8c",
@@ -658,7 +664,22 @@ var GROUPS=[
      p.rect(x+11,y+4,2,7,C.bronze); p.px(x+12,y+3,C.bronzeL);
      p.rect(x+6,y+20,2,6,C.bronzeD); p.rect(x+9,y+20,2,6,C.bronze);
      p.hl(x+1,b,14,C.shadow);}},
-{id:"fries",name:"Fry stand",w:44,h:34,cw:42,zones:["boardwalk"],edge:true,
+{id:"guardchair",name:"Lifeguard chair",w:26,h:36,cw:20,zones:["beach"],edge:true,
+   note:"The beach's tall piece. Splayed legs, a seat on top and a flag \u2014 nothing else on the sand forces you up.",
+   draw:function(p,x,b){var y=b-36;
+     [[4,0],[20,0]].forEach(function(q){
+       for(var j=0;j<20;j++) p.px(x+q[0]+Math.round(j*0.18)*(q[0]<12?-1:1),b-1-j,C.wood);
+     });
+     p.rect(x+8,b-18,3,18,C.woodD); p.rect(x+16,b-18,3,18,C.woodD);
+     for(var k=0;k<4;k++) p.rect(x+6,b-8-k*4,14,2,C.woodL);
+     p.rect(x+2,y+12,22,3,C.wood); p.hl(x+2,y+12,22,C.woodL); p.hl(x+2,y+14,22,C.woodD);
+     p.rect(x+4,y+4,3,9,C.wood); p.rect(x+19,y+4,3,9,C.wood);
+     p.rect(x+4,y+2,18,3,C.guard); p.hl(x+4,y+2,18,C.guardD);
+     p.rect(x+5,y+6,16,6,C.woodD); p.hl(x+5,y+6,16,C.wood);
+     p.rect(x+12,y-6,2,8,C.ironD);
+     p.rect(x+14,y-6,7,4,C.guard); p.hl(x+14,y-6,7,C.guardD);
+     p.hl(x+2,b,22,C.shadow);}},
+  {id:"fries",name:"Fry stand",w:44,h:34,cw:42,zones:["boardwalk"],edge:true,
    note:"A boardwalk food stand with a sign board on the roof. The walk's tall piece \u2014 without it the boardwalk is hoverable.",
    draw:function(p,x,b){var y=b-34;
      p.rect(x+7,y,30,9,C.kiosk); p.hl(x+7,y,30,C.kioskL); p.hl(x+7,y+8,30,C.kioskD);
@@ -715,6 +736,38 @@ var GROUPS=[
      p.vl(x+7,y+5,26,C.phoneD); p.hl(x+1,y+31,12,C.phoneD);
      p.hl(x,b,14,C.shadow);}}
 ]},
+{id:"sandy",cls:"ground",name:"On the sand",blurb:"Beach clutter. The net is the one that really makes you climb.",items:[
+  {id:"umbrella",name:"Beach umbrella",w:28,h:27,cw:24,zones:["beach"],edge:true,
+   note:"Striped canopy on a pole. Wide at the top, which is exactly where you want to be.",
+   draw:function(p,x,b){var y=b-27;
+     p.rect(x+13,y+8,2,19,C.wood); p.vl(x+13,y+9,17,C.woodL);
+     p.rect(x+11,b-2,6,2,C.sandD);
+     for(var i=0;i<28;i++){
+       var band=((i/4)|0)%2;
+       var h=3+Math.round(Math.sin((i/27)*Math.PI)*5);
+       p.vl(x+i,y+7-h,h,band?C.candyB:C.candyA);
+       p.px(x+i,y+7,band?C.walkD:C.redD);
+     }
+     p.px(x+14,y-1,C.candyA); p.px(x+14,y,C.candyA);
+     p.hl(x+10,b,8,C.shadow);}},
+  {id:"net",name:"Volleyball net",w:46,h:29,cw:44,zones:["beach"],edge:true,
+   note:"Two posts and a span of mesh. Tall, wide and see-through \u2014 the keyline is doing the work of telling you it is solid.",
+   draw:function(p,x,b){var y=b-29;
+     p.rect(x+1,y,3,29,C.wood); p.rect(x+42,y,3,29,C.wood);
+     p.vl(x+1,y+1,27,C.woodL); p.vl(x+42,y+1,27,C.woodL);
+     p.rect(x+4,y+1,38,3,C.net); p.hl(x+4,y+3,38,C.netD);
+     for(var j=5;j<20;j+=3) p.hl(x+4,y+j,38,C.netD);
+     for(var i=4;i<42;i+=3) p.vl(x+i,y+4,16,C.netD);
+     p.rect(x+4,y+19,38,2,C.net);
+     p.hl(x,b,46,C.shadow);}},
+  {id:"cooler",name:"Cooler",w:16,h:12,cw:15,zones:["beach"],
+   note:"Low blue box with a white lid. The beach's rhythm piece \u2014 clears with a nudge.",
+   draw:function(p,x,b){var y=b-12;
+     p.rect(x+1,y+3,14,9,C.blue); p.vl(x+1,y+4,7,C.blueL);
+     p.rect(x,y,16,3,C.candyB); p.hl(x,y,16,C.gullL); p.hl(x,y+2,16,C.walkD);
+     p.rect(x+6,y+5,4,1,C.blueL);
+     p.hl(x+1,b,14,C.shadow);}}
+]},
 {id:"walk",cls:"ground",name:"On the boardwalk",blurb:"Boardwalk clutter \u2014 low and mid-height things that set the rhythm between the big stuff.",items:[
   {id:"railing",name:"Deck railing",w:40,h:13,cw:38,zones:["boardwalk"],
    note:"A run of railing along the sea edge. Low enough to be rhythm rather than threat.",
@@ -750,6 +803,69 @@ var GROUPS=[
      p.rect(x+7,y+1,3,4,C.iron); p.px(x+9,y+1,C.glass);
      p.px(x+2,y+9,C.amber);
      p.hl(x+1,b,8,C.shadow);}}
+]},
+{id:"overbeach",cls:"air",name:"Over the sand",blurb:"Three ways to be made to fly low on a beach.",items:[
+  {id:"palm",name:"Palm fronds",w:46,d:27,boxes:[{dx:3,w:40,d:27}],zones:["beach"],
+   note:"The beach's tree. Leaning trunk in the sand, fronds spraying out over you.",
+   bg:function(p,x,wy){
+     var tx=x+27;
+     for(var j=0;j<wy-24;j++){
+       var lean=Math.round(j*0.09);
+       p.px(tx+lean,wy-1-j,C.palm); p.px(tx+1+lean,wy-1-j,C.palm); p.px(tx+2+lean,wy-1-j,C.palmD);
+       if(j%4===0) p.px(tx+lean,wy-1-j,C.palmD);
+     }
+     p.rect(tx-3,wy-3,10,3,C.palm); p.hl(tx-4,wy-1,12,C.palmD);},
+   draw:function(p,x){
+     var cx=x+27, cy=8;
+     [[-1,0.75],[-1,0.25],[1,0.3],[1,0.8],[0,-0.15]].forEach(function(f){
+       var dir=f[0], drop=f[1];
+       for(var i=0;i<22;i++){
+         var t=i/21;
+         var px2=cx+dir*i*(dir===0?0.2:1.05), py=cy+drop*i*0.85+Math.pow(t,2)*5;
+         p.px(px2,py,C.frond); p.px(px2,py+1,C.frondD);
+         if(i%3===0){ p.px(px2,py-1,C.frondL); p.px(px2+dir,py+2,C.frondD); }
+       }
+     });
+     p.rect(cx-2,cy-2,5,4,C.palmD);
+     p.px(cx-3,cy+3,C.kiteB); p.px(cx+3,cy+3,C.kiteB);}},
+  {id:"kite",name:"Kite",w:24,d:24,boxes:[{dx:5,w:14,d:24}],zones:["beach"],
+   note:"Flying high on a long line. Only the kite itself is solid \u2014 the string is scenery, so this one is narrow and deep.",
+   bg:function(p,x,wy){
+     for(var j=0;j<wy-20;j++){
+       var t=j/(wy-20);
+       p.px(x+11+Math.round(t*16),20+j,C.netD);
+     }
+     p.rect(x+26,wy-4,4,4,C.wood); p.hl(x+26,wy-4,4,C.woodL);},
+   draw:function(p,x){
+     var cx=x+11, cy=10;
+     for(var dy=-9;dy<=9;dy++){
+       var w=Math.round((1-Math.abs(dy)/9.5)*7);
+       for(var dx=-w;dx<=w;dx++){
+         var col=(dy<0)?((dx<0)?C.kiteA:C.kiteB):((dx<0)?C.kiteC:C.kiteA);
+         p.px(cx+dx,cy+dy,col);
+       }
+     }
+     p.vl(cx,cy-9,19,C.kiteC); p.hl(cx-7,cy,15,C.kiteC);
+     for(var k=0;k<5;k++){
+       p.px(cx+Math.round(Math.sin(k*1.1)*3),cy+10+k*3,C.kiteB);
+       p.px(cx+Math.round(Math.sin(k*1.1)*3),cy+11+k*3,C.kiteA);
+     }}},
+  {id:"pierdeck",name:"Pier",w:74,d:18,boxes:[{dx:0,w:74,d:18}],zones:["beach"],
+   note:"You fly under it. Wide, low and unambiguous \u2014 the only overhead piece that asks you to commit rather than weave.",
+   bg:function(p,x,wy){
+     [6,26,46,66].forEach(function(o){
+       p.rect(x+o,18,4,wy-18,C.pier); p.vl(x+o,19,wy-19,C.deck);
+       p.rect(x+o-2,wy-2,8,2,C.pier);
+     });
+     for(var i=0;i<4;i++){
+       var a=x+8+i*20;
+       for(var j=0;j<18;j++) p.px(a+j,34+Math.round(j*0.5),C.pier);
+     }},
+   draw:function(p,x){
+     p.rect(x,10,74,5,C.deck); p.hl(x,10,74,C.deckL);
+     for(var i=0;i<74;i+=3) p.vl(x+i,11,4,C.deckD);
+     p.rect(x,15,74,3,C.pier); p.hl(x,17,74,C.deckD);
+     for(var k=0;k<74;k+=12){ p.rect(x+k,6,3,4,C.deckD); p.rect(x+k+1,3,1,3,C.deckD); }}}
 ]},
 {id:"pier",cls:"air",name:"Over the boardwalk",blurb:"What hangs out over a boardwalk.",items:[
   {id:"arcade",name:"Arcade sign",w:42,d:26,boxes:[{dx:11,w:20,d:26},{dx:1,w:30,d:6}],zones:["boardwalk"],
@@ -943,11 +1059,15 @@ var R_REF=10, R_MIN=4, R_MAX=20;
 var P={g:180,w:420,c:4.6,p:1.35,inf:15,s:60};
 var BASE_SPEED=60, SPEED_CAP=38, SPEED_RATE=200;
 var RULES={ceiling:"soft",birds:true};
+/* preview: start a run partway along so a later zone can be looked at without
+   playing to it. Never persisted, and never records a score. */
+var PREVIEW=0;
 
 /* his saved rotation */
 var on={bench:["slat","scroll"],post:["hydrant","meter","bollard"],bin:["trash","mailbox","newsbox"],
-        shelter:["hedge","statue","fries","busstop","car","phonebox"],
+        shelter:["hedge","statue","fries","guardchair","busstop","car","phonebox"],
         walk:["railing","cart","scope"], pier:["arcade"],
+        sandy:["umbrella","net","cooler"], overbeach:["palm","kite","pierdeck"],
         tree:["leafy"],shop:["striped"],pole:["lamp","traffic"]};
 GROUPS.forEach(function(g){ g.items.forEach(function(it){ it.gid=g.id; }); });
 var DEFAULT_ON=JSON.parse(JSON.stringify(on));
@@ -964,7 +1084,7 @@ function toggle(gid,iid){
    furniture turns up AND what the horizon looks like, so the change of scenery and
    the change of difficulty are one event rather than two that coincide. */
 var ZONES=[{id:"park",from:0,name:"Park"},{id:"city",from:2700,name:"City"},
-           {id:"boardwalk",from:4700,name:"Boardwalk"}];
+           {id:"boardwalk",from:4700,name:"Boardwalk"},{id:"beach",from:6400,name:"Beach"}];
 var FADE=1100;
 /* How present a zone is at this distance: ramps in over FADE before its own start,
    holds, then ramps out over FADE before the next one starts. Two zones overlap
@@ -1085,8 +1205,8 @@ function drawVerge(p,off){
     if(bay(wx,7)<0.18) p.px(x,WALKY+2,C.grassD);
   }
 }
-function drawSea(p,off){
-  var top=WALKY-34;
+function drawSea(p,off,depth){
+  var top=WALKY-(depth||34);
   p.rect(0,top,GW,WALKY-top,C.sea);
   p.hl(0,top,GW,C.foam);          /* the horizon itself, the line that says "water" */
   p.hl(0,top+1,GW,C.seaL);
@@ -1109,6 +1229,17 @@ function drawSea(p,off){
     p.rect(px2,top-3,58,3,C.pier);
     for(var k=0;k<7;k++) p.rect(px2+4+k*8,top,2,7,C.pier);
   }
+}
+function drawSand(p,off){
+  for(var x=0;x<GW;x++){
+    var wx=Math.floor(x+off);
+    p.px(x,WALKY,C.sandL);
+    for(var y=WALKY+1;y<GH;y++) p.px(x,y,C.sand);
+    if(bay(wx,1)<0.3) p.px(x,WALKY+1,C.sandL);
+    if(bay(wx,5)<0.18) p.px(x,WALKY+3,C.sandD);
+    if(bay(wx,9)<0.12) p.px(x,WALKY+6,C.sandD);
+  }
+  p.hl(0,GH-2,GW,C.sandD); p.hl(0,GH-1,GW,C.sandD);
 }
 function drawDeck(p,off){
   for(var x=0;x<GW;x++){
@@ -1252,8 +1383,10 @@ var G={phase:"title",R:R_MIN,y:0,x:0,v:0,hold:false,world:0,obs:[],parts:[],bird
 function rnd(){ G.seed=(G.seed*1664525+1013904223)&0x7fffffff; return G.seed/0x7fffffff; }
 function startRun(){
   G.kid=rollKid(); G.phase="ready"; G.R=R_MIN; G.y=wandY(); G.x=WAND_X-2+R_MIN;
-  G.v=0; G.world=0; G.obs=[]; G.birds=[]; G.parts=[]; G.run=0; G.clip=0; G.campY=G.y; G.campT=0;
-  G.seed=(Math.random()*2147483647)|0; G.nextX=GW+120; G.deadT=0; G.stage=0; G.zone=null; G.zoneDelay=0; G.bannerT=0;
+  G.v=0; G.world=PREVIEW; G.run=PREVIEW; G.obs=[]; G.birds=[]; G.parts=[];
+  G.clip=0; G.campY=G.y; G.campT=0;
+  G.seed=(Math.random()*2147483647)|0; G.nextX=G.world+GW+120;
+  G.deadT=0; G.stage=0; G.zone=null; G.zoneDelay=0; G.bannerT=0;
   G.sq=0; G.sqV=0; G.birdT=7+Math.random()*7;
   ov.title.hidden=true; ov.ready.hidden=false; ov.dead.hidden=true; ov.pause.hidden=true;
   banner.classList.remove("show");
@@ -1344,16 +1477,20 @@ function pop(why){
     G.parts.push({x:G.x,y:G.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,c:POP[i%3]});
   }
   Snd.blowStop(); Snd.wind(false); Snd.pop();
-  var isBest=G.run>G.best;
+  var isBest=(PREVIEW===0)&&G.run>G.best;
   if(isBest) G.best=G.run;
-  STATS.runs++;
-  var med=medalFor(G.run);
-  if(med&&(!STATS.bestMedal||med.m>STATS.bestMedal.m)) STATS.bestMedal=med;
-  queueSave();
+  var med=null;
+  if(PREVIEW===0){
+    STATS.runs++;
+    med=medalFor(G.run);
+    if(med&&(!STATS.bestMedal||med.m>STATS.bestMedal.m)) STATS.bestMedal=med;
+    queueSave();
+  }
   G.phase="dead"; G.deadT=0; G.hold=false;
   ov.cause.textContent=CAUSE[why]||"Popped";
   ov.dist.textContent=(G.run/60).toFixed(1)+" m";
-  ov.best.textContent="best "+(G.best/60).toFixed(1)+" m \u00b7 run "+STATS.runs;
+  ov.best.textContent=PREVIEW?"preview \u2014 not counted"
+    :("best "+(G.best/60).toFixed(1)+" m \u00b7 run "+STATS.runs);
   ov.newbest.hidden=!isBest;
   if(med){ ov.medal.hidden=false; ov.medal.textContent=med.name+" \u00b7 "+med.m+" m"; }
   else ov.medal.hidden=true;
@@ -1479,8 +1616,13 @@ function step(dt){
 function drawWorld(t){
   gimg.data.set(skyBase);
   gp.setA(0.55); drawClouds(gp,G.world*0.12); gp.setA(1);
-  var wPark=zw("park",G.run), wCity=zw("city",G.run), wWalk=zw("boardwalk",G.run);
-  if(wWalk>0.005){ gp.setFade(0.18); gp.setA(wWalk); drawSea(gp,G.world*0.25); gp.setA(1); gp.setFade(0); }
+  var wPark=zw("park",G.run), wCity=zw("city",G.run), wWalk=zw("boardwalk",G.run), wBeach=zw("beach",G.run);
+  var wSea=Math.max(wWalk,wBeach);
+  if(wSea>0.005){
+    gp.setFade(0.18); gp.setA(wSea);
+    drawSea(gp,G.world*0.25,34+wBeach*10);
+    gp.setA(1); gp.setFade(0);
+  }
   if(wPark>0.005){ gp.setFade(0.5); gp.setA(wPark); drawTreeline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
   if(wCity>0.005){ gp.setFade(0.62); gp.setA(wCity); drawSkyline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
   gp.setFade(0.5);
@@ -1488,6 +1630,7 @@ function drawWorld(t){
   gp.setFade(0);
   drawWalk(gp,GW,GH,WALKY,G.world);
   if(wWalk>0.005){ gp.setA(wWalk); drawDeck(gp,G.world); gp.setA(1); }
+  if(wBeach>0.005){ gp.setA(wBeach); drawSand(gp,G.world); gp.setA(1); }
   if(wPark>0.005){ gp.setA(wPark); drawVerge(gp,G.world); gp.setA(1); }
   G.obs.forEach(function(o){
     var sx=Math.round(o.x-G.world);
@@ -1511,7 +1654,7 @@ function drawWorld(t){
     }
   }
   var z=zoneAt(G.run);
-  var bird=(z==="boardwalk")?drawGull:((z==="park")?drawJay:drawDove);
+  var bird=(z==="boardwalk"||z==="beach")?drawGull:((z==="park")?drawJay:drawDove);
   G.birds.forEach(function(b){ bird(gp,b.x,b.y,b.f); });
   if(G.phase==="title"){
     var dx2=((t*26)%(GW+80))-40, dy2=34+Math.sin(t*0.8)*16;
@@ -1735,6 +1878,9 @@ function seg(host,opts,get,set){
 seg(document.getElementById("seg-ceiling"),
   [{label:"Soft pop",value:"soft"},{label:"Hard stop",value:"hard"},{label:"Open",value:"open"}],
   function(){return RULES.ceiling;},function(v){RULES.ceiling=v; queueSave();});
+seg(document.getElementById("seg-start"),
+  ZONES.map(function(z){ return {label:z.name,value:z.from}; }),
+  function(){return PREVIEW;},function(v){ PREVIEW=v; startRun(); });
 seg(document.getElementById("seg-birds"),
   [{label:"On",value:true},{label:"Off",value:false}],
   function(){return RULES.birds;},function(v){RULES.birds=v; if(!v) G.birds=[]; queueSave();});
