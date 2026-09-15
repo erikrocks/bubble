@@ -161,6 +161,15 @@ and the change of difficulty are one event rather than two that coincide.
   fry stand, beach has the lifeguard chair. They all live in the `shelter` group, which is
   what the `tall` gate reads.
 
+**Ground items can be bands, not one rectangle.** `cw` x `h` is a single box for the
+whole height, which is wrong for anything that narrows: the fry stand's sign board is 30
+wide over a 38-wide body, so six pixels of empty sky either side of the sign were lethal.
+Give such an item `boxes:[{dx,w,top,bot}]` — bands measured up from the pavement — and
+`heightOf()` will report the tallest for pair clearance. Done for the fry stand, the car
+(nothing above the roofline kills you now) and the umbrella (the pole, not the canopy's
+footprint). Worth sweeping a new sprite's collider before shipping it; the maps in
+`hitmap.js`-style sweeps make a mismatch obvious in seconds.
+
 **One obstacle can be both a ceiling and a floor.** A box in `boxes[]` with `up:true`
 stands on the pavement (`h` tall) instead of hanging from the top (`d` deep), which is
 how the greengrocer and the souvenir stand are a shop *and* the stall outside it — you
@@ -268,6 +277,9 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   telescope, fry stand (the walk's tall piece) and an arcade sign. Sea horizon,
   plank decking, gulls instead of pigeons. Banners now name the zone a second after you
   enter it rather than announcing difficulty stages.
+- **15 Sep 2026** — Fixed hitboxes that did not match their art. Ground items can now be
+  described as stacked bands; the fry stand, car and umbrella were killing players in empty
+  sky beside their narrow upper halves.
 - **15 Sep 2026** — Shops with something out front: the greengrocer (city) and souvenir
   stand (boardwalk). Needed `up:true` collision boxes so a single air obstacle can also
   own a box standing on the ground.

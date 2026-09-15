@@ -684,6 +684,7 @@ var GROUPS=[
      p.rect(x+14,y-6,7,4,C.guard); p.hl(x+14,y-6,7,C.guardD);
      p.hl(x+2,b,22,C.shadow);}},
   {id:"fries",name:"Fry stand",w:44,h:34,cw:42,zones:["boardwalk"],edge:true,
+   boxes:[{dx:7,w:30,top:34,bot:25},{dx:3,w:38,top:25,bot:0}],
    note:"A boardwalk food stand with a sign board on the roof. The walk's tall piece \u2014 without it the boardwalk is hoverable.",
    draw:function(p,x,b){var y=b-34;
      p.rect(x+7,y,30,9,C.kiosk); p.hl(x+7,y,30,C.kioskL); p.hl(x+7,y+8,30,C.kioskD);
@@ -712,6 +713,7 @@ var GROUPS=[
      p.rect(x+4,y+6,10,5,C.signBand); p.hl(x+5,y+8,8,C.cream);
      p.hl(x,b,46,C.shadow);}},
   {id:"car",name:"Parked car",w:44,h:26,cw:42,zones:["city"],edge:true,
+   boxes:[{dx:11,w:22,top:24,bot:14},{dx:2,w:40,top:14,bot:0}],
    note:"Wide and mid-height. Cheap to clear on its own, brutal when a branch is sitting over it.",
    draw:function(p,x,b,W,v){
      var y=b-26, CARS=[["carR","carRL","carRD"],["carB","carBL","carBD"],
@@ -746,6 +748,7 @@ var GROUPS=[
 ]},
 {id:"sandy",cls:"ground",name:"On the sand",blurb:"Beach clutter. The net is the one that really makes you climb.",items:[
   {id:"umbrella",name:"Beach umbrella",w:28,h:27,cw:24,zones:["beach"],edge:true,
+   boxes:[{dx:0,w:28,top:27,bot:20},{dx:11,w:6,top:20,bot:0}],
    note:"Striped canopy on a pole. Wide at the top, which is exactly where you want to be.",
    draw:function(p,x,b){var y=b-27;
      p.rect(x+13,y+8,2,19,C.wood); p.vl(x+13,y+9,17,C.woodL);
@@ -1235,6 +1238,12 @@ function pickFor(cls,tall){
   for(i=0;i<pool.length;i++){ r-=w[i]; if(r<=0) return pool[i]; }
   return pool[pool.length-1];
 }
+function heightOf(it){
+  if(!it.boxes||it.cls==="air") return it.h;
+  var h=0;
+  it.boxes.forEach(function(b){ if(b.top>h) h=b.top; });
+  return h||it.h;
+}
 function depthOf(it){
   var d=0;
   (it.boxes||[{d:it.d}]).forEach(function(b){ if(!b.up&&b.d>d) d=b.d; });
@@ -1531,7 +1540,7 @@ function spawn(){
       /* a shop that already has a stall outside it makes its own gap; pairing it
          with anything else stacks two gaps and there is no way through */
       if(gi&&ai&&!ai.nopair&&!(gi.gid==="shelter"&&ai.gid==="shop")){
-        if((WALKY-gi.h)-depthOf(ai)>=34){
+        if((WALKY-heightOf(gi))-depthOf(ai)>=34){
           G.obs.push({cls:"ground",it:gi,x:G.nextX,v:Math.floor(rnd()*97)});
           G.obs.push({cls:"air",it:ai,x:G.nextX-8,v:Math.floor(rnd()*97)});
           paired=true;
@@ -1546,6 +1555,19 @@ function spawn(){
 function hit(o){
   var r=G.R*0.82, sx=o.x-G.world, it=o.it;
   if(o.cls==="ground"){
+    /* A single cw-by-h rectangle is wrong for anything narrower at the top: the fry
+       stand's sign board is 30 wide over a 38-wide body, so 6px of empty sky either
+       side of the sign was still lethal. Ground boxes are bands measured up from the
+       pavement: {dx, w, top, bot}. */
+    var gb=it.boxes;
+    if(gb){
+      for(var i=0;i<gb.length;i++){
+        var bx=gb[i], a0=sx+bx.dx, a1=a0+bx.w;
+        if(G.x+r<a0||G.x-r>a1) continue;
+        if(G.y+r>WALKY-bx.top&&G.y-r<WALKY-(bx.bot||0)) return true;
+      }
+      return false;
+    }
     var cw=it.cw||it.w, x0=sx+(it.w-cw)/2;
     if(G.x+r<x0||G.x-r>x0+cw) return false;
     return G.y+r>WALKY-it.h;
