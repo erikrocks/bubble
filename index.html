@@ -280,23 +280,27 @@ function film(ang,x,y,t){
   return (bay(x,y)<fr)?CROSS[1+((i+1)%5)]:CROSS[1+(i%5)];
 }
 function keyMix(R){ if(R>=8) return 1; if(R<=5) return 0.5; return 0.5+((R-5)/3)*0.5; }
-function drawBubble(d,W,H,cx,cy,R,t,alpha){
-  var rad=Math.ceil(R*1.25),bx=Math.round(cx),by=Math.round(cy),ox,oy;
+function drawBubbleE(d,W,H,cx,cy,rx,ry,t,pinchDown,alpha){
+  var rad=Math.ceil(Math.max(rx,ry)*1.3), bx=Math.round(cx), by=Math.round(cy);
+  var R=(rx+ry)/2, ox, oy;
   for(oy=-rad;oy<=rad;oy++){
     var y=by+oy; if(y<0||y>=H) continue;
     for(ox=-rad;ox<=rad;ox++){
       var x=bx+ox; if(x<0||x>=W) continue;
-      var dist=Math.hypot(ox,oy),ang=Math.atan2(oy,ox);
+      var ux=ox/rx, uy=oy/ry;
+      var dist=Math.hypot(ux,uy), ang=Math.atan2(oy,ox);
       var wob=1+0.035*Math.sin(2*ang+t*1.6)+0.022*Math.sin(3*ang-t*1.05);
-      var nd=dist/(R*wob), c=null;
+      /* wind hits the underside, so the bottom flattens more than the top */
+      if(pinchDown) wob*=(1-pinchDown*Math.max(0,Math.sin(ang)));
+      var nd=dist/wob, c=null;
       if(nd<=1){
-        var hx=(-0.36+0.04*Math.sin(t*0.7))*R, hy=-0.40*R;
-        var h=Math.hypot(ox-hx,oy-hy)/R, h2=Math.hypot(ox-0.30*R,oy-0.34*R)/R;
+        var hx=-0.36+0.04*Math.sin(t*0.7), hy=-0.40;
+        var h=Math.hypot(ux-hx,uy-hy), h2=Math.hypot(ux-0.30,uy-0.34);
         if(nd>0.91){
           var k=keyMix(R);
           if(k>=1) c=CROSS[0];
-          else{var fc=film(ang,x,y,t),K=CROSS[0];
-               c=[K[0]*k+fc[0]*(1-k),K[1]*k+fc[1]*(1-k),K[2]*k+fc[2]*(1-k),255];}
+          else { var fc=film(ang,x,y,t), K=CROSS[0];
+                 c=[K[0]*k+fc[0]*(1-k),K[1]*k+fc[1]*(1-k),K[2]*k+fc[2]*(1-k),255]; }
         }
         else if(nd>0.71) c=withA(film(ang,x,y,t),nd>0.87?255:235);
         else if(h<0.29&&h>0.14) c=CROSS[6];
@@ -307,7 +311,7 @@ function drawBubble(d,W,H,cx,cy,R,t,alpha){
     }
   }
 }
-
+function drawBubble(d,W,H,cx,cy,R,t,alpha){ drawBubbleE(d,W,H,cx,cy,R,R,t,0,alpha); }
 
 /* ---------------- the kid, and the pigeon ---------------- */
 function bottle(p,x,wy){
@@ -945,12 +949,13 @@ var STATS={runs:0,bestMedal:null};
 /* ================= state ================= */
 var G={phase:"title",R:R_MIN,y:0,x:0,v:0,hold:false,world:0,obs:[],parts:[],birds:[],
        run:0,best:0,seed:7,nextX:0,highT:0,clip:0,kid:null,deadT:0,armed:true,
-       prev:null,stage:0,bannerT:0,attract:0};
+       prev:null,stage:0,bannerT:0,attract:0,sq:0,sqV:0};
 function rnd(){ G.seed=(G.seed*1664525+1013904223)&0x7fffffff; return G.seed/0x7fffffff; }
 function startRun(){
   G.kid=rollKid(); G.phase="ready"; G.R=R_MIN; G.y=wandY(); G.x=WAND_X-2+R_MIN;
   G.v=0; G.world=0; G.obs=[]; G.birds=[]; G.parts=[]; G.run=0; G.highT=0; G.clip=0;
   G.seed=(Math.random()*2147483647)|0; G.nextX=GW+120; G.deadT=0; G.stage=0; G.bannerT=0;
+  G.sq=0; G.sqV=0;
   ov.title.hidden=true; ov.ready.hidden=false; ov.dead.hidden=true; ov.pause.hidden=true;
   banner.classList.remove("show");
 }
@@ -1070,6 +1075,12 @@ function step(dt){
   if(G.hold) a-=P.w*k;
   G.v+=a*dt; G.v-=G.v*P.c*dt; G.y+=G.v*dt;
   G.x+=(LANE-G.x)*Math.min(1,dt*4);
+  /* wind shoves the underside: squash wide. Falling free: stretch long.
+     Sprung rather than snapped, so starting and stopping the wind rings. */
+  var target=G.hold?1:-Math.max(0,Math.min(1,G.v/70));
+  G.sqV+=((target-G.sq)*120-G.sqV*9)*dt;
+  G.sq+=G.sqV*dt;
+  if(G.sq>1.6) G.sq=1.6; if(G.sq<-1.6) G.sq=-1.6;
   G.clip=Math.max(0,G.R-G.y);
   if(RULES.ceiling==="hard"){ if(G.y<G.R+1){ G.y=G.R+1; if(G.v<0) G.v=0; } G.clip=0; }
   else if(RULES.ceiling==="soft"){ if(G.clip>G.R*0.667){ pop("ceiling"); return; } }
@@ -1129,7 +1140,12 @@ function drawWorld(t){
     var dx2=((t*26)%(GW+80))-40, dy2=34+Math.sin(t*0.8)*16;
     drawBubble(gimg.data,GW,GH,dx2,dy2,11,t);
     drawBubble(gimg.data,GW,GH,dx2-70,dy2+22+Math.sin(t*1.3)*8,6,t);
-  } else if(G.phase!=="dead") drawBubble(gimg.data,GW,GH,G.x,G.y,G.R,t);
+  } else if(G.phase!=="dead"){
+    var br=(G.phase==="fly"?0.02:0.055)*Math.sin(t*5.5);   /* breathing */
+    var amp=0.10+G.R*0.004, sq=(G.phase==="fly"?G.sq:0);
+    var rx=G.R*(1+amp*sq*0.9+br), ry=G.R*(1-amp*sq-br);
+    drawBubbleE(gimg.data,GW,GH,G.x,G.y,rx,ry,t,Math.max(0,sq)*0.26);
+  }
   if(G.phase!=="title"){
     var kx=kidX()-G.world;
     if(kx>-28) kidSel().draw(gp,kx,WALKY);
