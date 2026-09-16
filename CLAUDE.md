@@ -209,6 +209,21 @@ sleep. The trade, which KUDR's notes made the other way: the two games' keys can
 and insert into each other's score tables. Given scores are public and forgeable anyway,
 that buys little.
 
+## The tuning drawer lives at /admin
+
+The physics sliders, rules, Start-in preview and obstacle rotation are hidden unless
+`ADMIN` is true: the path is `/admin`, or the hash is `#admin`, or there is an `admin`
+query parameter. `admin/index.html` is a five-line redirect to `/#admin`, so the tidy URL
+works while the game stays one file.
+
+**This is obscurity, not security, and that is the right amount.** Everything the drawer
+changes is client-side and already sitting in `localStorage`; there is nothing to protect,
+only clutter to hide from players.
+
+"Reset to system default" restores the tune, rules, preview and obstacle rotation. It
+deliberately keeps best distance, runs, medals and the chosen kid — those are the
+player's, not settings.
+
 ## Who's blowing
 
 A row of kid portraits under the game picks the character, or "Anyone" for a random kid
@@ -433,6 +448,9 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   telescope, fry stand (the walk's tall piece) and an arcade sign. Sea horizon,
   plank decking, gulls instead of pigeons. Banners now name the zone a second after you
   enter it rather than announcing difficulty stages.
+- **15 Sep 2026** — Tuning drawer moved behind `/admin`, with a reset-to-defaults button.
+  Pigtails wears pink at Vivian's request (it was blue only because the original yellow
+  merged with her blonde hair; pink has no such problem).
 - **15 Sep 2026** — High-score board added, copied from KUDR: same Supabase pattern, own
   table in the same project. Verified the RLS behaviour against the live table first.
 - **15 Sep 2026** — The route became a repeating round trip (Erik's idea): out to the sea
