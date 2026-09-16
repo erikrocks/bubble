@@ -820,11 +820,18 @@ var GROUPS=[
        p.px(x+6+m*1.4,b-19+ph2*9,C.glass);
      }
      p.px(x+13,b-28,C.glassD);
+     if(hasKid(v)){                                       /* sitting on the rim */
+       var km=kidSel().mini;
+       p.hl(x+3,b-14,3,mcol(km,"hair")); p.hl(x+3,b-13,3,mcol(km,"skin"));
+       p.rect(x+3,b-12,3,5,mcol(km,"top"));
+       p.px(x+2,b-11,mcol(km,"skin")); p.px(x+6,b-11,mcol(km,"skin"));
+       p.vl(x+3,b-6,4,mcol(km,"leg")); p.vl(x+5,b-6,4,mcol(km,"leg"));
+     }
      p.hl(x,b,26,C.shadow);}},
   {id:"fries",name:"Fry stand",w:44,h:34,cw:42,zones:["boardwalk"],edge:true,
    boxes:[{dx:7,w:30,top:34,bot:25},{dx:3,w:38,top:25,bot:0}],
    note:"A boardwalk food stand with a sign board on the roof. The walk's tall piece \u2014 without it the boardwalk is hoverable.",
-   draw:function(p,x,b){var y=b-34;
+   draw:function(p,x,b,W,v){var y=b-34;
      p.rect(x+7,y,30,9,C.kiosk); p.hl(x+7,y,30,C.kioskL); p.hl(x+7,y+8,30,C.kioskD);
      p.rect(x+11,y+3,8,3,C.candyB); p.rect(x+22,y+3,11,3,C.candyB);
      p.rect(x+3,y+9,38,25,C.candyB); p.vl(x+3,y+10,24,C.gullL);
@@ -834,6 +841,12 @@ var GROUPS=[
        p.px(x+3+i,y+14,band?C.walkD:C.kioskD);
      }
      p.rect(x+8,y+16,28,9,C.glassD); p.rect(x+9,y+17,26,7,C.glass);
+     if(hasKid(v)){                                       /* serving, behind the counter */
+       var km=kidSel().mini;
+       p.hl(x+20,y+18,3,mcol(km,"hair")); p.hl(x+20,y+19,3,mcol(km,"skin"));
+       p.rect(x+20,y+20,3,4,mcol(km,"top"));
+       p.px(x+19,y+21,mcol(km,"skin")); p.px(x+23,y+21,mcol(km,"skin"));
+     }
      p.hl(x+9,y+20,26,C.glassD);
      p.rect(x+2,y+25,40,3,C.deckD); p.hl(x+2,y+25,40,C.deckL);
      p.rect(x+5,y+28,4,6,C.deckD); p.rect(x+35,y+28,4,6,C.deckD);
@@ -895,18 +908,24 @@ var GROUPS=[
      p.hl(x+2,b-1,10,C.deepD);}},
   {id:"dinghy",name:"Moored dinghy",w:34,h:15,cw:32,zones:["sea"],edge:true,floats:true,
    note:"A little boat riding the swell. Wide and low \u2014 the water's version of a bench.",
-   draw:function(p,x,b){var y=b-15;
+   draw:function(p,x,b,W,v){var y=b-15;
      p.rect(x+13,y,2,9,C.wood); p.rect(x+15,y+1,6,5,C.buoyB); p.hl(x+15,y+1,6,C.gullL);
      p.rect(x+2,y+9,30,4,C.hull); p.hl(x+2,y+9,30,C.buoyB); p.hl(x+2,y+12,30,C.hullD);
      p.rect(x+4,y+13,26,2,C.hullD);
      p.rect(x+6,y+10,6,2,C.wood); p.rect(x+20,y+10,6,2,C.wood);
+     if(hasKid(v)){                                       /* sitting on the aft thwart */
+       var km=kidSel().mini;
+       p.hl(x+21,y+3,3,mcol(km,"hair")); p.hl(x+21,y+4,3,mcol(km,"skin"));
+       p.rect(x+21,y+5,3,5,mcol(km,"top"));
+       p.px(x+20,y+6,mcol(km,"skin")); p.px(x+24,y+6,mcol(km,"skin"));
+     }
      p.hl(x+1,b-1,32,C.deepD);}}
 ]},
 {id:"sandy",cls:"ground",name:"On the sand",blurb:"Beach clutter. The net is the one that really makes you climb.",items:[
   {id:"umbrella",name:"Beach umbrella",w:28,h:27,cw:24,zones:["beach"],edge:true,
    boxes:[{dx:0,w:28,top:27,bot:20},{dx:11,w:6,top:20,bot:0}],
    note:"Striped canopy on a pole. Wide at the top, which is exactly where you want to be.",
-   draw:function(p,x,b){var y=b-27;
+   draw:function(p,x,b,W,v){var y=b-27;
      p.rect(x+13,y+8,2,19,C.wood); p.vl(x+13,y+9,17,C.woodL);
      p.rect(x+11,b-2,6,2,C.sandD);
      for(var i=0;i<28;i++){
@@ -916,6 +935,7 @@ var GROUPS=[
        p.px(x+i,y+7,band?C.walkD:C.redD);
      }
      p.px(x+14,y-1,C.candyA); p.px(x+14,y,C.candyA);
+     if(hasKid(v)) miniKid(p,x+3,b,kidSel().mini);        /* out of the sun */
      p.hl(x+10,b,8,C.shadow);}},
   {id:"net",name:"Volleyball net",w:46,h:29,cw:44,zones:["beach"],edge:true,
    note:"Two posts and a span of mesh. Tall, wide and see-through \u2014 the keyline is doing the work of telling you it is solid.",
@@ -1128,7 +1148,7 @@ var GROUPS=[
      p.hl(x+11,25,20,C.ironD);}}
 ]},
 {id:"tree",cls:"air",name:"Tree",blurb:"Rooted in the sidewalk, trunk hazed back behind the play line, canopy hanging into it. The deepest things in the level.",items:[
-  {id:"leafy",name:"Leafy bough",w:54,d:32,boxes:[{dx:2,w:50,d:32}],
+  {id:"leafy",name:"Leafy bough",w:54,d:32,zones:["park","city"],boxes:[{dx:2,w:50,d:32}],
    note:"Full summer crown sitting right on its trunk. Deep enough that you have to commit to going low — the headline overhead piece.",
    bg:function(p,x,wy){
      var tx=x+24;
@@ -1199,6 +1219,7 @@ var GROUPS=[
      p.rect(x+6,wy-40,26,26,C[sk.brD]);
      p.rect(x+7,wy-39,24,24,C.glassD); p.rect(x+8,wy-38,22,22,C.glass);
      p.vl(x+19,wy-38,22,C.glassD); p.hl(x+8,wy-27,22,C.glassD);
+     if(hasKid(v)) miniKid(p,x+11,wy-17,kidSel().mini);   /* someone at the glass */
      p.rect(x+6,wy-14,26,3,C.conc); p.hl(x+6,wy-14,26,C.concL);
      p.rect(x+36,wy-30,16,30,C[sk.brD]);
      p.rect(x+37,wy-29,14,29,C.doorW); p.vl(x+37,wy-28,27,C.wood);
@@ -1709,101 +1730,10 @@ function sitKid(p,x,seat,m){      /* folded at the hip, legs hanging below `seat
   p.px(x,seat-3,mcol(m,"skin")); p.px(x+4,seat-3,mcol(m,"skin"));
   p.vl(x+1,seat+2,3,mcol(m,"leg")); p.vl(x+3,seat+2,3,mcol(m,"leg"));
 }
-function cameoAt(off,per,fn){
-  var first=Math.floor(off/per)-1;
-  for(var i=first;i<first+Math.ceil(GW/per)+2;i++){
-    var x=Math.round(i*per-off);
-    if(x>-40&&x<GW+40) fn(x,i);
-  }
-}
-/* park: sitting on a bench under the trees, feet swinging */
-function cameoPark(p,off){
-  var m=kidSel().mini;
-  cameoAt(off,400,function(x){
-    var seat=WALKY-6;
-    p.rect(x,seat-7,16,2,C.wood);                                    /* back rail */
-    p.vl(x+1,seat-7,7,C.woodD); p.vl(x+14,seat-7,7,C.woodD);
-    sitKid(p,x+5,seat,m);                                            /* then the kid */
-    p.hl(x,seat,16,C.woodL); p.hl(x,seat+1,16,C.wood);               /* seat in front */
-    p.vl(x+1,seat+2,4,C.woodD); p.vl(x+14,seat+2,4,C.woodD);         /* legs */
-  });
-}
-/* city: in a lit shop window, looking out at the street */
-function cameoCity(p,off){
-  var m=kidSel().mini;
-  cameoAt(off,420,function(x,i){
-    var b=WALKY-1, w=26, h=22, wall=(i&1)?C.brickB:C.brickA, wallD=(i&1)?C.brickBD:C.brickAD;
-    p.rect(x,b-h,w,h,wall); p.hl(x,b-h,w,wallD); p.vl(x+w-1,b-h,h,wallD);
-    p.rect(x+2,b-17,17,2,(i&1)?C.awnB:C.awnA);                       /* awning over the glass */
-    p.hl(x+2,b-15,17,(i&1)?C.awnBD:C.awnAD);
-    p.rect(x+3,b-14,14,11,C.lamp2);                                  /* the lit pane */
-    p.hl(x+3,b-14,14,C.iron); p.vl(x+3,b-14,11,C.iron); p.vl(x+16,b-14,11,C.iron);
-    p.hl(x+3,b-4,14,C.iron);
-    miniKid(p,x+7,b-5,m);                                            /* standing inside it */
-    p.rect(x+20,b-9,4,9,C.doorW); p.px(x+23,b-5,C.gold);
-  });
-}
-/* boardwalk: one car of the wheel the sea has been promising all along */
-function cameoWheel(p,off,t){
-  var m=kidSel().mini;
-  cameoAt(off,400,function(x,i){
-    var cx=x+20, cy=WALKY-62, R=15, horizon=WALKY-34;
-    p.rect(cx-1,cy,2,horizon-cy,C.pier);                             /* tower */
-    for(var k=0;k<2;k++){
-      var lx=cx+(k?6:-6);
-      for(var j=0;j<10;j++) p.px(cx+Math.round((lx-cx)*j/9),horizon-9+j,C.pier);
-    }
-    for(var a=0;a<64;a++){                                           /* rim */
-      var an=a/64*Math.PI*2;
-      p.px(cx+Math.round(Math.cos(an)*R),cy+Math.round(Math.sin(an)*R),C.iron);
-    }
-    var spin=t*0.3+i;
-    for(var k2=0;k2<6;k2++){
-      var an2=spin+k2*Math.PI/3;
-      var gx=cx+Math.round(Math.cos(an2)*R), gy=cy+Math.round(Math.sin(an2)*R);
-      for(var j2=3;j2<R-1;j2+=2)
-        p.px(cx+Math.round(Math.cos(an2)*j2),cy+Math.round(Math.sin(an2)*j2),C.iron);
-      p.rect(gx-2,gy,5,4,(k2&1)?C.candyA:C.mint);                    /* gondola */
-      p.hl(gx-2,gy,5,C.buoyB);
-      if(k2===0){                                                    /* the kid is in this one */
-        p.hl(gx-1,gy-3,3,mcol(m,"hair"));
-        p.hl(gx-1,gy-2,3,mcol(m,"skin"));
-        p.hl(gx-1,gy-1,3,mcol(m,"top"));
-      }
-    }
-  });
-}
-/* beach: out in the shallows in a rubber ring */
-function cameoSwim(p,off,t){
-  var m=kidSel().mini;
-  cameoAt(off,360,function(x,i){
-    /* The ring has to read as a ring, not a hull: the near side runs the full width,
-       the far side is only visible either side of the kid, who sits down inside it. */
-    var y=WALKY-13+Math.round(Math.sin(t*1.7+i*2.1)*1), cx=x+6;
-    p.hl(cx-2,y-4,3,mcol(m,"hair"));                                 /* head */
-    p.hl(cx-2,y-3,3,mcol(m,"skin"));
-    p.hl(cx-2,y-2,3,mcol(m,"top"));
-    p.hl(cx-2,y-1,3,mcol(m,"top"));
-    p.px(cx-3,y-1,mcol(m,"skin")); p.px(cx+3,y-1,mcol(m,"skin"));    /* arms on the ring */
-    p.hl(cx-6,y,4,C.buoyA); p.hl(cx+3,y,4,C.buoyA);                  /* far side of the ring */
-    p.hl(cx-6,y+1,13,C.buoyA);                                       /* near side */
-    p.px(cx-4,y+1,C.buoyB); p.px(cx,y+1,C.buoyB); p.px(cx+4,y+1,C.buoyB);
-    p.hl(cx-4,y+2,9,C.buoyA);
-    p.px(cx-7,y+2,C.foam); p.px(cx+7,y+2,C.foam);                    /* splash */
-  });
-}
-/* sea: rowing past, riding the same swell as everything else out there */
-function cameoBoat(p,off,t){
-  var m=kidSel().mini;
-  cameoAt(off,360,function(x,i){
-    var y=WALKY-18+Math.round(Math.sin(t*1.2+i*1.7)*1.4);
-    p.rect(x+1,y,13,3,C.hull); p.hl(x+1,y,13,C.buoyB); p.hl(x+1,y+2,13,C.hullD);
-    p.px(x,y,C.hullD); p.px(x+14,y,C.hullD);
-    sitKid(p,x+5,y-1,m);
-    p.px(x+3,y-2,C.wood); p.px(x+2,y-1,C.wood); p.px(x+1,y,C.wood);  /* the oar */
-    p.hl(x,y+3,15,C.foam);
-  });
-}
+/* Roughly a third of the instances of an obstacle carry the kid. `v` is the
+   per-instance random the spawner already attaches, so the same piece of street
+   furniture is sometimes occupied and sometimes not. */
+function hasKid(v){ return ((v||0)%3)===0; }
 
 /* ================= sound =================
    everything synthesised, so nothing has to load */
@@ -2201,19 +2131,8 @@ function drawWorld(t){
     drawSea(gp,G.world*0.25,34+wBeach*10+wCross*22);
     gp.setA(1); gp.setFade(0);
   }
-  /* The cameos ride their zone's own layer and weight, so they fade in and out with
-     the scenery they belong to instead of popping at a boundary. Each sits a little
-     less faded than its backdrop - enough to notice the kid, not enough to mistake
-     one for something you have to dodge. */
-  gp.setFade(0.2);
-  if(wWalk>0.005){ gp.setA(wWalk); cameoWheel(gp,G.world*0.25,t); }
-  if(wCross>0.005){ gp.setA(wCross); cameoBoat(gp,G.world*0.25,t); }
-  if(wBeach>0.005){ gp.setA(wBeach); cameoSwim(gp,G.world*0.25,t); }
-  gp.setA(1); gp.setFade(0);
   if(wPark>0.005){ gp.setFade(0.5); gp.setA(wPark); drawTreeline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
   if(wCity>0.005){ gp.setFade(0.62); gp.setA(wCity); drawSkyline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
-  if(wPark>0.005){ gp.setFade(0.3); gp.setA(wPark); cameoPark(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
-  if(wCity>0.005){ gp.setFade(0.3); gp.setA(wCity); cameoCity(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
   gp.setFade(0.5);
   G.obs.forEach(function(o){ if(o.cls==="air"&&o.it.bg) o.it.bg(gp,Math.round(o.x-G.world),WALKY,GW,o.v||0); });
   gp.setFade(0);

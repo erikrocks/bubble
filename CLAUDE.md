@@ -156,22 +156,25 @@ while doing nothing still drives you into the bird placed below you.
 
 ## The kid turns up in every zone
 
-A cameo per zone, in the parallax layer behind the playfield: on a bench in the park, in
-a lit shop window in the city, in a gondola on the Ferris wheel over the boardwalk, in a
-rubber ring in the shallows off the beach, rowing past out at sea. They are **never
-colliders** — nothing in `cameo*` is registered as an obstacle, and each is drawn at its
-zone's own weight so it fades in and out with the scenery it belongs to.
+The kid you are playing is drawn **into obstacle sprites**, one per zone: sitting on the
+fountain rim in the park, standing in the shop window under the striped awning in the
+city, serving at the fry stand's counter on the boardwalk, sitting under the beach
+umbrella, and out in the moored dinghy at sea.
 
-The playable sprite is 24px tall and at that size a second one reads as a second player,
-so cameos use `miniKid`/`sitKid`: a 9-10px doll built from four colours each kid carries
-in its `mini` block (hair, skin, top, leg). That is enough to tell Pigtails from Ball Cap
-and not enough to compete with the bubble.
+The first attempt put these in the parallax background as free-floating scenes - a bench,
+a shopfront, a Ferris wheel, a rubber ring, a rowboat - and that was wrong. They belong to
+the furniture you are already dodging, so they read as part of the world instead of
+wallpaper. **The kid does not have to sit inside the collider.** The awning is the hitbox;
+the window below it is the same obstacle's art, and that is where the kid goes.
 
-Spacing is per-cameo and set in layer coordinates, all larger than `GW`+40 so two never
-share the screen: park 400, city 420, wheel 400, swim 360, boat 360. Against a 0.4
-parallax that is roughly one per 1000px of run; against 0.25, one per ~1450px. Do not
-tune these with chained string replacements — the wheel's period got clobbered that way
-and the wheel silently stopped appearing where it was expected.
+`hasKid(v)` gates it on `v`, the per-instance random the spawner already attaches, so
+about a third of each obstacle's instances are occupied. Every instance would be wallpaper
+again.
+
+The playable sprite is 24px tall; a second one at that size reads as a second player, so
+cameos use `miniKid`/`sitKid` or a few inline rows, built from the four colours each kid
+carries in its `mini` block (hair, skin, top, leg). Enough to tell Pigtails from Ball Cap,
+not enough to compete with the bubble.
 
 ## Zones, and the route
 
@@ -303,8 +306,15 @@ toward the sky, so it starts darker than the streetlamp on purpose: it has to su
 mix and still read as cast iron. The collider is the lantern and its neck only; the post is
 scenery you pass in front of, like every other pole.
 
+`leafy` (the overhanging bough) is `zones:["park","city"]` for the same reason - untagged,
+it hung over the boardwalk, the beach and the open sea.
+
 Measured across a run: streetlamp weight is 0 for the whole beach and the whole crossing,
-and 0 in the park core; the park lamp is 0 everywhere except the park.
+and 0 in the park core; the park lamp is 0 everywhere except the park; the leafy bough is
+0 on the boardwalk, the beach and the sea.
+
+**Still untagged, and still turning up on the sand:** slat bench, scrolled bench, bollard
+and wire bin, which between them are about 40% of beach ground spawns.
 
 ## Adding an obstacle without it being invisible
 
@@ -494,3 +504,8 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   park got its own Victorian lamppost and the modern streetlamp was confined to the city
   and boardwalk, and the high-score dials open on the last initials used on that device
   rather than back at AAA every time.
+- **15 Sep 2026** — The zone cameos were rebuilt. They started as free-floating background
+  scenes; they are now drawn into the obstacles themselves (fountain, shop window, fry
+  stand counter, beach umbrella, dinghy) on about a third of instances. The Ferris wheel
+  that came with the first attempt went with it. Leafy bough tagged park/city so it stops
+  hanging over the sea.
