@@ -174,6 +174,9 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
 .rot button{font:500 11.5px/1 "Instrument Sans",sans-serif; color:var(--ink3); background:transparent;
   border:1px solid var(--line2); border-radius:2px; padding:6px 9px; cursor:pointer}
 .rot button[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff}
+button.chip{font:500 12.5px/1 "Instrument Sans",sans-serif; color:var(--ink2); background:var(--surface);
+  border:1px solid var(--line2); border-radius:2px; padding:9px 12px; cursor:pointer}
+button.chip:hover{border-color:var(--accent); color:var(--ink)}
 .rotgroup{margin-bottom:10px}
 .rotgroup > span{display:block; font-family:"JetBrains Mono",monospace; font-size:10.5px; color:var(--ink3); margin-bottom:4px}
 </style>
@@ -256,6 +259,9 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
       <p style="margin:2px 0 0;font-size:11.5px;color:var(--ink3)">Jump straight to a zone to look at it. Runs started this way don't count towards your best.</p>
       <h3 style="margin-top:18px">What shows up</h3>
       <div id="rotation"></div>
+      <h3 style="margin-top:18px">Start over</h3>
+      <button type="button" id="btn-reset" class="chip">Reset to system default</button>
+      <p style="margin:6px 0 0;font-size:11.5px;color:var(--ink3)">Puts the physics, rules and obstacle list back to how they ship. Your best distance, medals and chosen kid are kept.</p>
     </div>
   </div>
 </details>
@@ -355,7 +361,7 @@ var C={};
     carG:"#3f7a5a",carGL:"#6aa886",carGD:"#275540",
     carK:"#4a4f58",carKL:"#767d89",carKD:"#2c3038",
     phone:"#b8322c",phoneL:"#d6564e",phoneD:"#7d1d18",
-    dress:"#5f76c9",dressL:"#8a9ce0",hoodie:"#4a8a52",hoodieL:"#6cab72",
+    dress:"#e2649f",dressL:"#f79cc8",dressD:"#b23d74",hoodie:"#4a8a52",hoodieL:"#6cab72",
     stripeA:"#2f8a8a",stripeB:"#f2e8d5",cap:"#e07a3a",capD:"#b45c26",
     denim:"#38508c",denimL:"#4f6bb0",grey:"#6b7280",
     shirt:"#d9584e",shirtL:"#e8776c",pants:"#38508c",shoe:"#2a2f3a",
@@ -459,7 +465,7 @@ var KIDS=[
    p.hl(x+4,wy-1,4,C.shoe); p.hl(x+8,wy-1,4,C.shoe);
    p.rect(x+2,wy-12,12,6,C.dress); p.rect(x+4,wy-16,8,4,C.dress);
    p.hl(x+4,wy-16,8,C.dressL); p.vl(x+4,wy-15,7,C.dressL);
-   p.hl(x+2,wy-7,12,C.stripeB); p.hl(x+2,wy-6,12,C.dress);
+   p.hl(x+2,wy-7,12,C.stripeB); p.hl(x+2,wy-6,12,C.dressD);
    p.rect(x+4,wy-22,7,6,C.skin2); p.vl(x+4,wy-21,5,C.skin2D);
    p.rect(x+3,wy-24,9,2,C.blonde); p.px(x+3,wy-22,C.blonde); p.px(x+11,wy-22,C.blonde);
    p.rect(x+1,wy-22,2,5,C.blonde); p.rect(x+12,wy-22,2,5,C.blonde);
@@ -1257,11 +1263,17 @@ var GROUPS=[
 var GW=226, GH=104, GZ=4, WALKY=92, LANE=54, WAND_X=44;
 var R_REF=10, R_MIN=4, R_MAX=20;
 var P={g:180,w:420,c:4.6,p:1.35,inf:15,s:60};
+var TUNE_DEFAULT=Object.assign({},P);
 var BASE_SPEED=60, SPEED_CAP=38, SPEED_RATE=200;
 var RULES={ceiling:"soft",birds:true};
 /* preview: start a run partway along so a later zone can be looked at without
    playing to it. Never persisted, and never records a score. */
 var PREVIEW=0;
+/* The tuning drawer is for me, not for players. Obscurity only - everything it changes
+   is client-side anyway, so there is nothing here worth protecting, just hiding. */
+var ADMIN=/(^|\/)admin\/?$/.test(location.pathname)
+  ||location.hash==="#admin"
+  ||/(^|[?&])admin(=|&|$)/.test(location.search);
 
 /* his saved rotation */
 var on={bench:["slat","scroll"],post:["hydrant","meter","bollard"],bin:["trash","mailbox","newsbox"],
@@ -2101,6 +2113,14 @@ if(elFS||rootFS){
   });
 }
 
+function syncSliders(){
+  SPEC.forEach(function(sp){
+    var inp=document.getElementById("s-"+sp.key), out=document.getElementById("o-"+sp.key);
+    if(!inp) return;
+    inp.value=P[sp.key];
+    out.textContent=(sp.step<1?P[sp.key].toFixed(2):Math.round(P[sp.key]))+" "+sp.unit;
+  });
+}
 /* reflect loaded settings back into the controls */
 function syncOptionUI(){
   [["seg-ceiling",["soft","hard","open"],RULES.ceiling],
@@ -2110,6 +2130,11 @@ function syncOptionUI(){
       b.setAttribute("aria-pressed",String(row[1][i]===row[2]));
     });
   });
+  var startHost=document.getElementById("seg-start");
+  if(startHost) Array.prototype.forEach.call(startHost.children,function(b,i){
+    b.setAttribute("aria-pressed",String(ZONES[i]&&ZONES[i].from===PREVIEW));
+  });
+  syncSliders();
   var gi=0;
   GROUPS.forEach(function(gr){
     var block=document.querySelectorAll("#rotation .rotgroup")[gi++];
@@ -2366,6 +2391,23 @@ iniIn.addEventListener("keydown",function(e){
       o.setAttribute("aria-pressed",id===kidPick);
     });
   };
+})();
+
+var optsEl=document.querySelector("details.opts");
+if(!ADMIN&&optsEl) optsEl.hidden=true;
+(function(){
+  var b=document.getElementById("btn-reset");
+  if(!b) return;
+  b.addEventListener("click",function(){
+    P=Object.assign({},TUNE_DEFAULT);
+    RULES.ceiling="soft"; RULES.birds=true; PREVIEW=0;
+    Object.keys(DEFAULT_ON).forEach(function(k){ on[k]=DEFAULT_ON[k].slice(); });
+    syncOptionUI();
+    queueSave();
+    startRun();
+    b.textContent="Reset \u2713";
+    setTimeout(function(){ b.textContent="Reset to system default"; },1600);
+  });
 })();
 
 /* ================= persistence =================
