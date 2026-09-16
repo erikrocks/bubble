@@ -477,6 +477,8 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   telescope, fry stand (the walk's tall piece) and an arcade sign. Sea horizon,
   plank decking, gulls instead of pigeons. Banners now name the zone a second after you
   enter it rather than announcing difficulty stages.
+- **15 Sep 2026** — Title screen got a flock of eight bubbles that pop on the scenery for
+  real, using the player's own collision test.
 - **15 Sep 2026** — The crossing's water was washing 12 m into the beach: ground now has its
   own short fade, separate from the horizon's. Camp birds aim at the player again — passing
   wide had made camping free.

@@ -1711,6 +1711,45 @@ function startRun(){
   banner.classList.remove("show");
   if(hint) hint.classList.remove("show");
 }
+/* The title screen runs a little flock of bubbles across the same obstacles the game
+   spawns, using the same collision test - so they pop on a lamp post for real rather
+   than on a timer. Purely decorative; none of this touches the player. */
+function newDrifter(anywhere){
+  return {
+    x: anywhere? rnd()*GW : GW+10+rnd()*50,
+    y: 14+rnd()*(WALKY-34),
+    r: 5+rnd()*10,
+    wvx: 26+rnd()*48,          /* drift rightward through the world */
+    vy: -(2+rnd()*6),
+    ph: rnd()*6.283
+  };
+}
+function seedDrifters(){
+  G.tb=[];
+  for(var i=0;i<8;i++) G.tb.push(newDrifter(true));
+}
+function popDrifter(b){
+  for(var i=0;i<10;i++){
+    var a=Math.PI*2*i/10+rnd()*0.4, sp=8+rnd()*22;
+    G.parts.push({x:b.x,y:b.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,c:POP[i%3]});
+  }
+}
+function stepDrifters(dt,t){
+  if(!G.tb) seedDrifters();
+  for(var i=0;i<G.tb.length;i++){
+    var b=G.tb[i];
+    b.x+=(b.wvx-P.s)*dt;
+    b.y+=(b.vy+Math.sin(t*1.1+b.ph)*4)*dt;
+    var burst=(b.y+b.r*0.82>WALKY);
+    if(!burst){
+      for(var k=0;k<G.obs.length;k++){
+        if(hitsAt(G.obs[k],b.x,b.y,b.r)){ burst=true; break; }
+      }
+    }
+    if(burst){ popDrifter(b); G.tb[i]=newDrifter(false); }
+    else if(b.x<-30||b.x>GW+60||b.y<-22) G.tb[i]=newDrifter(false);
+  }
+}
 function toTitle(){
   G.phase="title"; G.attract=0; G.world=0; G.obs=[]; G.birds=[]; G.parts=[];
   G.run=2600; G.seed=(Math.random()*2147483647)|0; G.kid=rollKid();
@@ -1718,6 +1757,7 @@ function toTitle(){
   for(var i=0;i<8;i++) spawn();
   ov.title.hidden=false; ov.ready.hidden=true; ov.dead.hidden=true; ov.pause.hidden=true;
   if(hint) hint.classList.remove("show");
+  seedDrifters();
   refreshTitleStats();
 }
 function togglePause(){
@@ -1762,8 +1802,11 @@ function spawn(){
   }
   G.nextX+=sp;
 }
-function hit(o){
-  var r=G.R*0.82, sx=o.x-G.world, it=o.it;
+function hit(o){ return hitsAt(o,G.x,G.y,G.R); }
+/* the same test for anything round - the player, or a bubble drifting past on the
+   title screen, which is the only reason it takes coordinates at all */
+function hitsAt(o,px,py,pr){
+  var r=pr*0.82, sx=o.x-G.world, it=o.it;
   if(o.cls==="ground"){
     /* A single cw-by-h rectangle is wrong for anything narrower at the top: the fry
        stand's sign board is 30 wide over a 38-wide body, so 6px of empty sky either
@@ -1773,23 +1816,23 @@ function hit(o){
     if(gb){
       for(var i=0;i<gb.length;i++){
         var bx=gb[i], a0=sx+bx.dx, a1=a0+bx.w;
-        if(G.x+r<a0||G.x-r>a1) continue;
-        if(G.y+r>WALKY-bx.top&&G.y-r<WALKY-(bx.bot||0)) return true;
+        if(px+r<a0||px-r>a1) continue;
+        if(py+r>WALKY-bx.top&&py-r<WALKY-(bx.bot||0)) return true;
       }
       return false;
     }
     var cw=it.cw||it.w, x0=sx+(it.w-cw)/2;
-    if(G.x+r<x0||G.x-r>x0+cw) return false;
-    return G.y+r>WALKY-it.h;
+    if(px+r<x0||px-r>x0+cw) return false;
+    return py+r>WALKY-it.h;
   }
   var bs=it.boxes||[{dx:0,w:it.w,d:it.d}];
   for(var i=0;i<bs.length;i++){
     var bx=bs[i], a0=bx.w?sx+bx.dx:0, a1=bx.w?a0+bx.w:GW;
-    if(G.x+r<a0||G.x-r>a1) continue;
+    if(px+r<a0||px-r>a1) continue;
     /* `up` boxes stand on the pavement instead of hanging from the top, which is how
        one obstacle can be a shop AND the stall outside it, with a gap between them */
-    if(bx.up){ if(G.y+r>WALKY-bx.h) return true; }
-    else if(G.y-r<bx.d) return true;
+    if(bx.up){ if(py+r>WALKY-bx.h) return true; }
+    else if(py-r<bx.d) return true;
   }
   return false;
 }
@@ -1845,6 +1888,7 @@ function step(dt){
     while(G.nextX-G.world<GW+70) spawn();
     for(var ti=G.obs.length-1;ti>=0;ti--)
       if(G.obs[ti].x-G.world+(G.obs[ti].it.w||GW)<-10) G.obs.splice(ti,1);
+    stepDrifters(dt,G.attract);
     return;
   }
   if(G.phase==="dead"){ G.deadT+=dt; if(G.deadT>0.45) ov.dead.hidden=false; return; }
@@ -2022,9 +2066,10 @@ function drawWorld(t){
   var bird=(z==="boardwalk"||z==="beach"||z==="sea")?drawGull:((z==="park")?drawJay:drawDove);
   G.birds.forEach(function(b){ bird(gp,b.x,b.y,b.f); });
   if(G.phase==="title"){
-    var dx2=((t*26)%(GW+80))-40, dy2=34+Math.sin(t*0.8)*16;
-    drawBubble(gimg.data,GW,GH,dx2,dy2,11,t);
-    drawBubble(gimg.data,GW,GH,dx2-70,dy2+22+Math.sin(t*1.3)*8,6,t);
+    if(G.tb) for(var di=0;di<G.tb.length;di++){
+      var b=G.tb[di];
+      drawBubble(gimg.data,GW,GH,b.x,b.y,b.r,t);
+    }
   } else if(G.phase!=="dead"){
     var br=(G.phase==="fly"?0.012:0.035)*Math.sin(t*5.5);   /* breathing */
     var amp=0.055+G.R*0.002, sq=(G.phase==="fly"?G.sq:0);
