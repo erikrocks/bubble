@@ -341,6 +341,10 @@ Give such an item `boxes:[{dx,w,top,bot}]` — bands measured up from the paveme
 footprint). Worth sweeping a new sprite's collider before shipping it; the maps in
 `hitmap.js`-style sweeps make a mismatch obvious in seconds.
 
+Air sprites receive the frame clock as their last `draw()` argument, which is how the
+squall's rain falls. **Keep animated detail inside the collider**: the rain stops exactly
+where the hitbox stops, so nothing drawn is a lie about what will pop you.
+
 **One obstacle can be both a ceiling and a floor.** A box in `boxes[]` with `up:true`
 stands on the pavement (`h` tall) instead of hanging from the top (`d` deep), which is
 how the greengrocer and the souvenir stand are a shop *and* the stall outside it — you
@@ -448,6 +452,9 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   telescope, fry stand (the walk's tall piece) and an arcade sign. Sea horizon,
   plank decking, gulls instead of pigeons. Banners now name the zone a second after you
   enter it rather than announcing difficulty stages.
+- **15 Sep 2026** — The squall's rain animates (air sprites now get the clock) and comes in
+  three shapes. The white cloud moved from the crossing to the boardwalk — mixing fair and
+  stormy weather in one place read as a mistake, and the boardwalk's ceiling was thin.
 - **15 Sep 2026** — Tuning drawer moved behind `/admin`, with a reset-to-defaults button.
   Pigtails wears pink at Vivian's request (it was blue only because the original yellow
   merged with her blonde hair; pink has no such problem).

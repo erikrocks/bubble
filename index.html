@@ -918,32 +918,32 @@ var GROUPS=[
 ]},
 {id:"oversea",cls:"air",name:"Over the water",blurb:"Weather, mostly.",items:[
   {id:"squall",name:"Rain squall",w:62,d:27,boxes:[{dx:6,w:50,d:27}],zones:["sea"],
-   note:"A darker bank trailing rain. Deeper than the plain cloud, and the streaks tell you how far down it reaches.",
-   draw:function(p,x){
-     [[14,8,13,6],[34,6,15,7],[50,9,12,5],[26,11,12,5]].forEach(function(q){
+   note:"A dark bank dragging rain behind it. The rain falls, and it falls only as far as the obstacle reaches \u2014 the bottom of the drops is the bottom of the hitbox.",
+   draw:function(p,x,b,W,v,t){
+     t=t||0;
+     var SHAPES=[
+       [[14,8,13,6],[34,6,15,7],[50,9,12,5],[26,11,12,5]],
+       [[18,7,15,7],[38,9,14,6],[52,7,11,5],[30,12,11,4]],
+       [[12,9,11,5],[28,7,14,7],[44,8,14,6],[56,11,10,4]]
+     ];
+     SHAPES[(v||0)%3].forEach(function(q){
        for(var yy=q[1]-q[3];yy<=q[1]+q[3];yy++)for(var xx=q[0]-q[2];xx<=q[0]+q[2];xx++){
-         var v=Math.pow((xx-q[0])/q[2],2)+Math.pow((yy-q[1])/q[3],2);
-         if(v>1) continue;
-         if(v>0.62&&bay(x+xx,yy)>0.5) continue;
-         p.px(x+xx,yy,(yy-q[1])/q[3]<-0.3?C.gullD:((v>0.55)?C.ironD:C.gullD));
+         var d=Math.pow((xx-q[0])/q[2],2)+Math.pow((yy-q[1])/q[3],2);
+         if(d>1) continue;
+         if(d>0.62&&bay(x+xx,yy)>0.5) continue;
+         p.px(x+xx,yy,(yy-q[1])/q[3]<-0.3?C.gullD:((d>0.55)?C.ironD:C.gullD));
        }
      });
-     for(var i=0;i<26;i++){
-       var rx=8+((i*17)%46), ry=15+((i*7)%9);
-       p.px(x+rx,ry,C.deepL); p.px(x+rx,ry+1,C.deepL); p.px(x+rx,ry+2,C.seaL);
-       if(i%3===0){ p.px(x+rx-1,ry+4,C.seaL); p.px(x+rx-1,ry+5,C.seaL); }
+     /* rain, falling on a loop. Kept inside the collider so nothing drawn here is a
+        lie about what will pop you. */
+     var TOP=14, BOT=26, SPAN=BOT-TOP;
+     for(var i=0;i<30;i++){
+       var rx=7+((i*19)%48);
+       var ry=TOP+((t*26+i*5.3)%SPAN);
+       p.px(x+rx,ry,C.deepL);
+       p.px(x+rx,ry+1,C.seaL);
+       if((i&3)===0) p.px(x+rx,ry+2,C.deepL);
      }}},
-  {id:"cloudbank",name:"Low cloud",w:78,d:19,boxes:[{dx:4,w:70,d:19}],zones:["sea"],
-   note:"A bank of cloud sitting low over the water. Soft-edged but solid \u2014 the crossing's ceiling.",
-   draw:function(p,x){
-     [[16,9,15,7],[38,7,17,8],[58,10,14,6],[28,12,13,6],[48,13,12,5]].forEach(function(q){
-       for(var yy=q[1]-q[3];yy<=q[1]+q[3];yy++)for(var xx=q[0]-q[2];xx<=q[0]+q[2];xx++){
-         var v=Math.pow((xx-q[0])/q[2],2)+Math.pow((yy-q[1])/q[3],2);
-         if(v>1) continue;
-         if(v>0.62&&bay(x+xx,yy)>0.5) continue;
-         p.px(x+xx,yy,(yy-q[1])/q[3]<-0.3?C.gullL:((v>0.55)?C.gullD:C.gull));
-       }
-     });}}
 ]},
 {id:"overbeach",cls:"air",name:"Over the sand",blurb:"Three ways to be made to fly low on a beach.",items:[
   {id:"palm",name:"Palm fronds",w:46,d:27,boxes:[{dx:3,w:40,d:27}],zones:["beach"],
@@ -1050,6 +1050,17 @@ var GROUPS=[
        var bx2=x+14+m*8;
        p.rect(bx2,wy-7,6,6,BALLS[(m+2)%5]); p.hl(bx2,wy-7,6,C.cream);
      }}},
+  {id:"cloudbank",name:"Low cloud",w:78,d:19,boxes:[{dx:4,w:70,d:19}],zones:["boardwalk"],
+   note:"A bank of white cloud drifting in off the sea. Soft-edged but solid \u2014 the boardwalk's only weather.",
+   draw:function(p,x){
+     [[16,9,15,7],[38,7,17,8],[58,10,14,6],[28,12,13,6],[48,13,12,5]].forEach(function(q){
+       for(var yy=q[1]-q[3];yy<=q[1]+q[3];yy++)for(var xx=q[0]-q[2];xx<=q[0]+q[2];xx++){
+         var v=Math.pow((xx-q[0])/q[2],2)+Math.pow((yy-q[1])/q[3],2);
+         if(v>1) continue;
+         if(v>0.62&&bay(x+xx,yy)>0.5) continue;
+         p.px(x+xx,yy,(yy-q[1])/q[3]<-0.3?C.gullL:((v>0.55)?C.gullD:C.gull));
+       }
+     });}},
   {id:"arcade",name:"Arcade sign",w:42,d:26,boxes:[{dx:11,w:20,d:26},{dx:1,w:30,d:6}],zones:["boardwalk"],
    note:"A neon sign hung off the arcade front. Deep and narrow \u2014 the boardwalk's version of the hanging shop sign.",
    bg:function(p,x,wy){
@@ -1296,9 +1307,9 @@ var ADMIN=/(^|\/)admin\/?$/.test(location.pathname)
 /* his saved rotation */
 var on={bench:["slat","scroll"],post:["hydrant","meter","bollard"],bin:["trash","mailbox","newsbox"],
         shelter:["hedge","statue","fries","guardchair","lighthouse","busstop","car","phonebox"],
-        walk:["cart","scope"], pier:["arcade","souvenir"],
+        walk:["cart","scope"], pier:["arcade","souvenir","cloudbank"],
         sandy:["umbrella","net","cooler"], overbeach:["palm","kite","pierdeck"],
-        atsea:["buoy","dinghy"], oversea:["cloudbank","squall"],
+        atsea:["buoy","dinghy"], oversea:["squall"],
         tree:["leafy"],shop:["striped","grocer"],pole:["lamp","traffic"]};
 GROUPS.forEach(function(g){ g.items.forEach(function(it){ it.gid=g.id; }); });
 var DEFAULT_ON=JSON.parse(JSON.stringify(on));
@@ -1948,8 +1959,8 @@ function drawWorld(t){
       return;
     }
     var ax=o.it.w?sx:0;
-    gp.force=C.edge; gp.oy=1; o.it.draw(gp,ax,0,GW,o.v||0); gp.force=null; gp.oy=0;
-    o.it.draw(gp,ax,0,GW,o.v||0);
+    gp.force=C.edge; gp.oy=1; o.it.draw(gp,ax,0,GW,o.v||0,t); gp.force=null; gp.oy=0;
+    o.it.draw(gp,ax,0,GW,o.v||0,t);
   });
   if(G.phase==="fly"&&RULES.ceiling!=="hard"&&G.clip>0){
     var danger=Math.min(1,G.clip/(G.R*0.667));
