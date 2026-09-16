@@ -347,7 +347,7 @@ and the change of difficulty are one event rather than two that coincide.
   boardwalk — picked by `zoneAt()` at draw time. Same sprite size and hitbox, so it is
   colour and silhouette only, never a difficulty change.
 - **Every zone needs its own tall ground piece** or that stretch becomes hoverable —
-  park has the boxwood and statue, city has the shelter/car/phone box, boardwalk has the
+  park has the topiary, planter and fountain, city has the shelter/car/phone box, boardwalk has the
   fry stand, beach has the lifeguard chair. They all live in the `shelter` group, which is
   what the `tall` gate reads.
 
