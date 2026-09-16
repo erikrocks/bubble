@@ -273,6 +273,8 @@ button.chip:hover{border-color:var(--accent); color:var(--ink)}
       <h3>Rules</h3>
       <div class="ctl"><span>Ceiling</span><div class="seg" id="seg-ceiling"></div></div>
       <div class="ctl"><span>Pigeons</span><div class="seg" id="seg-birds"></div></div>
+      <div class="ctl"><span>Start</span><div class="seg" id="seg-style"></div></div>
+      <p style="margin:2px 0 8px;font-size:11.5px;color:var(--ink3)" id="style-note"></p>
       <div class="ctl"><span>Start in</span><div class="seg" id="seg-start"></div></div>
       <p style="margin:2px 0 0;font-size:11.5px;color:var(--ink3)">Jump straight to a zone to look at it. Runs started this way don't count towards your best.</p>
       <h3 style="margin-top:18px">What shows up</h3>
@@ -1296,6 +1298,14 @@ var RULES={ceiling:"soft",birds:true};
 /* preview: start a run partway along so a later zone can be looked at without
    playing to it. Never persisted, and never records a score. */
 var PREVIEW=0;
+/* Four ways to get a bubble into the air, switchable so they can be played against
+   each other rather than argued about:
+     classic  hold to blow, let go to size it, tap to launch   (three actions)
+     quick    hold to blow, let go and it launches             (two, with a hang)
+     taps     tap to start filling, tap again to launch        (no holding at all)
+     meter    size sweeps up and down, one tap picks and goes  (one action)   */
+var START_STYLES=["classic","quick","taps","meter"];
+var START="classic";
 /* The tuning drawer is for me, not for players. Obscurity only - everything it changes
    is client-side anyway, so there is nothing here worth protecting, just hiding. */
 var ADMIN=/(^|\/)admin\/?$/.test(location.pathname)
@@ -1687,15 +1697,23 @@ var STATS={runs:0,bestMedal:null};
 /* ================= state ================= */
 var G={phase:"title",R:R_MIN,y:0,x:0,v:0,hold:false,world:0,obs:[],parts:[],birds:[],
        run:0,best:0,seed:7,nextX:0,campY:0,campT:0,clip:0,kid:null,deadT:0,armed:true,
-       prev:null,stage:0,zone:null,zoneDelay:0,bannerT:0,attract:0,sq:0,sqV:0,birdT:0};
+       prev:null,stage:0,zone:null,zoneDelay:0,bannerT:0,sweep:0,hangT:0,attract:0,sq:0,sqV:0,birdT:0};
 function rnd(){ G.seed=(G.seed*1664525+1013904223)&0x7fffffff; return G.seed/0x7fffffff; }
+function launchBubble(hang){
+  G.phase="fly"; G.v=-6;
+  Snd.blowStop(); Snd.launch();
+  if(hint) hint.classList.remove("show");
+  /* a release-to-launch start gives no chance to grab the wind, so gravity is
+     softened for a moment instead of dropping the player straight away */
+  G.hangT=hang?0.55:0;
+}
 function startRun(){
   G.kid=rollKid(); G.phase="ready"; G.R=R_MIN; G.y=wandY(); G.x=WAND_X-2+R_MIN;
   G.v=0; G.world=PREVIEW; G.run=PREVIEW; G.obs=[]; G.birds=[]; G.parts=[];
   G.clip=0; G.campY=G.y; G.campT=0;
   G.seed=(Math.random()*2147483647)|0; G.nextX=G.world+GW+120;
   G.deadT=0; G.stage=0; G.zone=null; G.zoneDelay=0; G.bannerT=0;
-  G.sq=0; G.sqV=0; G.birdT=7+Math.random()*7;
+  G.sq=0; G.sqV=0; G.birdT=7+Math.random()*7; G.sweep=0; G.hangT=0;
   ov.title.hidden=true; ov.ready.hidden=false; ov.dead.hidden=true; ov.pause.hidden=true;
   if(typeof iniRow!=="undefined"&&iniRow){ iniRow.hidden=true; deadPrompt.hidden=false; nameOpen=false; }
   banner.classList.remove("show");
@@ -1884,16 +1902,25 @@ function step(dt){
   if(G.phase==="dead"){ G.deadT+=dt; if(G.deadT>0.45) ov.dead.hidden=false; return; }
   if(G.phase==="ready"||G.phase==="blow"||G.phase==="armed"){
     if(G.phase==="blow"){
-      if(G.hold){
+      if(START==="meter"){
+        /* no filling: the size sweeps and one tap picks it */
+        G.sweep+=dt;
+        var u=(1-Math.cos(G.sweep*3.4))/2;
+        G.R=R_MIN+(R_MAX-R_MIN-1.2)*u;
+        Snd.blowAt(G.R);
+      } else if(START==="taps"||G.hold){
         G.R+=P.inf*dt*(1-0.45*(G.R-R_MIN)/(R_MAX-R_MIN));
         Snd.blowAt(G.R);
         if(G.R>=R_MAX){ pop("over"); return; }
       }
       else if(G.R>R_MIN+0.5){
-        /* sized and sitting on the wand - launching is its own press now, so
-           picking a size and choosing when to go are two decisions, not one */
-        G.phase="armed"; Snd.blowStop();
-        if(hint) hint.classList.add("show");
+        if(START==="quick") launchBubble(true);
+        else {
+          /* sized and sitting on the wand - launching is its own press, so picking
+             a size and choosing when to go are two decisions, not one */
+          G.phase="armed"; Snd.blowStop();
+          if(hint) hint.classList.add("show");
+        }
       }
     }
     G.x=WAND_X-2+G.R;
@@ -1903,6 +1930,7 @@ function step(dt){
   P.s=speedAt(G.run);
   var k=Math.pow(R_REF/G.R,P.p), a=P.g*k;
   if(G.hold) a-=P.w*k;
+  if(G.hangT>0){ a*=0.18; G.hangT-=dt; }
   G.v+=a*dt; G.v-=G.v*P.c*dt; G.y+=G.v*dt;
   G.x+=(LANE-G.x)*Math.min(1,dt*4);
   /* wind shoves the underside: squash wide. Falling free: stretch long.
@@ -2125,12 +2153,20 @@ function press(){
   if(G.phase==="title"){ startRun(); }
   if(G.phase==="dead"){ if(G.deadT>0.45) startRun(); return; }
   if(G.phase==="armed"){
-    G.phase="fly"; G.v=-6; Snd.launch();
-    if(hint) hint.classList.remove("show");
+    launchBubble(false);
     G.hold=true; Snd.wind(true);      /* the launch press is also your first gust */
     return;
   }
-  if(G.phase==="ready"){ G.phase="blow"; ov.ready.hidden=true; Snd.blowStart(); }
+  if(G.phase==="blow"&&(START==="taps"||START==="meter")){
+    launchBubble(false);
+    G.hold=true; Snd.wind(true);
+    return;
+  }
+  if(G.phase==="ready"){
+    G.phase="blow"; ov.ready.hidden=true; Snd.blowStart();
+    G.sweep=0;
+    if(hint&&(START==="taps"||START==="meter")) hint.classList.add("show");
+  }
   G.hold=true;
   if(G.phase==="fly") Snd.wind(true);
 }
@@ -2243,6 +2279,10 @@ function syncOptionUI(){
       b.setAttribute("aria-pressed",String(row[1][i]===row[2]));
     });
   });
+  var styleHost=document.getElementById("seg-style");
+  if(styleHost) Array.prototype.forEach.call(styleHost.children,function(b,i){
+    b.setAttribute("aria-pressed",String(START_STYLES[i]===START));
+  });
   var startHost=document.getElementById("seg-start");
   if(startHost) Array.prototype.forEach.call(startHost.children,function(b,i){
     b.setAttribute("aria-pressed",String(ZONES[i]&&ZONES[i].from===PREVIEW));
@@ -2294,6 +2334,30 @@ function seg(host,opts,get,set){
 seg(document.getElementById("seg-ceiling"),
   [{label:"Soft pop",value:"soft"},{label:"Hard stop",value:"hard"},{label:"Open",value:"open"}],
   function(){return RULES.ceiling;},function(v){RULES.ceiling=v; queueSave();});
+var STYLE_TEXT={
+  classic:["Hold to blow","Hold to blow \u2014 the longer you hold, the bigger it gets. Let go and it waits on the wand. <b>Tap again to launch.</b>",
+           "Tap to launch","Three actions: hold, let go, tap. Most control, most steps."],
+  quick:["Hold to blow","Hold to blow, then <b>let go and it flies</b>. Gravity is softened for half a second so you have time to catch the wind.",
+         "","Two actions. Fastest, but sizing and launching are the same decision."],
+  taps:["Tap to start filling","<b>Tap once</b> and it starts filling on its own. <b>Tap again</b> to launch. Let it fill too far and it pops on the wand.",
+        "Tap again to launch","No holding at all \u2014 easiest on a phone."],
+  meter:["Tap to pick a size","The size <b>sweeps up and down</b> on its own. <b>Tap</b> to take whatever it is at and go. It can never pop on the wand.",
+         "Tap to lock the size","One action. Arcade power-bar feel; you time it rather than hold it."]
+};
+function applyStyle(){
+  var t=STYLE_TEXT[START]||STYLE_TEXT.classic;
+  var h2=ov.ready.querySelector("h2"), pp=ov.ready.querySelector("p");
+  if(h2) h2.textContent=t[0];
+  if(pp) pp.innerHTML=t[1];
+  if(hint) hint.textContent=t[2];
+  var note=document.getElementById("style-note");
+  if(note) note.textContent=t[3];
+  startRun();
+}
+seg(document.getElementById("seg-style"),
+  [{label:"Hold \u00b7 let go \u00b7 tap",value:"classic"},{label:"Hold \u00b7 let go",value:"quick"},
+   {label:"Tap \u00b7 tap",value:"taps"},{label:"Meter",value:"meter"}],
+  function(){return START;},function(v){ START=v; applyStyle(); queueSave(); });
 seg(document.getElementById("seg-start"),
   ZONES.map(function(z){ return {label:z.name,value:z.from}; }),
   function(){return PREVIEW;},function(v){ PREVIEW=v; startRun(); });
@@ -2560,7 +2624,7 @@ if(!ADMIN&&optsEl) optsEl.hidden=true;
   if(!b) return;
   b.addEventListener("click",function(){
     P=Object.assign({},TUNE_DEFAULT);
-    RULES.ceiling="soft"; RULES.birds=true; PREVIEW=0;
+    RULES.ceiling="soft"; RULES.birds=true; PREVIEW=0; START="classic";
     Object.keys(DEFAULT_ON).forEach(function(k){ on[k]=DEFAULT_ON[k].slice(); });
     syncOptionUI();
     queueSave();
@@ -2591,7 +2655,7 @@ function queueSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(flushSave,50
 function flushSave(){
   writeStore({
     tune:Object.assign({},P), rules:Object.assign({},RULES),
-    rotation:JSON.parse(JSON.stringify(on)), known:allItemIds(), kid:kidPick,
+    rotation:JSON.parse(JSON.stringify(on)), known:allItemIds(), kid:kidPick, startStyle:START,
     best:Math.round(G.best), runs:STATS.runs,
     bestMedal:STATS.bestMedal?STATS.bestMedal.name:null,
     sound:soundOn, savedAt:new Date().toISOString()
@@ -2608,6 +2672,7 @@ function saveBest(){ queueSave(); }
     if(window.__syncWho) window.__syncWho();
     G.kid=rollKid();
   }
+  if(d.startStyle&&START_STYLES.indexOf(d.startStyle)>=0) START=d.startStyle;
   if(d.sound===false){
     soundOn=false; btnSound.textContent="Sound off"; btnSound.setAttribute("aria-pressed","false");
   }
@@ -2644,6 +2709,7 @@ function saveBest(){ queueSave(); }
     });
   }
   syncOptionUI();
+  applyStyle();
   hudTick();
 })();
 

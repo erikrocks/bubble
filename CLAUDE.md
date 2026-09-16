@@ -92,6 +92,22 @@ enough to read as one building repeated.
 
 ## The launch flow
 
+`START` selects one of four, switchable in the /admin drawer so they can be played
+against each other rather than argued about. All four end in `launchBubble()`:
+
+| Style | Actions | Size decided by |
+|---|---|---|
+| `classic` | hold, let go, tap | how long you held |
+| `quick` | hold, let go | how long you held (launch is the same action) |
+| `taps` | tap, tap | how long you wait — it fills on its own, no holding |
+| `meter` | tap | when you tap into a sweep that never reaches max, so it cannot pop |
+
+`quick` is the only one where launching gives no chance to grab the wind, so it gets a
+`hangT` of 0.55s during which gravity is scaled to 18%. Without it you are falling before
+your thumb is back down.
+
+## The launch flow (classic, in detail)
+
 `title -> ready -> blow -> armed -> fly -> dead`
 
 **`armed` is the important one.** Releasing the blow no longer launches: the bubble sits
@@ -276,6 +292,22 @@ mixed 50% toward the sky, which halves every difference. The first set was subtl
 enough to read as one building repeated.
 
 ## The launch flow
+
+`START` selects one of four, switchable in the /admin drawer so they can be played
+against each other rather than argued about. All four end in `launchBubble()`:
+
+| Style | Actions | Size decided by |
+|---|---|---|
+| `classic` | hold, let go, tap | how long you held |
+| `quick` | hold, let go | how long you held (launch is the same action) |
+| `taps` | tap, tap | how long you wait — it fills on its own, no holding |
+| `meter` | tap | when you tap into a sweep that never reaches max, so it cannot pop |
+
+`quick` is the only one where launching gives no chance to grab the wind, so it gets a
+`hangT` of 0.55s during which gravity is scaled to 18%. Without it you are falling before
+your thumb is back down.
+
+## The launch flow (classic, in detail)
 
 `title -> ready -> blow -> armed -> fly -> dead`
 
