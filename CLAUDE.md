@@ -154,6 +154,25 @@ it is a death. Three rules keep that honest, all in the `RULES.birds` block:
 Verified by simulation: holding station takes zero hits at every radius from 5 to 20,
 while doing nothing still drives you into the bird placed below you.
 
+## The kid turns up in every zone
+
+A cameo per zone, in the parallax layer behind the playfield: on a bench in the park, in
+a lit shop window in the city, in a gondola on the Ferris wheel over the boardwalk, in a
+rubber ring in the shallows off the beach, rowing past out at sea. They are **never
+colliders** — nothing in `cameo*` is registered as an obstacle, and each is drawn at its
+zone's own weight so it fades in and out with the scenery it belongs to.
+
+The playable sprite is 24px tall and at that size a second one reads as a second player,
+so cameos use `miniKid`/`sitKid`: a 9-10px doll built from four colours each kid carries
+in its `mini` block (hair, skin, top, leg). That is enough to tell Pigtails from Ball Cap
+and not enough to compete with the bubble.
+
+Spacing is per-cameo and set in layer coordinates, all larger than `GW`+40 so two never
+share the screen: park 400, city 420, wheel 400, swim 360, boat 360. Against a 0.4
+parallax that is roughly one per 1000px of run; against 0.25, one per ~1450px. Do not
+tune these with chained string replacements — the wheel's period got clobbered that way
+and the wheel silently stopped appearing where it was expected.
+
 ## Zones, and the route
 
 The run is a **round trip that repeats**: out to the sea, then back through the same
@@ -270,6 +289,22 @@ player's, not settings.
 A row of kid portraits under the game picks the character, or "Anyone" for a random kid
 each run. It persists as `kid` in `localStorage`. Vivian asked for this, and only ever
 plays as Pigtails.
+
+## Two lamps, and neither is allowed everywhere
+
+`lamp` (the modern cast-arm streetlamp) is `zones:["city","boardwalk"]`. It used to be
+untagged, which meant it stood on the beach and in the park, and it read as municipal kit
+someone had dumped there.
+
+`parklamp` is the park's own: Victorian cast iron, dark grey, and **straight up and down**
+— fluted post, tapered lantern sitting on top of it, finial above that. It is not on a
+bracket and must not be put back on one. Because the post is `bg` it is drawn at half fade
+toward the sky, so it starts darker than the streetlamp on purpose: it has to survive the
+mix and still read as cast iron. The collider is the lantern and its neck only; the post is
+scenery you pass in front of, like every other pole.
+
+Measured across a run: streetlamp weight is 0 for the whole beach and the whole crossing,
+and 0 in the park core; the park lamp is 0 everywhere except the park.
 
 ## Adding an obstacle without it being invisible
 
@@ -455,3 +490,7 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   hand, with the arm reaching out and down to meet it. The loop stays at mouth height —
   raising it to sit above the handle puts it over the kid's head, which Erik rejected
   the first time round. Every kid's `anchor.dx` went 19 -> 15 to follow the loop.
+- **15 Sep 2026** — The kid now appears in the background of every zone (see above), the
+  park got its own Victorian lamppost and the modern streetlamp was confined to the city
+  and boardwalk, and the high-score dials open on the last initials used on that device
+  rather than back at AAA every time.
