@@ -341,8 +341,14 @@ Give such an item `boxes:[{dx,w,top,bot}]` — bands measured up from the paveme
 footprint). Worth sweeping a new sprite's collider before shipping it; the maps in
 `hitmap.js`-style sweeps make a mismatch obvious in seconds.
 
-Air sprites receive the frame clock as their last `draw()` argument, which is how the
-squall's rain falls. **Keep animated detail inside the collider**: the rain stops exactly
+**Every sprite receives the frame clock** as the last `draw()` argument — air and ground
+both — which is how the rain falls, the lighthouse flashes and the traffic signals cycle
+(offset by their instance `v`, so a street's signals are not in lockstep).
+
+An item marked `floats:true` rides the swell: the draw base is offset by `waveAt()`, the
+same function the water surface is drawn from. It lifts **above** the nominal line only,
+never below, because the collider stays at `WALKY` — drawing lower would leave hitbox
+above the art, and up is the forgiving direction. **Keep animated detail inside the collider**: the rain stops exactly
 where the hitbox stops, so nothing drawn is a lie about what will pop you.
 
 **One obstacle can be both a ceiling and a floor.** A box in `boxes[]` with `up:true`
@@ -452,6 +458,8 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   telescope, fry stand (the walk's tall piece) and an arcade sign. Sea horizon,
   plank decking, gulls instead of pigeons. Banners now name the zone a second after you
   enter it rather than announcing difficulty stages.
+- **15 Sep 2026** — Sprites animate: boats and buoys ride the swell, the lighthouse flashes,
+  traffic signals cycle. Gulls at sea instead of pigeons. "Who's blowing" became "Who's playing".
 - **15 Sep 2026** — The squall's rain animates (air sprites now get the clock) and comes in
   three shapes. The white cloud moved from the crossing to the boardwalk — mixing fair and
   stormy weather in one place read as a mistake, and the boardwalk's ceiling was thin.
