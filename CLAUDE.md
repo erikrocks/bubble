@@ -94,14 +94,38 @@ enough to read as one building repeated.
 
 `title -> ready -> blow -> fly -> dead`
 
-**Tap, tap.** One tap starts the bubble filling on its own; the next launches it, and that
-launch tap is also the first gust of wind. **Nothing is held** during the start, which is
-what makes it work in landscape on a phone. Leaving it to fill too long pops it on the
-wand, so waiting for a big bubble is the risk you take.
+**Three taps, and the first one is free.** Tap to clear the title, tap to start it
+filling, tap to launch — and that launch tap is also the first gust of wind. **Nothing is
+held** during the start, which is what makes it work in landscape on a phone. Leaving it
+to fill too long pops it on the wand, so waiting for a big bubble is the risk you take.
+
+The first tap doing nothing but clearing the title is deliberate, and `press()` **returns**
+after `startRun()` so it cannot fall through into the `ready` branch within the same call.
+It used to, and the effect was that the tap dismissing the instructions also started the
+fill: you never saw the kid, the wand or the street before you were committed. `ready` is
+therefore a bare prompt over a clean, undimmed scene — no scrim, no paragraph. The
+explaining happens on the title screen, where nothing is ticking.
 
 Chosen by playing four candidates against each other (hold/let-go/tap, hold/let-go with a
 gravity hang, tap/tap, and a sweeping size meter). The others and the `armed` state they
 needed are gone — don't reintroduce a hold-to-blow without testing it on a phone.
+
+Death restarts into the `ready` prompt, not straight into blowing, with a 0.45s guard so
+the press that killed you cannot restart you.
+
+## Overlays anchor to the canvas, not the frame
+
+`.frame` holds the canvas *and* the HUD, the player row and the tool bar, so an overlay at
+`inset:0` covers all of it: the dim swallowed the stats and the character picker, and
+anything positioned from the bottom (`.launch`, an overlay's prompt) landed on the chrome
+below the game instead of in the scene. Overlays, the zone banner and the launch hint
+instead pin to `top:0` with `aspect-ratio:226/104` — exactly the canvas box, since the
+canvas is always the frame's full width.
+
+Two fallbacks revert them to `inset:0`, both being cases where the canvas is no longer the
+tall part of the frame: **under 600px wide**, where the title copy outgrows a ~174px-high
+canvas, and **in fullscreen**, where the canvas is centred vertically rather than sitting
+at the top. `min-height:min-content` lets an overlay grow past the canvas rather than clip.
 
 After a death the first tap only brings the next kid to the wand; the tap after that
 starts filling. Restarting and committing to a size stay separate actions.
@@ -247,169 +271,7 @@ A row of kid portraits under the game picks the character, or "Anyone" for a ran
 each run. It persists as `kid` in `localStorage`. Vivian asked for this, and only ever
 plays as Pigtails.
 
-## Making a ground piece read against the background## Making a ground piece read against the background
-
-Big flat ground objects dissolve into hazed scenery. Two tools:
-
-- `edge:true` on an item stamps a 1px dark silhouette *above and around* it (the air
-  obstacles get the same treatment offset downward). On: bus shelter, car, phone box,
-  bush, statue. **Careful with a full-width ground-shadow row on an `edge:true` item**:
-  the keyline pass draws it one row up, and if the art does not cover that row it
-  becomes a dark bar floating under the object. That is what happened to the car, which
-  sits on wheels with a gap beneath it; its shadow is now just two contact points.
-- Colour it against the sky, not in isolation. The statue was grey stone on a pale
-  blue-grey horizon and vanished; verdigris bronze on near-black granite reads at a
-  glance and still looks like a park statue.
-
-Also: **never pair a `shelter` item with a `shop` item.** Paired obstacles sit ~8px
-apart, and a bus shelter under a shopfront reads as the building's ground floor rather
-than a separate thing to dodge. The rule lives in the pairing branch of `spawn()`.
-
-## Shopfronts vary per instance
-
-Obstacles are shared objects, so per-instance variety lives on the spawn record: each
-gets `v`, a small random number, passed as the last argument to `draw()` and `bg()`.
-`shopOf(v)` maps it to one of four schemes in `SHOPS` — brick, awning stripe and sign
-board together. **Both** `draw` and `bg` need `v` forwarded; when only `draw` had it,
-every awning was a different colour on an identical building and the variety looked
-broken rather than absent.
-
-Pick brick colours further apart than looks right in isolation: background scenery is
-mixed 50% toward the sky, which halves every difference. The first set was subtle
-enough to read as one building repeated.
-
-## The launch flow
-
-`START` selects one of four, switchable in the /admin drawer so they can be played
-against each other rather than argued about. All four end in `launchBubble()`:
-
-| Style | Actions | Size decided by |
-|---|---|---|
-| `classic` | hold, let go, tap | how long you held |
-| `quick` | hold, let go | how long you held (launch is the same action) |
-| `taps` | tap, tap | how long you wait — it fills on its own, no holding |
-| `meter` | tap | when you tap into a sweep that never reaches max, so it cannot pop |
-
-`quick` is the only one where launching gives no chance to grab the wind, so it gets a
-`hangT` of 0.55s during which gravity is scaled to 18%. Without it you are falling before
-your thumb is back down.
-
-## The launch flow (classic, in detail)
-
-`title -> ready -> blow -> armed -> fly -> dead`
-
-**`armed` is the important one.** Releasing the blow no longer launches: the bubble sits
-on the wand at whatever size you stopped at, indefinitely, and the *next* press launches
-it — and that same press counts as your first gust of wind. Sizing and launching are two
-decisions now, which matters most on touch, where the old flow made you release and
-re-grab inside about a second or the bubble hit the pavement.
-
-Death restarts straight into blowing on one press (no separate "press to restart"), with
-a 0.45s guard so the press that killed you cannot restart you.
-
-## Birds have to scale with the bubble
-
-A 40px bubble falls at 15 px/s. In the ~1.6s a bird takes to cross the screen it can
-move 18px — less than its own radius — so a bird aimed at its height is not a dodge,
-it is a death. Three rules keep that honest, all in the `RULES.birds` block:
-
-- **Ambient** birds use `clearLane(want)`: a height at least `R*0.82 + CLEAR` from the
-  player, trying the far side if the near one clamps, and returning null rather than
-  spawning an unfair bird when neither side has room. They are traffic, not an attack.
-- **Camp** birds are aimed straight at `G.y` — that is the entire point of them. They are
-  made fair by **time, not by missing**: the lead is derived from how long a bubble that
-  size needs to shift its own radius, so R=20 gets 2.9s and R=5 gets 1.3s. Making them
-  pass wide instead was the obvious fix and the wrong one: camping stopped being punished
-  at all. Measured: a parked bubble is hit essentially every time, one that reacts never is.
-- The camp threshold is `termFall(R) * 0.35` — a third of a second of that bubble's own
-  free-fall — not a flat pixel count. Patience stretches with size too. A flat 14px
-  asked a big bubble for a third of its whole manoeuvring budget.
-- Bird flight bobs as `y0 + sin(x)*2.2`, **not** `y += sin(x)*0.28`. The second form
-  integrates, so birds random-walked several pixels off their lane and ate the
-  clearance; that alone was killing hovering players.
-
-Verified by simulation: holding station takes zero hits at every radius from 5 to 20,
-while doing nothing still drives you into the bird placed below you.
-
-## Zones
-
-A run walks through a sequence of places. `ZONES` lists them with the distance each
-begins; `zoneW(i,d)` ramps a zone in over `FADE` before its start, holds it, then ramps
-it out over `FADE` before the next begins, so two zones overlap during a handover.
-
-| Zone | From | Reached at |
-|---|---|---|
-| Park | 0 | start |
-| City | 2700 | ~45 m |
-| Boardwalk | 4700 | ~78 m |
-| Beach | 6400 | ~107 m |
-
-The later zones sit past most runs, so the tuning drawer has a **Start in** control that
-begins a run at a zone's distance purely to look at it. Runs started that way set
-`PREVIEW` and record no score, no medal and no run count.
-
-**Zone starts and stage starts are coupled.** Overhead obstacles only exist from
-`STAGES[3]`, so if a zone's dominant stretch ends before that distance, nothing ever
-hangs over it — the park had exactly that problem and never saw a single tree. Check
-`zw(zone, STAGES[3].from)` after moving either.
-
-The same weights drive **both** the furniture and the horizon, so the change of place
-and the change of difficulty are one event rather than two that coincide.
-
-- Items carry `zones:["park"]` etc. Untagged items — benches, wire bin, bollard, trees,
-  streetlamp — belong everywhere and are the thread that makes it one continuous street.
-  `itemW` squares the zone weight and multiplies by 1.9, so a zone's own furniture
-  arrives late and then dominates, instead of trickling in.
-- Horizon: `drawTreeline` / `drawSkyline` / `drawSea`, each drawn at its zone's weight.
-  Ground: `drawVerge` (grass) and `drawDeck` (planks) overlay the pavement the same way.
-- Birds: one species per zone — bluejay in the park, pigeon downtown, gull on the
-  boardwalk — picked by `zoneAt()` at draw time. Same sprite size and hitbox, so it is
-  colour and silhouette only, never a difficulty change.
-- **Every zone needs its own tall ground piece** or that stretch becomes hoverable —
-  park has the topiary, planter and fountain, city has the shelter/car/phone box, boardwalk has the
-  fry stand, beach has the lifeguard chair. They all live in the `shelter` group, which is
-  what the `tall` gate reads.
-
-**Ground items can be bands, not one rectangle.** `cw` x `h` is a single box for the
-whole height, which is wrong for anything that narrows: the fry stand's sign board is 30
-wide over a 38-wide body, so six pixels of empty sky either side of the sign were lethal.
-Give such an item `boxes:[{dx,w,top,bot}]` — bands measured up from the pavement — and
-`heightOf()` will report the tallest for pair clearance. Done for the fry stand, the car
-(nothing above the roofline kills you now) and the umbrella (the pole, not the canopy's
-footprint). Worth sweeping a new sprite's collider before shipping it; the maps in
-`hitmap.js`-style sweeps make a mismatch obvious in seconds.
-
-**Every sprite receives the frame clock** as the last `draw()` argument — air and ground
-both — which is how the rain falls, the lighthouse flashes and the traffic signals cycle
-(offset by their instance `v`, so a street's signals are not in lockstep).
-
-An item marked `floats:true` rides the swell: the draw base is offset by `waveAt()`, the
-same function the water surface is drawn from. It lifts **above** the nominal line only,
-never below, because the collider stays at `WALKY` — drawing lower would leave hitbox
-above the art, and up is the forgiving direction. **Keep animated detail inside the collider**: the rain stops exactly
-where the hitbox stops, so nothing drawn is a lie about what will pop you.
-
-**One obstacle can be both a ceiling and a floor.** A box in `boxes[]` with `up:true`
-stands on the pavement (`h` tall) instead of hanging from the top (`d` deep), which is
-how the greengrocer and the souvenir stand are a shop *and* the stall outside it — you
-thread the gap between the awning and the crates. Both are `nopair:true`: they already
-make their own gap, and pairing them with a second obstacle stacks two gaps with no way
-through. `depthOf()` ignores `up` boxes so pair clearance still measures headroom only.
-Keep the gap generous — 57px against a 40px bubble is about right.
-
-The beach solves "what hangs over a beach" three ways, and they are worth keeping
-distinct: the **palm** is a tree (weave past it), the **kite** is narrow and deep with
-only the kite body solid and its string drawn as background, and the **pier** is wide and
-low so you have to commit to going under rather than around.
-
-`zoneAt(d)` returns the zone whose **nominal start** you have passed, not whichever
-zone weighs most. Those differ: the scenery cross-fade begins `FADE` early so a place
-appears on the horizon before you reach it, and weight-based naming announced the city
-nine seconds before its start. The banner names the zone **one second after** that
-nominal start. Difficulty stages still exist and still drive
-spawning, but they are no longer announced — `STAGES` is internal now.
-
-## Adding an obstacle without it being invisible## Adding an obstacle without it being invisible
+## Adding an obstacle without it being invisible
 
 `localStorage` holds the player's rotation as a list of item ids that are ON. A list
 saved before your new obstacle existed does not mention it, and the naive read —
@@ -555,3 +417,11 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   city from 2800px, park pieces weighted 1.8x — they now appear in 95% of runs to 60m.
   Fullscreen also got a root-element fallback and now reports "Not allowed here" instead of
   failing silently, because some embedders refuse the request and the button looked dead.
+- **15 Sep 2026** — The start sequence stopped eating its own instructions. One press used
+  to clear the title *and* begin the fill, so the how-to was dismissed by the very tap that
+  committed you — and the scrim over it hid the kid and the street you were about to play.
+  Now: tap clears the title, tap fills, tap launches. The how-to moved to the title screen,
+  `ready` became a bare "Tap to blow" over an undimmed scene, and overlays were re-anchored
+  to the canvas so no prompt lands on the HUD (see above). Also cut ~160 lines of stale
+  duplicate sections this file had been carrying, which still documented the `armed` state
+  and the four-way style switch, both long removed.
