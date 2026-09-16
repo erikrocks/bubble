@@ -171,6 +171,44 @@ The later legs sit past most runs, so the tuning drawer has a **Start in** contr
 begins a run at a place's first appearance purely to look at it. Those runs set `PREVIEW`
 and record no score, medal or run count.
 
+## High scores
+
+Copied from KUDR. Supabase REST called with plain `fetch` — **no Supabase JS library**, so
+the no-dependencies rule holds.
+
+```
+project  kudr-leaderboard (shared)   table  public.bubble_scores
+columns  id, initials, score, created_at
+RLS      SELECT + INSERT only - no UPDATE or DELETE policy exists
+```
+
+With RLS on, an operation with no policy matches zero rows, so PATCH and DELETE return
+**204 having changed nothing** — the board can be added to but never edited or wiped with
+the public key. Verified against the live table before any UI was written. Constraints
+reject anything but `^[A-Z]{3}$` and a score outside 0-1,000,000.
+
+The publishable key sits in the HTML on purpose; that is how Supabase is designed.
+**Scores are forgeable** by anyone with devtools — unavoidable without accounts, accepted.
+
+The column is an integer and Bubble measures metres with a decimal, so **distance is
+stored as metres x 10**: 1287 is 128.7 m. `toScore` / `fromScore` are the only places
+that know.
+
+**Every call returns `null`/`false` on any failure and times out at 6s.** `loadScores`,
+`submitScore` and `qualifies` all swallow errors. `qualifies` returning false when the
+board cannot be read is deliberate: the game must never ask for initials it would then
+fail to save. Nothing in the frame loop awaits or throws.
+
+Periods are **calendar** periods (week starts Monday), not rolling windows, so everyone's
+board resets together. Initials render through `textContent`, never `innerHTML` — that is
+other people's text.
+
+Shares KUDR's project rather than having its own. Free-tier Supabase **pauses after ~7
+days with no activity**; one project serving two games halves what can go quietly to
+sleep. The trade, which KUDR's notes made the other way: the two games' keys can now read
+and insert into each other's score tables. Given scores are public and forgeable anyway,
+that buys little.
+
 ## Who's blowing
 
 A row of kid portraits under the game picks the character, or "Anyone" for a random kid
@@ -395,6 +433,8 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   telescope, fry stand (the walk's tall piece) and an arcade sign. Sea horizon,
   plank decking, gulls instead of pigeons. Banners now name the zone a second after you
   enter it rather than announcing difficulty stages.
+- **15 Sep 2026** — High-score board added, copied from KUDR: same Supabase pattern, own
+  table in the same project. Verified the RLS behaviour against the live table first.
 - **15 Sep 2026** — The route became a repeating round trip (Erik's idea): out to the sea
   and back through every place in reverse. Added the crossing itself — open water underfoot,
   buoy, moored dinghy, lighthouse rock, low cloud and a rain squall. Added a character

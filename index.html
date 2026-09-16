@@ -111,6 +111,31 @@ button.who.any{line-height:1; padding:0 10px; height:56px; font:500 12px/1 "Inst
   color:var(--ink2); background:var(--surface)}
 button.who.any[aria-pressed="true"]{background:var(--accent); color:#fff}
 button.who:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.board{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:10px; padding:14px; background:rgba(13,16,32,.86);
+  pointer-events:auto; user-select:none}
+.board[hidden]{display:none}
+.board h2{color:#fff}
+.btabs{display:flex; border:1px solid rgba(255,255,255,.28); border-radius:2px; overflow:hidden}
+.btabs button{font:500 12px/1 "Instrument Sans",sans-serif; color:#cfd9ef; background:transparent;
+  border:0; border-right:1px solid rgba(255,255,255,.28); padding:7px 11px; cursor:pointer}
+.btabs button:last-child{border-right:0}
+.btabs button[aria-pressed="true"]{background:var(--accent); color:#fff}
+.blist{width:min(300px,86%); display:flex; flex-direction:column; gap:2px; min-height:120px}
+.brow{display:flex; gap:10px; align-items:baseline; font-family:"JetBrains Mono",monospace;
+  font-size:13px; color:#e8edf8; padding:2px 6px; border-radius:2px}
+.brow:nth-child(odd){background:rgba(255,255,255,.06)}
+.brow .rk{width:2ch; color:#97a3bf; text-align:right}
+.brow .ini{font-family:"Silkscreen",monospace; font-size:12px; letter-spacing:.08em}
+.brow .val{margin-left:auto; font-variant-numeric:tabular-nums}
+.bmsg{font-size:13px; color:#b9c4dd; text-align:center; padding:28px 0}
+.initials{display:flex; gap:8px; align-items:center; pointer-events:auto}
+.initials input{width:5.5ch; text-transform:uppercase; text-align:center; letter-spacing:.18em;
+  font:400 18px/1 "Silkscreen",monospace; color:var(--ink); background:#fff;
+  border:1px solid var(--line2); border-radius:2px; padding:8px 6px}
+.initials button{font:500 12.5px/1 "Instrument Sans",sans-serif; border-radius:2px; padding:9px 12px;
+  cursor:pointer; border:1px solid var(--line2); background:var(--surface); color:var(--ink2)}
+.initials button.go{background:var(--accent); border-color:var(--accent); color:#fff}
 .tools{display:flex; gap:6px; align-items:center; padding:9px 12px}
 .tools button{font:500 12px/1 "Instrument Sans",sans-serif; color:var(--ink2); background:var(--surface);
   border:1px solid var(--line2); border-radius:2px; padding:7px 10px; cursor:pointer; white-space:nowrap}
@@ -179,6 +204,12 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
     <span class="kbd">P or Esc to resume</span>
   </div>
   <div class="banner" id="banner"></div>
+  <div class="board" id="board" hidden>
+    <h2>High scores</h2>
+    <div class="btabs" id="btabs"></div>
+    <div class="blist" id="blist"></div>
+    <button class="kbd" id="bclose" style="border:0;cursor:pointer">Close</button>
+  </div>
   <p class="launch" id="launch-hint">Tap to launch</p>
   <div class="overlay" id="ov-dead" hidden>
     <h2 id="ov-cause">Popped</h2>
@@ -186,7 +217,12 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
     <span class="newbest" id="ov-newbest" hidden>New best</span>
     <span class="medal" id="ov-medal" hidden>First corner</span>
     <p class="sub" id="ov-best">best 0.0 m</p>
-    <span class="kbd">Play again?</span>
+    <div class="initials" id="initials" hidden>
+      <input id="ini-in" maxlength="3" autocomplete="off" spellcheck="false" aria-label="Your initials">
+      <button class="go" id="ini-save" type="button">Save</button>
+      <button id="ini-skip" type="button">Skip</button>
+    </div>
+    <span class="kbd" id="dead-prompt">Play again?</span>
   </div>
   <dl class="hud">
     <div><dt>Distance</dt><dd id="h-dist">0.0 m</dd></div>
@@ -200,6 +236,7 @@ details.opts[open] summary{border-bottom:1px solid var(--line)}
     <button type="button" id="btn-sound" aria-pressed="true">Sound on</button>
     <button type="button" id="btn-pause">Pause</button>
     <button type="button" id="btn-full" hidden>Fullscreen</button>
+    <button type="button" id="btn-board">High scores</button>
     <span style="font-size:12px;color:var(--ink3)">Space / tap to blow &middot; P to pause</span>
   </div>
 </div>
@@ -1605,6 +1642,7 @@ function startRun(){
   G.deadT=0; G.stage=0; G.zone=null; G.zoneDelay=0; G.bannerT=0;
   G.sq=0; G.sqV=0; G.birdT=7+Math.random()*7;
   ov.title.hidden=true; ov.ready.hidden=false; ov.dead.hidden=true; ov.pause.hidden=true;
+  if(typeof iniRow!=="undefined"&&iniRow){ iniRow.hidden=true; deadPrompt.hidden=false; nameOpen=false; }
   banner.classList.remove("show");
   if(hint) hint.classList.remove("show");
 }
@@ -1729,6 +1767,7 @@ function pop(why){
   if(med){ ov.medal.hidden=false; ov.medal.textContent=med.name+" \u00b7 "+med.m+" m"; }
   else ov.medal.hidden=true;
   if(isBest&&G.run>60) Snd.best();
+  if(PREVIEW===0) askInitials(toScore(G.run));
 }
 
 /* ================= step ================= */
@@ -1955,6 +1994,7 @@ function hudTick(){
 
 /* ================= input ================= */
 function press(){
+  if(boardOpen||nameOpen) return;      /* a modal is up; the game waits */
   Snd.init();
   if(G.phase==="paused"){ togglePause(); return; }
   if(G.phase==="title"){ startRun(); }
@@ -1984,6 +2024,8 @@ window.addEventListener("pointercancel",release);
 frame.addEventListener("contextmenu",function(e){ e.preventDefault(); });
 window.addEventListener("keydown",function(e){
   if(e.target&&(e.target.tagName==="INPUT"||e.target.tagName==="BUTTON"||e.target.tagName==="SUMMARY")) return;
+  if(e.code==="Escape"&&boardOpen){ e.preventDefault(); closeBoard(); return; }
+  if(boardOpen||nameOpen) return;
   if(e.code==="KeyP"||e.code==="Escape"){ e.preventDefault(); togglePause(); return; }
   if(e.code==="Space"||e.code==="ArrowUp"){ e.preventDefault(); if(!e.repeat) press(); }
 });
@@ -2138,6 +2180,144 @@ seg(document.getElementById("seg-birds"),
     wrap.appendChild(row); host.appendChild(wrap);
   });
 })();
+
+/* ================= high scores =================
+   Supabase REST called with plain fetch - no library, so the no-dependencies rule
+   holds. Shares KUDR's project; its own table `bubble_scores` with SELECT and INSERT
+   policies only, so with the public key the board can be added to but never edited
+   or wiped (UPDATE and DELETE match zero rows and report success having done nothing).
+   Scores are forgeable by anyone with devtools. Unavoidable without accounts.
+
+   EVERY call here returns null/false on any failure and times out. The game has to
+   stay playable with no network at all, so a dead board must never reach a frame. */
+var SUPA_URL="https://dsandoakgeceuzyhwxhg.supabase.co";
+var SUPA_KEY="sb_publishable_p7QhKoUFYdj1alM5Sx5hkQ_Q7JxR4gi";
+var BOARD_SIZE=10, NET_TIMEOUT=6000;
+/* the column is an integer, so distance is stored as metres x 10: 1287 = 128.7 m */
+function toScore(px){ return Math.max(0,Math.min(1000000,Math.round(px/60*10))); }
+function fromScore(v){ return (v/10).toFixed(1)+" m"; }
+
+function supaHeaders(){
+  return {apikey:SUPA_KEY,Authorization:"Bearer "+SUPA_KEY,"Content-Type":"application/json"};
+}
+/* calendar periods, not rolling windows, so everyone's board resets together */
+function periodStart(period){
+  var now=new Date();
+  if(period==="month") return new Date(now.getFullYear(),now.getMonth(),1);
+  if(period==="week"){
+    var d=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    d.setDate(d.getDate()-((d.getDay()+6)%7));      /* Monday = 0 */
+    return d;
+  }
+  return null;
+}
+function netSignal(){
+  try{ return AbortSignal.timeout(NET_TIMEOUT); }catch(e){ return undefined; }
+}
+async function loadScores(period){
+  try{
+    var url=SUPA_URL+"/rest/v1/bubble_scores?select=initials,score&order=score.desc&limit="+BOARD_SIZE;
+    var since=periodStart(period);
+    if(since) url+="&created_at=gte."+encodeURIComponent(since.toISOString());
+    var res=await fetch(url,{headers:supaHeaders(),signal:netSignal()});
+    if(!res.ok) return null;
+    return await res.json();
+  }catch(e){ return null; }
+}
+async function submitScore(initials,value){
+  try{
+    var res=await fetch(SUPA_URL+"/rest/v1/bubble_scores",{
+      method:"POST",headers:supaHeaders(),
+      body:JSON.stringify({initials:initials,score:value}),
+      signal:netSignal()
+    });
+    return res.ok;
+  }catch(e){ return false; }
+}
+/* false when the board cannot be read, so the game never asks for initials it
+   would then fail to save */
+async function qualifies(value){
+  if(value<=0) return false;
+  var rows=await loadScores("all");
+  if(rows===null) return false;
+  boardRows.all=rows;
+  if(rows.length<BOARD_SIZE) return true;
+  return value>rows[rows.length-1].score;
+}
+
+var boardRows={all:null,month:null,week:null}, boardPeriod="all", boardOpen=false, nameOpen=false;
+var boardEl=document.getElementById("board"), blistEl=document.getElementById("blist");
+function renderBoard(){
+  var rows=boardRows[boardPeriod];
+  if(rows===undefined||rows===null){
+    blistEl.innerHTML='<p class="bmsg">'+(rows===null?"Couldn\u2019t reach the board.<br>The game plays fine without it.":"Loading\u2026")+'</p>';
+    return;
+  }
+  if(!rows.length){ blistEl.innerHTML='<p class="bmsg">No scores yet. Be first.</p>'; return; }
+  blistEl.innerHTML=rows.map(function(r,i){
+    return '<div class="brow"><span class="rk">'+(i+1)+'</span>'+
+           '<span class="ini"></span><span class="val">'+fromScore(r.score)+'</span></div>';
+  }).join("");
+  Array.prototype.forEach.call(blistEl.querySelectorAll(".ini"),function(el,i){
+    el.textContent=rows[i].initials;     /* never innerHTML: this is other people's text */
+  });
+}
+function refreshBoard(period){
+  boardRows[period]=undefined; renderBoard();
+  loadScores(period).then(function(rows){ boardRows[period]=rows; if(boardPeriod===period) renderBoard(); });
+}
+function openBoard(){
+  boardOpen=true; boardEl.hidden=false;
+  if(G.phase==="fly"||G.phase==="blow") togglePause();
+  refreshBoard(boardPeriod);
+}
+function closeBoard(){ boardOpen=false; boardEl.hidden=true; game.focus(); }
+(function(){
+  var tabs=document.getElementById("btabs");
+  [["All time","all"],["This month","month"],["This week","week"]].forEach(function(t){
+    var b=document.createElement("button");
+    b.type="button"; b.textContent=t[0]; b.setAttribute("aria-pressed",t[1]===boardPeriod);
+    b.addEventListener("click",function(e){
+      e.stopPropagation(); boardPeriod=t[1];
+      Array.prototype.forEach.call(tabs.children,function(o){ o.setAttribute("aria-pressed",o===b); });
+      if(boardRows[boardPeriod]===undefined) refreshBoard(boardPeriod); else renderBoard();
+    });
+    tabs.appendChild(b);
+  });
+  boardEl.addEventListener("pointerdown",function(e){ e.stopPropagation(); });
+  document.getElementById("bclose").addEventListener("click",function(e){ e.stopPropagation(); closeBoard(); });
+  document.getElementById("btn-board").addEventListener("click",closeOrOpen);
+  function closeOrOpen(){ boardOpen?closeBoard():openBoard(); }
+})();
+
+/* initials, asked only when the run actually beats 10th place */
+var iniRow=document.getElementById("initials"), iniIn=document.getElementById("ini-in"),
+    deadPrompt=document.getElementById("dead-prompt");
+function askInitials(value){
+  qualifies(value).then(function(ok){
+    if(!ok||G.phase!=="dead") return;
+    nameOpen=true;
+    iniRow.hidden=false; deadPrompt.hidden=true;
+    iniIn.value=""; try{ iniIn.focus(); }catch(e){}
+  });
+}
+function endInitials(){ nameOpen=false; iniRow.hidden=true; deadPrompt.hidden=false; game.focus(); }
+iniRow.addEventListener("pointerdown",function(e){ e.stopPropagation(); });
+document.getElementById("ini-skip").addEventListener("click",function(e){ e.stopPropagation(); endInitials(); });
+document.getElementById("ini-save").addEventListener("click",function(e){
+  e.stopPropagation();
+  var v=(iniIn.value||"").toUpperCase().replace(/[^A-Z]/g,"").slice(0,3);
+  if(v.length<3){ iniIn.focus(); return; }
+  var val=toScore(G.run);
+  endInitials();
+  submitScore(v,val).then(function(ok){
+    if(ok){ boardRows={all:null,month:null,week:null}; if(boardOpen) refreshBoard(boardPeriod); }
+  });
+});
+iniIn.addEventListener("keydown",function(e){
+  e.stopPropagation();
+  if(e.key==="Enter") document.getElementById("ini-save").click();
+});
 
 /* ================= who's blowing ================= */
 (function(){
