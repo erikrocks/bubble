@@ -637,7 +637,16 @@ function drawDove(p,x,y,f){
 
 
 /* ---------------- sky + sidewalk ---------------- */
-var SKY=["#5d93c9","#84b9e0","#accfe8","#d2e4f0","#f0dcc4"].map(hexc);
+var SKY_DAY=["#5d93c9","#84b9e0","#accfe8","#d2e4f0","#f0dcc4"].map(hexc);
+/* Not black. A black sky reads as a hole in the screen at this resolution; the
+   horizon band keeps a little warmth so the skyline still has something to sit on. */
+var SKY_NIGHT=["#080d22","#0d1531","#141f45","#1d2a56","#2e3760"].map(hexc);
+var SKY=SKY_DAY.slice();            /* the live palette - everything reads through this */
+var NIGHT=0;                        /* what SKY is currently mixed to */
+function mixc(a,b,t){
+  return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),
+          Math.round(a[2]+(b[2]-a[2])*t),255];
+}
 function skyAt(x,y,H){
   var v=y/H, i=Math.floor(v*5+(bay(x,y)-0.5)*0.85);
   if(i<0)i=0; if(i>4)i=4;
@@ -1217,7 +1226,9 @@ var GROUPS=[
      for(var i=0;i<6;i++) p.rect(x+10+i*7,3,4,2,C.gold);
      /* street level: window and door both stand on the pavement */
      p.rect(x+6,wy-40,26,26,C[sk.brD]);
-     p.rect(x+7,wy-39,24,24,C.glassD); p.rect(x+8,wy-38,22,22,C.glass);
+     p.rect(x+7,wy-39,24,24,C.glassD);
+     if(NIGHT>0.25) lit(p,function(){ p.rect(x+8,wy-38,22,22,C.lamp2); });
+     else p.rect(x+8,wy-38,22,22,C.glass);
      p.vl(x+19,wy-38,22,C.glassD); p.hl(x+8,wy-27,22,C.glassD);
      if(hasKid(v)) miniKid(p,x+11,wy-17,kidSel().mini);   /* someone at the glass */
      p.rect(x+6,wy-14,26,3,C.conc); p.hl(x+6,wy-14,26,C.concL);
@@ -1248,7 +1259,9 @@ var GROUPS=[
      p.rect(x+5,1,48,6,C[sk.bd]); p.hl(x+5,1,48,C[sk.bdL]);
      for(var i=0;i<6;i++) p.rect(x+10+i*7,3,4,2,C.gold);
      p.rect(x+7,wy-44,26,22,C[sk.brD]);
-     p.rect(x+8,wy-43,24,20,C.glassD); p.rect(x+9,wy-42,22,18,C.glass);
+     p.rect(x+8,wy-43,24,20,C.glassD);
+     if(NIGHT>0.25) lit(p,function(){ p.rect(x+9,wy-42,22,18,C.lamp2); });
+     else p.rect(x+9,wy-42,22,18,C.glass);
      p.vl(x+20,wy-42,18,C.glassD);
      p.rect(x+38,wy-34,14,34,C[sk.brD]);
      p.rect(x+39,wy-33,12,33,C.doorW); p.vl(x+39,wy-32,31,C.wood);
@@ -1430,10 +1443,41 @@ function toggle(gid,iid){
    gets a job - the turnaround - instead of being a dead end. */
 var ZONE_NAMES={park:"Park",city:"City",boardwalk:"Boardwalk",beach:"Beach",sea:"The crossing"};
 var ROUTE=["park","city","boardwalk","beach","sea","beach","boardwalk","city"];
-var FIRST=2700, LEG=2000, FADE=1100;
-function legStart(i){ return i<=0?0:FIRST+(i-1)*LEG; }
-function legIndex(d){ return d<FIRST?0:1+Math.floor((d-FIRST)/LEG); }
+/* The crossing is longer than the other legs on purpose: it is where the light goes,
+   and a sunset needs room to happen in. Legs are no longer a uniform LEG apart, so
+   everything goes through LEGCUM rather than arithmetic on LEG. */
+var FIRST=2700, LEG=2000, SEA_LEG=3400, FADE=1100;
+var LEGLEN=ROUTE.map(function(id,i){ return i===0?FIRST:(id==="sea"?SEA_LEG:LEG); });
+var LEGCUM=(function(){ var o=[0]; for(var i=0;i<LEGLEN.length;i++) o.push(o[i]+LEGLEN[i]); return o; })();
+var LOOP=LEGCUM[ROUTE.length];              /* one full lap, out and back */
+function legStart(i){
+  var n=ROUTE.length, lap=Math.floor(i/n), k=((i%n)+n)%n;
+  return lap*LOOP+LEGCUM[k];
+}
+function legIndex(d){
+  var n=ROUTE.length, lap=Math.floor(d/LOOP), r=d-lap*LOOP, k=0;
+  while(k+1<n&&LEGCUM[k+1]<=r) k++;
+  return lap*n+k;
+}
 function legId(i){ return ROUTE[((i%ROUTE.length)+ROUTE.length)%ROUTE.length]; }
+
+/* ---- day and night ----
+   0 is full daylight, 1 is full dark. Dusk falls on the water: it starts as the sea
+   takes the horizon and is complete about two thirds of the way across, so the last
+   of the crossing is made in the dark and the whole way home is at night. The sun
+   then comes up across the park at the top of the next lap - which is why the park
+   is the one leg that looks different depending on which lap you are on.
+   The FIRST lap opens in daylight; you have to earn the night. */
+function nightAt(d){
+  if(d<=0) return 0;
+  var lap=Math.floor(d/LOOP), r=d-lap*LOOP;
+  var parkEnd=LEGCUM[1], seaA=LEGCUM[4], seaB=LEGCUM[5];
+  function ease(t){ t=Math.max(0,Math.min(1,t)); return t*t*(3-2*t); }
+  if(r<parkEnd) return lap===0?0:1-ease(r/(parkEnd*0.72));   /* sunrise over the park */
+  if(r<seaA-FADE*0.5) return 0;                              /* daylight to the water */
+  if(r<seaB) return ease((r-(seaA-FADE*0.5))/((seaA+SEA_LEG*0.66)-(seaA-FADE*0.5)));
+  return 1;                                                  /* night all the way home */
+}
 function legW(i,d){
   var a=legStart(i), b=legStart(i+1), w=1;
   if(i>0){
@@ -1489,12 +1533,18 @@ function firstStart(id){
   for(var i=0;i<ROUTE.length;i++) if(ROUTE[i]===id) return legStart(i);
   return 0;
 }
+/* The jump list in /admin. It lists the way OUT once per place, and then the legs on
+   the way home separately, because those are the same places at night and there is no
+   other way to see them without a run twice as long as anyone's best. */
 var ZONES=(function(){
   var seen={}, out=[];
-  ROUTE.forEach(function(id){
+  ROUTE.forEach(function(id,i){
     if(seen[id]) return;
-    seen[id]=1; out.push({id:id,name:ZONE_NAMES[id],from:firstStart(id)});
+    seen[id]=1; out.push({id:id,name:ZONE_NAMES[id],from:legStart(i)});
   });
+  for(var i=5;i<ROUTE.length;i++)
+    out.push({id:ROUTE[i],name:ZONE_NAMES[ROUTE[i]]+" \u00b7 night",from:legStart(i)+120});
+  out.push({id:"park",name:"Sunrise",from:LOOP+60});
   return out;
 })();
 
@@ -1574,11 +1624,41 @@ var gctx=game.getContext("2d");
 var goff=document.createElement("canvas"); goff.width=GW; goff.height=GH;
 var goctx=goff.getContext("2d"), gimg=goctx.createImageData(GW,GH);
 var gp=painter(gimg.data,GW,GH);
-var skyBase=(function(){
-  var o=document.createElement("canvas"); o.width=GW; o.height=GH;
-  var im=o.getContext("2d").createImageData(GW,GH), pp=painter(im.data,GW,GH);
-  drawSky(pp,GW,GH); return im.data.slice(0);
-})();
+/* Stars and the moon are baked INTO the sky base rather than drawn over it. The night
+   tint below skips anything that still matches the sky base exactly, so anything baked
+   in here is immune to it - which is what keeps stars looking like stars instead of
+   grey specks. Rebuilt only when the light has actually moved. */
+var skyCanvas=document.createElement("canvas");
+skyCanvas.width=GW; skyCanvas.height=GH;
+var skyImg=skyCanvas.getContext("2d").createImageData(GW,GH);
+var skyBase=null, skyBuiltAt=-1;
+function buildSky(n){
+  for(var i=0;i<5;i++) SKY[i]=mixc(SKY_DAY[i],SKY_NIGHT[i],n);
+  var pp=painter(skyImg.data,GW,GH);
+  pp.a=1; pp.fade=0; pp.force=null; pp.oy=0;
+  drawSky(pp,GW,GH);
+  if(n>0.03){
+    for(var k=0;k<58;k++){                       /* stars, thickest up top */
+      var sx=Math.floor(hash(k*3.7)*GW), sy=Math.floor(Math.pow(hash(k*5.1),1.7)*(WALKY-30));
+      var tw=0.55+0.45*hash(k*9.3);
+      pp.px(sx,sy,withA([232,240,255,255],Math.round(255*n*tw)));
+      if(hash(k*2.3)>0.88) pp.px(sx+1,sy,withA([232,240,255,255],Math.round(140*n*tw)));
+    }
+    var mx=GW-44, my=17, mr=6;                   /* a gibbous moon */
+    for(var yy=-mr;yy<=mr;yy++)for(var xx=-mr;xx<=mr;xx++){
+      if(xx*xx+yy*yy>mr*mr) continue;
+      var lit=(xx+mr*0.55)*(xx+mr*0.55)+yy*yy>mr*mr*0.62;
+      pp.px(mx+xx,my+yy,withA(lit?[246,244,226,255]:[214,212,196,255],Math.round(255*n)));
+    }
+  }
+  skyBase=skyImg.data.slice(0);
+  skyBuiltAt=n;
+}
+buildSky(0);
+function setNight(n){
+  NIGHT=n;
+  if(Math.abs(n-skyBuiltAt)>=0.02||(n===0&&skyBuiltAt!==0)) buildSky(n);
+}
 var POP=[hexc("#ffffff"),hexc("#ffd9f2"),hexc("#bfe6ff")];
 var FAR=[hexc("#8fa7c4"),hexc("#7d95b4"),hexc("#a2b7cf")], FARW=hexc("#cfe0ef");
 
@@ -1694,6 +1774,10 @@ function drawGull(p,x,y,f){
   if(f){ p.rect(x+3,y-2,5,3,C.gullL); p.hl(x+3,y-2,5,C.gull); p.px(x+7,y-2,C.edge); }
   else { p.rect(x+3,y+5,5,2,C.gull); p.hl(x+3,y+6,5,C.gullD); p.px(x+7,y+6,C.edge); }
 }
+/* A light source has to be painted at its exact colour to survive the night tint's
+   LIT exemption, and the fade toward sky would spoil that - so lit windows drop the
+   fade for the moment it takes to stamp them. */
+function lit(p,fn){ var f=p.fade; p.fade=0; fn(); p.fade=f; }
 function drawSkyline(p,off){
   var per=46, first=Math.floor(off/per)-1;
   for(var i=first;i<first+Math.ceil(GW/per)+3;i++){
@@ -1702,8 +1786,13 @@ function drawSkyline(p,off){
     p.rect(bx,top,w,h+6,col);
     p.hl(bx,top,w,FARW);
     for(var wy2=top+4;wy2<WALKY-8;wy2+=5)
-      for(var wx=bx+3;wx<bx+w-3;wx+=5)
-        if(hash(i*31+wx+wy2)<0.62) p.rect(wx,wy2,2,2,FARW);
+      for(var wx=bx+3;wx<bx+w-3;wx+=5){
+        var hq=hash(i*31+wx+wy2);
+        if(hq>=0.62) continue;
+        if(NIGHT>0.25&&hq<0.26){                 /* somebody is still up */
+          (function(ax,ay){ lit(p,function(){ p.rect(ax,ay,2,2,C.lampOn); }); })(wx,wy2);
+        } else p.rect(wx,wy2,2,2,FARW);
+      }
     if(hash(i+7)<0.3){ p.rect(bx+Math.floor(w/2)-1,top-5,3,5,col); }
   }
 }
@@ -2135,7 +2224,30 @@ function step(dt){
 }
 
 /* ================= draw ================= */
+/* The night pass. Everything the world draws gets mixed toward a deep blue, with two
+   exemptions: anything still matching the sky base exactly (bare sky, stars, the moon),
+   and the handful of colours that are meant to be a light source. That is what turns
+   the lamps into the only warm thing on the street once it is properly dark. */
+var NIGHT_TINT=hexc("#0a1228");
+var LIT=(function(){
+  var o={};
+  ["lampOn","lampGlow","lamp2","gold"].forEach(function(k){
+    var c=C[k]; o[(c[0]<<16)|(c[1]<<8)|c[2]]=1;
+  });
+  return o;
+})();
+function tintNight(d,n){
+  if(n<=0.004) return;
+  var k=n*0.62, ik=1-k, tr=NIGHT_TINT[0]*k, tg=NIGHT_TINT[1]*k, tb=NIGHT_TINT[2]*k;
+  for(var i=0;i<d.length;i+=4){
+    var r=d[i],g=d[i+1],b=d[i+2];
+    if(r===skyBase[i]&&g===skyBase[i+1]&&b===skyBase[i+2]) continue;
+    if(LIT[(r<<16)|(g<<8)|b]) continue;
+    d[i]=r*ik+tr; d[i+1]=g*ik+tg; d[i+2]=b*ik+tb;
+  }
+}
 function drawWorld(t){
+  setNight(nightAt(G.phase==="title"?0:G.run));
   gimg.data.set(skyBase);
   gp.setA(0.55); drawClouds(gp,G.world*0.12); gp.setA(1);
   var wPark=zw("park",G.run), wCity=zw("city",G.run), wWalk=zw("boardwalk",G.run),
@@ -2222,6 +2334,7 @@ function drawWorld(t){
     var px2=Math.round(q.x),py=Math.round(q.y);
     if(px2>=0&&py>=0&&px2<GW&&py<GH) blendAt(gimg.data,GW,px2,py,withA(q.c,Math.round(255*q.life)));
   });
+  tintNight(gimg.data,NIGHT);
   goctx.putImageData(gimg,0,0);
   gctx.imageSmoothingEnabled=false;
   gctx.drawImage(goff,0,0,game.width,game.height);
