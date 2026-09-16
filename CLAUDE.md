@@ -323,6 +323,27 @@ Platform-split, and the button knows the difference:
   rotation lock applies. A guaranteed landscape lock on iPhone needs the native wrapper.
 - A rotate hint shows above the game on narrow portrait screens.
 
+## Fullscreen is the only way to lose the phone's URL bar
+
+Safari keeps the address bar in landscape and no web API can hide it, so the on-screen
+Fullscreen button is the whole story on a phone. It has two failure modes worth knowing:
+iPhone Safari has no Fullscreen API for non-video elements at all (the button says
+"Not allowed here" rather than doing nothing), and some hosts allow only the document
+root, which is why there is a `documentElement` fallback and a `body.fs-root` class to
+hide the page around the game when that path is taken.
+
+`.frame` is the fullscreen element, and it carries the HUD, the player row and the tool
+bar as well as the canvas. On a phone in landscape that chrome leaves a canvas too small
+to play, so `@media (pointer:coarse),(max-height:560px)` strips it: the player row and
+tool bar go, the HUD collapses to Distance and Best floating over the top-left of the
+canvas, and `.fsx` — a corner ✕ — appears. **The ✕ is not optional.** Stripping the tool
+bar takes the Exit fullscreen button with it, and a phone has no Esc key. It calls
+`stopPropagation` on `pointerdown` because the frame turns any pointerdown into a gust
+of wind.
+
+Desktop fullscreen is deliberately left alone: there is room for the HUD there and it
+already worked.
+
 ## Deploying
 
 Push to `main`; Pages rebuilds in about a minute. Don't trust
@@ -425,3 +446,12 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   to the canvas so no prompt lands on the HUD (see above). Also cut ~160 lines of stale
   duplicate sections this file had been carrying, which still documented the `armed` state
   and the four-way style switch, both long removed.
+- **15 Sep 2026** — Fullscreen on a phone became actually playable: the HUD, player row
+  and tool bar are stripped below 560px of height (or on a coarse pointer), the distance
+  readout moves into the corner of the canvas, and a ✕ appears, since stripping the tool
+  bar removes the only way back out and phones have no Esc.
+- **15 Sep 2026** — The bubble wand was lying on its side, loop beside the fist. Kids hold
+  them upright, so `blowArm` now draws the handle running down from the loop into the
+  hand, with the arm reaching out and down to meet it. The loop stays at mouth height —
+  raising it to sit above the handle puts it over the kid's head, which Erik rejected
+  the first time round. Every kid's `anchor.dx` went 19 -> 15 to follow the loop.
