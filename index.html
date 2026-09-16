@@ -517,7 +517,7 @@ function cheeks(p,x,wy,skin,skinD,hy){
   p.px(x+9,wy+hy,C.edge);
 }
 var KIDS=[
-{id:"tee",name:"Tee & jeans",anchor:{dx:15,dy:-19},
+{id:"tee",name:"Tee & jeans",anchor:{dx:15,dy:-19},mini:{hair:"hair",skin:"skin",top:"shirt",leg:"denim"},
  note:"The default. Short hair, red tee, cheeks out. Clearest silhouette of the six.",
  draw:function(p,x,wy){
    p.rect(x+4,wy-7,3,6,C.denim); p.rect(x+8,wy-7,3,6,C.denim);
@@ -530,7 +530,7 @@ var KIDS=[
    p.rect(x+2,wy-14,2,6,C.skin);
    blowArm(p,x,wy,C.skin,C.skinD,-18,11,[C.wor,C.worL,C.worD]);
    bottle(p,x-4,wy); p.hl(x+1,wy,12,C.shadow);}},
-{id:"pigtails",name:"Pigtails",anchor:{dx:15,dy:-19},
+{id:"pigtails",name:"Pigtails",anchor:{dx:15,dy:-19},mini:{hair:"blonde",skin:"skin2",top:"dress",leg:"skin2"},
  note:"Blue dress, blonde pigtails. Widest head shape here — reads as a different kid at a glance.",
  draw:function(p,x,wy){
    p.rect(x+5,wy-6,2,5,C.skin2); p.rect(x+9,wy-6,2,5,C.skin2);
@@ -547,7 +547,7 @@ var KIDS=[
    p.rect(x+2,wy-15,2,5,C.skin2);
    blowArm(p,x,wy,C.skin2,C.skin2D,-18,11,[C.wgr,C.wgrL,C.wgrD]);
    bottle(p,x-4,wy); p.hl(x+1,wy,12,C.shadow);}},
-{id:"hoodie",name:"Hood up",anchor:{dx:15,dy:-19},
+{id:"hoodie",name:"Hood up",anchor:{dx:15,dy:-19},mini:{hair:"hoodie",skin:"skin3",top:"hoodie",leg:"grey"},
  note:"Hood up with a cream lining. The rounded head-and-shoulders shape reads as the oldest of them.",
  draw:function(p,x,wy){
    p.rect(x+4,wy-7,3,6,C.grey); p.rect(x+8,wy-7,3,6,C.grey);
@@ -562,7 +562,7 @@ var KIDS=[
    p.rect(x+2,wy-15,2,6,C.hoodie);
    blowArm(p,x,wy,C.hoodie,C.skin3,-18,11,[C.wbl,C.wblL,C.wblD]);
    bottle(p,x-4,wy); p.hl(x+1,wy,12,C.shadow);}},
-{id:"puff",name:"Puffs & stripes",anchor:{dx:15,dy:-19},
+{id:"puff",name:"Puffs & stripes",anchor:{dx:15,dy:-19},mini:{hair:"black",skin:"skin4",top:"stripeA",leg:"denim"},
  note:"Round hair puffs and a striped shirt. The most colour of the six without touching the bubble's palette.",
  draw:function(p,x,wy){
    p.rect(x+4,wy-7,3,6,C.denim); p.rect(x+8,wy-7,3,6,C.denim);
@@ -577,7 +577,7 @@ var KIDS=[
    p.rect(x+2,wy-14,2,6,C.skin4);
    blowArm(p,x,wy,C.skin4,C.skin4D,-18,11,[C.wgr,C.wgrL,C.wgrD]);
    bottle(p,x-4,wy); p.hl(x+1,wy,12,C.shadow);}},
-{id:"longhair",name:"Long hair",anchor:{dx:15,dy:-19},
+{id:"longhair",name:"Long hair",anchor:{dx:15,dy:-19},mini:{hair:"hair",skin:"skin2",top:"plum",leg:"skin2"},
  note:"Shoulder-length dark brown hair over a plum top. The only kid whose hair frames the face, so she reads instantly even at one pixel of movement.",
  draw:function(p,x,wy){
    p.rect(x+5,wy-6,2,5,C.skin2); p.rect(x+9,wy-6,2,5,C.skin2);
@@ -593,7 +593,7 @@ var KIDS=[
    p.rect(x+2,wy-15,2,5,C.skin2);
    blowArm(p,x,wy,C.skin2,C.skin2D,-18,11,[C.wbl,C.wblL,C.wblD]);
    bottle(p,x-4,wy); p.hl(x+1,wy,12,C.shadow);}},
-{id:"cap",name:"Ball cap",anchor:{dx:15,dy:-19},
+{id:"cap",name:"Ball cap",anchor:{dx:15,dy:-19},mini:{hair:"cap",skin:"skin2",top:"stripeA",leg:"denim"},
  note:"Orange cap with the brim turned back, teal shirt. Same blow, different attitude.",
  draw:function(p,x,wy){
    p.rect(x+4,wy-7,3,6,C.denim); p.rect(x+8,wy-7,3,6,C.denim);
@@ -1301,7 +1301,7 @@ var GROUPS=[
      p.rect(x+13,12,10,2,C.cream); p.rect(x+13,16,7,2,C.cream);}}
 ]},
 {id:"pole",cls:"air",name:"Poles",blurb:"Both stand on the sidewalk and reach out over the street. The pole is scenery; what it holds up is not.",items:[
-  {id:"lamp",name:"Streetlamp",w:44,d:19,boxes:[{dx:2,w:40,d:19}],
+  {id:"lamp",name:"Streetlamp",w:44,d:19,zones:["city","boardwalk"],boxes:[{dx:2,w:40,d:19}],
    note:"Pole at the back, cast arm reaching out over the street, lit head on the end. The glow gives you something to aim under.",
    bg:function(p,x,wy){
      p.rect(x+34,9,5,wy-9,C.iron); p.vl(x+34,9,wy-9,C.ironL); p.vl(x+38,9,wy-9,C.ironD);
@@ -1315,6 +1315,32 @@ var GROUPS=[
      p.rect(x+34,6,5,4,C.iron); p.hl(x+34,6,5,C.ironL);
      p.rect(x+8,13,10,3,C.iron); p.hl(x+8,13,10,C.ironL); p.hl(x+8,15,10,C.ironD);
      p.rect(x+9,16,8,2,C.lampOn); p.hl(x+10,18,6,C.lampGlow);}},
+  {id:"parklamp",name:"Park lamp",w:18,d:20,zones:["park"],
+   boxes:[{dx:4,w:9,d:16},{dx:7,w:3,d:20}],
+   note:"Victorian cast iron in dark grey, and unlike the streetlamp it is straight up and down - fluted post, tapered lantern sitting on top of it, finial above that. Narrow and deep: it costs you the top of the screen rather than a whole span of it. Park only; the modern streetlamp is city and boardwalk now.",
+   bg:function(p,x,wy){
+     /* Poles are background: drawn at half fade toward the sky, which is why this
+        one starts darker than the modern streetlamp. It has to survive the mix and
+        still read as cast iron rather than galvanised steel. */
+     p.rect(x+6,19,5,wy-19,C.carKD);                       /* the post, standing behind */
+     p.vl(x+6,19,wy-19,C.carK); p.vl(x+10,19,wy-19,C.black);
+     p.rect(x+5,wy-34,7,2,C.black);                        /* ladder rest */
+     p.rect(x+5,wy-16,7,2,C.black);
+     p.rect(x+4,wy-9,9,4,C.black);                         /* swelling foot */
+     p.rect(x+3,wy-5,11,5,C.black); p.hl(x+3,wy-5,11,C.carKD);
+   },
+   draw:function(p,x){
+     var cx=x+8;
+     p.px(cx,1,C.carKL); p.px(cx,2,C.carK);                /* finial */
+     p.hl(cx-2,3,5,C.carKD);                               /* roof, tapering outward */
+     p.hl(cx-3,4,7,C.carK); p.hl(cx-4,5,9,C.carKD);
+     p.rect(cx-3,6,7,8,C.lampOn);                          /* glass */
+     p.vl(cx-3,6,8,C.carK); p.vl(cx+3,6,8,C.carK);         /* corner posts */
+     p.vl(cx,6,8,C.carKD);                                 /* mullion */
+     p.hl(cx-2,12,5,C.lampGlow);
+     p.hl(cx-4,14,9,C.carKD); p.hl(cx-3,15,7,C.carK);      /* the lantern's base */
+     p.rect(cx-1,16,3,4,C.carK); p.vl(cx-1,16,4,C.carKL);  /* neck down onto the post */
+   }},
 {id:"traffic",name:"Traffic signal",w:36,d:24,zones:["city"],boxes:[{dx:0,w:32,d:7},{dx:16,w:11,d:24}],
    note:"Mast arm out over the street with the signal hanging off the end. Deep and narrow — forces a real dip, not a nudge.",
    bg:function(p,x,wy){
@@ -1363,7 +1389,7 @@ var on={bench:["slat","scroll"],post:["hydrant","meter","bollard"],bin:["trash",
         walk:["cart","scope"], pier:["arcade","souvenir","cloudbank"],
         sandy:["umbrella","net","cooler"], overbeach:["palm","kite","pierdeck"],
         atsea:["buoy","dinghy"], oversea:["squall"],
-        tree:["leafy"],shop:["striped","grocer"],pole:["lamp","traffic"]};
+        tree:["leafy"],shop:["striped","grocer"],pole:["lamp","parklamp","traffic"]};
 GROUPS.forEach(function(g){ g.items.forEach(function(it){ it.gid=g.id; }); });
 var DEFAULT_ON=JSON.parse(JSON.stringify(on));
 var kidsOn=KIDS.map(function(k){return k.id;});
@@ -1655,6 +1681,128 @@ function drawClouds(p,off){
       if(q<1&&(q<0.5||bay(x,y)<0.55)) p.px(x,y,[255,255,255,110]);
     }
   }
+}
+
+/* ---------------- the kid turns up in every zone ----------------
+   Cameos, not obstacles: these live in the parallax layer behind the playfield and
+   are drawn at the fade of the scenery around them, so they read as part of the
+   place rather than as something to dodge. Nothing here ever touches a collider.
+
+   The playable sprite is 24px tall. At that size a second one reads as a second
+   player, so the cameo is a 10px doll built from four of the kid's own colours -
+   hair, skin, top, legs - which is enough to tell Pigtails from Ball Cap at a
+   glance and not enough to compete with the bubble. */
+function mcol(m,k){ return C[m[k]]; }
+function miniKid(p,x,y,m){        /* standing, feet at y, 5 wide */
+  p.hl(x+1,y-8,3,mcol(m,"hair"));
+  p.hl(x+1,y-7,3,mcol(m,"skin")); p.px(x+1,y-7,mcol(m,"hair"));
+  p.rect(x+1,y-6,3,3,mcol(m,"top"));
+  p.px(x,y-6,mcol(m,"top")); p.px(x+4,y-6,mcol(m,"top"));
+  p.px(x,y-5,mcol(m,"skin")); p.px(x+4,y-5,mcol(m,"skin"));
+  p.vl(x+1,y-3,3,mcol(m,"leg")); p.vl(x+3,y-3,3,mcol(m,"leg"));
+}
+function sitKid(p,x,seat,m){      /* folded at the hip, legs hanging below `seat` */
+  p.hl(x+1,seat-6,3,mcol(m,"hair"));
+  p.hl(x+1,seat-5,3,mcol(m,"skin"));
+  p.rect(x+1,seat-4,3,4,mcol(m,"top"));
+  p.px(x,seat-4,mcol(m,"top")); p.px(x+4,seat-4,mcol(m,"top"));
+  p.px(x,seat-3,mcol(m,"skin")); p.px(x+4,seat-3,mcol(m,"skin"));
+  p.vl(x+1,seat+2,3,mcol(m,"leg")); p.vl(x+3,seat+2,3,mcol(m,"leg"));
+}
+function cameoAt(off,per,fn){
+  var first=Math.floor(off/per)-1;
+  for(var i=first;i<first+Math.ceil(GW/per)+2;i++){
+    var x=Math.round(i*per-off);
+    if(x>-40&&x<GW+40) fn(x,i);
+  }
+}
+/* park: sitting on a bench under the trees, feet swinging */
+function cameoPark(p,off){
+  var m=kidSel().mini;
+  cameoAt(off,400,function(x){
+    var seat=WALKY-6;
+    p.rect(x,seat-7,16,2,C.wood);                                    /* back rail */
+    p.vl(x+1,seat-7,7,C.woodD); p.vl(x+14,seat-7,7,C.woodD);
+    sitKid(p,x+5,seat,m);                                            /* then the kid */
+    p.hl(x,seat,16,C.woodL); p.hl(x,seat+1,16,C.wood);               /* seat in front */
+    p.vl(x+1,seat+2,4,C.woodD); p.vl(x+14,seat+2,4,C.woodD);         /* legs */
+  });
+}
+/* city: in a lit shop window, looking out at the street */
+function cameoCity(p,off){
+  var m=kidSel().mini;
+  cameoAt(off,420,function(x,i){
+    var b=WALKY-1, w=26, h=22, wall=(i&1)?C.brickB:C.brickA, wallD=(i&1)?C.brickBD:C.brickAD;
+    p.rect(x,b-h,w,h,wall); p.hl(x,b-h,w,wallD); p.vl(x+w-1,b-h,h,wallD);
+    p.rect(x+2,b-17,17,2,(i&1)?C.awnB:C.awnA);                       /* awning over the glass */
+    p.hl(x+2,b-15,17,(i&1)?C.awnBD:C.awnAD);
+    p.rect(x+3,b-14,14,11,C.lamp2);                                  /* the lit pane */
+    p.hl(x+3,b-14,14,C.iron); p.vl(x+3,b-14,11,C.iron); p.vl(x+16,b-14,11,C.iron);
+    p.hl(x+3,b-4,14,C.iron);
+    miniKid(p,x+7,b-5,m);                                            /* standing inside it */
+    p.rect(x+20,b-9,4,9,C.doorW); p.px(x+23,b-5,C.gold);
+  });
+}
+/* boardwalk: one car of the wheel the sea has been promising all along */
+function cameoWheel(p,off,t){
+  var m=kidSel().mini;
+  cameoAt(off,400,function(x,i){
+    var cx=x+20, cy=WALKY-62, R=15, horizon=WALKY-34;
+    p.rect(cx-1,cy,2,horizon-cy,C.pier);                             /* tower */
+    for(var k=0;k<2;k++){
+      var lx=cx+(k?6:-6);
+      for(var j=0;j<10;j++) p.px(cx+Math.round((lx-cx)*j/9),horizon-9+j,C.pier);
+    }
+    for(var a=0;a<64;a++){                                           /* rim */
+      var an=a/64*Math.PI*2;
+      p.px(cx+Math.round(Math.cos(an)*R),cy+Math.round(Math.sin(an)*R),C.iron);
+    }
+    var spin=t*0.3+i;
+    for(var k2=0;k2<6;k2++){
+      var an2=spin+k2*Math.PI/3;
+      var gx=cx+Math.round(Math.cos(an2)*R), gy=cy+Math.round(Math.sin(an2)*R);
+      for(var j2=3;j2<R-1;j2+=2)
+        p.px(cx+Math.round(Math.cos(an2)*j2),cy+Math.round(Math.sin(an2)*j2),C.iron);
+      p.rect(gx-2,gy,5,4,(k2&1)?C.candyA:C.mint);                    /* gondola */
+      p.hl(gx-2,gy,5,C.buoyB);
+      if(k2===0){                                                    /* the kid is in this one */
+        p.hl(gx-1,gy-3,3,mcol(m,"hair"));
+        p.hl(gx-1,gy-2,3,mcol(m,"skin"));
+        p.hl(gx-1,gy-1,3,mcol(m,"top"));
+      }
+    }
+  });
+}
+/* beach: out in the shallows in a rubber ring */
+function cameoSwim(p,off,t){
+  var m=kidSel().mini;
+  cameoAt(off,360,function(x,i){
+    /* The ring has to read as a ring, not a hull: the near side runs the full width,
+       the far side is only visible either side of the kid, who sits down inside it. */
+    var y=WALKY-13+Math.round(Math.sin(t*1.7+i*2.1)*1), cx=x+6;
+    p.hl(cx-2,y-4,3,mcol(m,"hair"));                                 /* head */
+    p.hl(cx-2,y-3,3,mcol(m,"skin"));
+    p.hl(cx-2,y-2,3,mcol(m,"top"));
+    p.hl(cx-2,y-1,3,mcol(m,"top"));
+    p.px(cx-3,y-1,mcol(m,"skin")); p.px(cx+3,y-1,mcol(m,"skin"));    /* arms on the ring */
+    p.hl(cx-6,y,4,C.buoyA); p.hl(cx+3,y,4,C.buoyA);                  /* far side of the ring */
+    p.hl(cx-6,y+1,13,C.buoyA);                                       /* near side */
+    p.px(cx-4,y+1,C.buoyB); p.px(cx,y+1,C.buoyB); p.px(cx+4,y+1,C.buoyB);
+    p.hl(cx-4,y+2,9,C.buoyA);
+    p.px(cx-7,y+2,C.foam); p.px(cx+7,y+2,C.foam);                    /* splash */
+  });
+}
+/* sea: rowing past, riding the same swell as everything else out there */
+function cameoBoat(p,off,t){
+  var m=kidSel().mini;
+  cameoAt(off,360,function(x,i){
+    var y=WALKY-18+Math.round(Math.sin(t*1.2+i*1.7)*1.4);
+    p.rect(x+1,y,13,3,C.hull); p.hl(x+1,y,13,C.buoyB); p.hl(x+1,y+2,13,C.hullD);
+    p.px(x,y,C.hullD); p.px(x+14,y,C.hullD);
+    sitKid(p,x+5,y-1,m);
+    p.px(x+3,y-2,C.wood); p.px(x+2,y-1,C.wood); p.px(x+1,y,C.wood);  /* the oar */
+    p.hl(x,y+3,15,C.foam);
+  });
 }
 
 /* ================= sound =================
@@ -2053,8 +2201,19 @@ function drawWorld(t){
     drawSea(gp,G.world*0.25,34+wBeach*10+wCross*22);
     gp.setA(1); gp.setFade(0);
   }
+  /* The cameos ride their zone's own layer and weight, so they fade in and out with
+     the scenery they belong to instead of popping at a boundary. Each sits a little
+     less faded than its backdrop - enough to notice the kid, not enough to mistake
+     one for something you have to dodge. */
+  gp.setFade(0.2);
+  if(wWalk>0.005){ gp.setA(wWalk); cameoWheel(gp,G.world*0.25,t); }
+  if(wCross>0.005){ gp.setA(wCross); cameoBoat(gp,G.world*0.25,t); }
+  if(wBeach>0.005){ gp.setA(wBeach); cameoSwim(gp,G.world*0.25,t); }
+  gp.setA(1); gp.setFade(0);
   if(wPark>0.005){ gp.setFade(0.5); gp.setA(wPark); drawTreeline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
   if(wCity>0.005){ gp.setFade(0.62); gp.setA(wCity); drawSkyline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
+  if(wPark>0.005){ gp.setFade(0.3); gp.setA(wPark); cameoPark(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
+  if(wCity>0.005){ gp.setFade(0.3); gp.setA(wCity); cameoCity(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
   gp.setFade(0.5);
   G.obs.forEach(function(o){ if(o.cls==="air"&&o.it.bg) o.it.bg(gp,Math.round(o.x-G.world),WALKY,GW,o.v||0); });
   gp.setFade(0);
@@ -2506,6 +2665,10 @@ function closeBoard(){ boardOpen=false; boardEl.hidden=true; game.focus(); }
    because this is played in landscape on a phone, and it says "three letters" by
    being three letters. The first version was an unlabelled white box. */
 var ALPHA="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+/* Whoever is at this device is nearly always the same person, and spinning three
+   dials back from AAA every time is the kind of small tax that stops people posting
+   a score at all. The last initials saved here come back pre-filled. */
+var lastIni="AAA";
 var iniRow=document.getElementById("initials"),
     slotsEl=document.getElementById("ini-slots"),
     deadPrompt=document.getElementById("dead-prompt");
@@ -2543,7 +2706,8 @@ function askInitials(value){
   qualifies(value).then(function(ok){
     if(!ok||G.phase!=="dead") return;
     nameOpen=true;
-    iniIdx=[0,0,0]; iniSlot=0; paintSlots();
+    iniIdx=[0,1,2].map(function(i){ return Math.max(0,ALPHA.indexOf(lastIni.charAt(i))); });
+    iniSlot=0; paintSlots();
     iniRow.hidden=false; deadPrompt.hidden=true;
   });
 }
@@ -2554,6 +2718,7 @@ document.getElementById("ini-save").addEventListener("click",function(e){ e.stop
 function saveInitials(){
   var v=ALPHA[iniIdx[0]]+ALPHA[iniIdx[1]]+ALPHA[iniIdx[2]];
   var val=toScore(G.run);
+  lastIni=v; queueSave();
   endInitials();
   submitScore(v,val).then(function(ok){
     if(ok){ boardRows={all:null,month:null,week:null}; if(boardOpen) refreshBoard(boardPeriod); }
@@ -2667,7 +2832,7 @@ function flushSave(){
     rotation:JSON.parse(JSON.stringify(on)), known:allItemIds(), kid:kidPick,
     best:Math.round(G.best), runs:STATS.runs,
     bestMedal:STATS.bestMedal?STATS.bestMedal.name:null,
-    sound:soundOn, savedAt:new Date().toISOString()
+    sound:soundOn, ini:lastIni, savedAt:new Date().toISOString()
   });
 }
 function saveBest(){ queueSave(); }
@@ -2675,6 +2840,7 @@ function saveBest(){ queueSave(); }
   var d=readStore();
   if(typeof d.best==="number"&&d.best>G.best) G.best=d.best;
   if(typeof d.runs==="number") STATS.runs=d.runs;
+  if(typeof d.ini==="string"&&/^[A-Z]{3}$/.test(d.ini)) lastIni=d.ini;
   if(d.bestMedal) MEDALS.forEach(function(m){ if(m.name===d.bestMedal) STATS.bestMedal=m; });
   if(d.kid&&(d.kid==="random"||KIDS.some(function(k){return k.id===d.kid;}))){
     kidPick=d.kid;
