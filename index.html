@@ -716,67 +716,57 @@ var GROUPS=[
      p.rect(x+3,y+5,5,1,C.cream); p.hl(x+1,b,9,C.shadow);}}
 ]},
 {id:"shelter",cls:"ground",name:"Tall on the ground",blurb:"The pieces that force you UP. Everything else on the sidewalk can be cleared by a lazy hover \u2014 these cannot.",items:[
-  {id:"hedge",name:"Boxwood",w:38,h:27,cw:30,zones:["park"],edge:true,
-   note:"A clipped boxwood ball on a short trunk. The tightest silhouette in the park \u2014 it reads as planted rather than wild, and the round mass is unmistakably solid.",
+  {id:"hedge",name:"Topiary",w:30,h:33,cw:22,zones:["park"],edge:true,
+   boxes:[{dx:11,w:15,top:33,bot:22},{dx:8,w:21,top:22,bot:7},{dx:14,w:7,top:7,bot:0}],
+   note:"Two clipped balls on one stem. Sculptural and obviously deliberate \u2014 stacking is what stops a single ball reading as a lollipop tree.",
    draw:function(p,x,b){
-     p.rect(x+17,b-7,4,7,C.bark); p.vl(x+17,b-6,6,C.barkD);
-     p.rect(x+14,b-1,10,1,C.hedgeD);
-     p.blob(x+19,b-15,14,12,C.hedge,C.hedgeL,C.hedgeD);
-     for(var a=0;a<28;a++){
-       var an=a/28*Math.PI*2;
-       p.px(x+19+Math.cos(an)*13.4,b-15+Math.sin(an)*11.4,C.hedgeD);
+     p.rect(x+17,b-9,3,9,C.bark); p.vl(x+17,b-8,7,C.barkD);
+     p.rect(x+14,b-1,9,1,C.hedgeD);
+     p.blob(x+18,b-16,10,8,C.hedge,C.hedgeL,C.hedgeD);
+     p.rect(x+17,b-24,3,4,C.bark);
+     p.blob(x+18,b-27,7,6,C.hedge,C.hedgeL,C.hedgeD);
+     for(var a=0;a<22;a++){
+       var an=a/22*Math.PI*2;
+       p.px(x+18+Math.cos(an)*9.4,b-16+Math.sin(an)*7.4,C.hedgeD);
+       p.px(x+18+Math.cos(an)*6.4,b-27+Math.sin(an)*5.4,C.hedgeD);
      }
-     for(var i=0;i<40;i++){
-       var qx=x+8+((i*7)%23), qy=b-24+((i*5)%17);
-       if(bay(qx,qy)<0.2) p.px(qx,qy,C.hedgeL);
+     p.hl(x+11,b,17,C.shadow);}},
+  {id:"planter",name:"Planter",w:36,h:28,cw:34,zones:["park"],edge:true,
+   boxes:[{dx:5,w:27,top:28,bot:13},{dx:1,w:34,top:13,bot:0}],
+   note:"A stone trough with a shrub in it. Obviously placed by a person, which keeps it from reading as a stray bit of hedge.",
+   draw:function(p,x,b){
+     p.blob(x+12,b-16,9,7,C.hedge,C.hedgeL,C.hedgeD);
+     p.blob(x+24,b-17,9,7,C.hedge,C.hedgeL,C.hedgeD);
+     p.blob(x+18,b-21,10,7,C.hedge,C.hedgeL,C.hedgeD);
+     p.rect(x+6,b-13,24,3,C.hedgeD);
+     p.rect(x+2,b-11,32,11,C.conc); p.hl(x+2,b-11,32,C.concL);
+     p.rect(x+1,b-13,34,2,C.concL); p.hl(x+1,b-13,34,C.concL);
+     for(var i=4;i<32;i+=6) p.vl(x+i,b-8,6,C.concD);
+     p.hl(x+2,b-1,32,C.concD); p.hl(x+1,b,34,C.shadow);}},
+  {id:"statue",name:"Fountain",w:26,h:26,cw:24,zones:["park"],edge:true,
+   boxes:[{dx:11,w:4,top:26,bot:21},{dx:6,w:14,top:21,bot:18},
+          {dx:11,w:4,top:18,bot:9},{dx:1,w:24,top:9,bot:0}],
+   note:"Two tiers with the water actually running. The only thing in the park that moves, and the spray is decoration \u2014 the collider stops at the spout.",
+   draw:function(p,x,b,W,v,t){
+     t=t||0;
+     p.rect(x+1,b-7,24,7,C.stone); p.hl(x+1,b-7,24,C.stoneL); p.hl(x+1,b-1,24,C.stoneD);
+     p.rect(x+3,b-9,20,2,C.stoneL);
+     for(var i=0;i<20;i++) p.px(x+3+i,b-6,C.glass);
+     p.rect(x+11,b-18,4,10,C.stone); p.vl(x+11,b-17,9,C.stoneL);
+     p.rect(x+6,b-21,14,3,C.stone); p.hl(x+6,b-21,14,C.stoneL); p.hl(x+6,b-19,14,C.stoneD);
+     p.rect(x+8,b-20,10,1,C.glass);
+     p.rect(x+12,b-26,2,5,C.stone);
+     for(var k=0;k<14;k++){
+       var ph=((t*1.5+k*0.31)%1), a=(k/14)*Math.PI*2;
+       p.px(x+13+Math.cos(a)*(2+ph*7),b-27+ph*8+Math.abs(Math.sin(a))*2,C.glass);
+       p.px(x+13+Math.cos(a)*(2+ph*7),b-26+ph*8+Math.abs(Math.sin(a))*2,C.glassD);
      }
-     p.hl(x+6,b,26,C.shadow);}},
-  {id:"statue",name:"Statue",w:16,h:36,cw:12,zones:["park"],edge:true,
-   note:"Verdigris bronze on a dark granite plinth \u2014 green and near-black so it reads against a pale sky rather than dissolving into it.",
-   draw:function(p,x,b){var y=b-36;
-     p.rect(x+1,b-4,14,4,C.granite); p.hl(x+1,b-4,14,C.graniteL); p.hl(x+1,b-1,14,C.graniteD);
-     p.rect(x+3,b-15,10,11,C.granite); p.vl(x+3,b-14,10,C.graniteL); p.vl(x+12,b-14,10,C.graniteD);
-     p.rect(x+4,b-17,8,2,C.graniteL); p.hl(x+4,b-17,8,C.graniteD);
-     p.rect(x+5,b-12,6,2,C.graniteD);
-     p.rect(x+6,y+8,5,12,C.bronze); p.vl(x+6,y+9,11,C.bronzeL); p.vl(x+10,y+9,11,C.bronzeD);
-     p.rect(x+6,y+2,5,6,C.bronze); p.hl(x+7,y+2,3,C.bronzeL); p.px(x+7,y+4,C.bronzeD);
-     p.px(x+9,y+4,C.bronzeD); p.hl(x+6,y+7,5,C.bronzeD);
-     p.rect(x+4,y+9,2,9,C.bronze); p.vl(x+4,y+10,7,C.bronzeD);
-     p.rect(x+11,y+4,2,7,C.bronze); p.px(x+12,y+3,C.bronzeL);
-     p.rect(x+6,y+20,2,6,C.bronzeD); p.rect(x+9,y+20,2,6,C.bronze);
-     p.hl(x+1,b,14,C.shadow);}},
-{id:"lighthouse",name:"Lighthouse rock",w:28,h:40,cw:18,zones:["sea"],edge:true,
-   boxes:[{dx:8,w:13,top:40,bot:12},{dx:2,w:24,top:12,bot:0}],
-   note:"The crossing's landmark and its only tall thing. Rock at the waterline, tower above \u2014 the collider follows both.",
-   draw:function(p,x,b,W,v,t){var y=b-40, lit=(((t||0)*0.55)%1)<0.34;
-     p.rect(x+2,b-12,24,12,C.rock); p.hl(x+2,b-12,24,C.rockL);
-     p.rect(x+5,b-14,18,2,C.rock); p.hl(x+5,b-14,18,C.rockL);
-     for(var i=0;i<24;i++) if(bay(x+2+i,b-6)<0.3) p.px(x+2+i,b-8+((i*3)%5),C.rockD);
-     p.rect(x+9,y+8,11,20,C.tower); p.vl(x+9,y+9,19,C.gullL); p.vl(x+19,y+9,19,C.hullD);
-     for(var k=0;k<3;k++) p.rect(x+9,y+11+k*6,11,3,C.towerR);
-     p.rect(x+8,y+5,13,3,C.ironD); p.hl(x+8,y+5,13,C.rockL);
-     p.rect(x+10,y+1,9,4,lit?C.lamp2:C.hullD); p.hl(x+10,y+1,9,lit?C.buoyB:C.hull);
-     if(lit){
-       p.hl(x+6,y+2,3,withA(C.lamp2,150)); p.hl(x+20,y+2,3,withA(C.lamp2,150));
-       p.px(x+4,y+3,withA(C.lamp2,90)); p.px(x+23,y+3,withA(C.lamp2,90));
+     for(var m=0;m<10;m++){
+       var ph2=((t*1.9+m*0.41)%1);
+       p.px(x+6+m*1.4,b-19+ph2*9,C.glass);
      }
-     p.rect(x+9,y,11,1,C.ironD); p.px(x+14,y-2,C.ironD);
-     p.hl(x+1,b,26,C.deepD);}},
-  {id:"guardchair",name:"Lifeguard chair",w:26,h:36,cw:20,zones:["beach"],edge:true,
-   note:"The beach's tall piece. Splayed legs, a seat on top and a flag \u2014 nothing else on the sand forces you up.",
-   draw:function(p,x,b){var y=b-36;
-     [[4,0],[20,0]].forEach(function(q){
-       for(var j=0;j<20;j++) p.px(x+q[0]+Math.round(j*0.18)*(q[0]<12?-1:1),b-1-j,C.wood);
-     });
-     p.rect(x+8,b-18,3,18,C.woodD); p.rect(x+16,b-18,3,18,C.woodD);
-     for(var k=0;k<4;k++) p.rect(x+6,b-8-k*4,14,2,C.woodL);
-     p.rect(x+2,y+12,22,3,C.wood); p.hl(x+2,y+12,22,C.woodL); p.hl(x+2,y+14,22,C.woodD);
-     p.rect(x+4,y+4,3,9,C.wood); p.rect(x+19,y+4,3,9,C.wood);
-     p.rect(x+4,y+2,18,3,C.guard); p.hl(x+4,y+2,18,C.guardD);
-     p.rect(x+5,y+6,16,6,C.woodD); p.hl(x+5,y+6,16,C.wood);
-     p.rect(x+12,y-6,2,8,C.ironD);
-     p.rect(x+14,y-6,7,4,C.guard); p.hl(x+14,y-6,7,C.guardD);
-     p.hl(x+2,b,22,C.shadow);}},
+     p.px(x+13,b-28,C.glassD);
+     p.hl(x,b,26,C.shadow);}},
   {id:"fries",name:"Fry stand",w:44,h:34,cw:42,zones:["boardwalk"],edge:true,
    boxes:[{dx:7,w:30,top:34,bot:25},{dx:3,w:38,top:25,bot:0}],
    note:"A boardwalk food stand with a sign board on the roof. The walk's tall piece \u2014 without it the boardwalk is hoverable.",
@@ -1314,7 +1304,7 @@ var ADMIN=/(^|\/)admin\/?$/.test(location.pathname)
 
 /* his saved rotation */
 var on={bench:["slat","scroll"],post:["hydrant","meter","bollard"],bin:["trash","mailbox","newsbox"],
-        shelter:["hedge","statue","fries","guardchair","lighthouse","busstop","car","phonebox"],
+        shelter:["hedge","planter","statue","fries","guardchair","lighthouse","busstop","car","phonebox"],
         walk:["cart","scope"], pier:["arcade","souvenir","cloudbank"],
         sandy:["umbrella","net","cooler"], overbeach:["palm","kite","pierdeck"],
         atsea:["buoy","dinghy"], oversea:["squall"],
