@@ -109,9 +109,14 @@ A 40px bubble falls at 15 px/s. In the ~1.6s a bird takes to cross the screen it
 move 18px — less than its own radius — so a bird aimed at its height is not a dodge,
 it is a death. Three rules keep that honest, all in the `RULES.birds` block:
 
-- `clearLane(want)` returns a height at least `R*0.82 + CLEAR` from the player, trying
-  the far side if the near one clamps, and **returns null rather than spawning an
-  unfair bird** when neither side has room.
+- **Ambient** birds use `clearLane(want)`: a height at least `R*0.82 + CLEAR` from the
+  player, trying the far side if the near one clamps, and returning null rather than
+  spawning an unfair bird when neither side has room. They are traffic, not an attack.
+- **Camp** birds are aimed straight at `G.y` — that is the entire point of them. They are
+  made fair by **time, not by missing**: the lead is derived from how long a bubble that
+  size needs to shift its own radius, so R=20 gets 2.9s and R=5 gets 1.3s. Making them
+  pass wide instead was the obvious fix and the wrong one: camping stopped being punished
+  at all. Measured: a parked bubble is hit essentially every time, one that reacts never is.
 - The camp threshold is `termFall(R) * 0.35` — a third of a second of that bubble's own
   free-fall — not a flat pixel count. Patience stretches with size too. A flat 14px
   asked a big bubble for a third of its whole manoeuvring budget.
@@ -155,8 +160,17 @@ the change of difficulty are one event rather than two that coincide.
   so nothing from the land is left floating during the crossing. `itemW` squares a zoned
   item's weight and multiplies by 1.9, so a place's own furniture arrives late and then
   dominates rather than trickling in.
-- Horizon: `drawTreeline` / `drawSkyline` / `drawSea`. Ground: `drawVerge`, `drawDeck`,
-  `drawSand`, `drawWater`, each overlaid at its zone's weight.
+- Horizon: `drawTreeline` / `drawSkyline` / `drawSea`, each at its zone's `zw` weight —
+  the long fade, so a place appears before you reach it.
+- **Ground is separate and much sharper** (`groundMix`, `GROUND_FADE` 280px). Water
+  painted at 35% over sand for eighteen seconds reads as a flooded beach, not as an
+  approaching sea. The ground fade starts AT the leg boundary, so sand stays sand right
+  up to the crossing and turns over in about four seconds.
+  Two rules that cost a bug each: paint the place you are **leaving at full alpha** and
+  fade the new one in on top — cross-fading both at partial alpha lets the concrete base
+  show through the middle — and **stop painting the old one once the fade completes**, or
+  the boardwalk's rail (drawn above the ground line, where sand cannot cover it) rides
+  onto the beach.
 - Birds: bluejay in the park, pigeon downtown, gull on the boardwalk and the coast.
 - **Every zone needs its own tall ground piece** or that stretch becomes hoverable — park
   has the boxwood and statue, city the shelter/car/phone box, boardwalk the fry stand,
@@ -280,9 +294,14 @@ A 40px bubble falls at 15 px/s. In the ~1.6s a bird takes to cross the screen it
 move 18px — less than its own radius — so a bird aimed at its height is not a dodge,
 it is a death. Three rules keep that honest, all in the `RULES.birds` block:
 
-- `clearLane(want)` returns a height at least `R*0.82 + CLEAR` from the player, trying
-  the far side if the near one clamps, and **returns null rather than spawning an
-  unfair bird** when neither side has room.
+- **Ambient** birds use `clearLane(want)`: a height at least `R*0.82 + CLEAR` from the
+  player, trying the far side if the near one clamps, and returning null rather than
+  spawning an unfair bird when neither side has room. They are traffic, not an attack.
+- **Camp** birds are aimed straight at `G.y` — that is the entire point of them. They are
+  made fair by **time, not by missing**: the lead is derived from how long a bubble that
+  size needs to shift its own radius, so R=20 gets 2.9s and R=5 gets 1.3s. Making them
+  pass wide instead was the obvious fix and the wrong one: camping stopped being punished
+  at all. Measured: a parked bubble is hit essentially every time, one that reacts never is.
 - The camp threshold is `termFall(R) * 0.35` — a third of a second of that bubble's own
   free-fall — not a flat pixel count. Patience stretches with size too. A flat 14px
   asked a big bubble for a third of its whole manoeuvring budget.
@@ -458,6 +477,9 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   telescope, fry stand (the walk's tall piece) and an arcade sign. Sea horizon,
   plank decking, gulls instead of pigeons. Banners now name the zone a second after you
   enter it rather than announcing difficulty stages.
+- **15 Sep 2026** — The crossing's water was washing 12 m into the beach: ground now has its
+  own short fade, separate from the horizon's. Camp birds aim at the player again — passing
+  wide had made camping free.
 - **15 Sep 2026** — Sprites animate: boats and buoys ride the swell, the lighthouse flashes,
   traffic signals cycle. Gulls at sea instead of pigeons. "Who's blowing" became "Who's playing".
 - **15 Sep 2026** — The squall's rain animates (air sprites now get the clock) and comes in
