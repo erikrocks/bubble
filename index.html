@@ -742,7 +742,7 @@ var GROUPS=[
      p.rect(x+2,y+7,3,12,C.iron); p.vl(x+2,y+7,12,C.ironL);
      p.rect(x+1,y+1,5,6,C.ironD); p.rect(x+2,y+2,3,3,C.glass); p.px(x+2,y+2,C.glassD);
      p.px(x+3,y,C.ironL); p.hl(x+1,b-1,5,C.ironD); p.hl(x+1,b,5,C.shadow);}},
-  {id:"bollard",name:"Bollard",w:5,h:12,cw:5,note:"The minimum obstacle. Rhythm rather than difficulty.",
+  {id:"bollard",name:"Bollard",w:5,h:12,cw:5,zones:["park","city","boardwalk"],note:"The minimum obstacle. Rhythm rather than difficulty.",
    draw:function(p,x,b){var y=b-12;
      p.rect(x+1,y+1,3,11,C.ironD); p.vl(x+1,y+2,10,C.ironL);
      p.px(x+2,y,C.ironL); p.hl(x+1,y+4,3,C.amber); p.hl(x+1,y+5,3,C.amber);
@@ -1168,7 +1168,7 @@ var GROUPS=[
      p.blob(x+7,21,8,7,C.leaf,C.leafL,C.leafD);
      for(var i=0;i<40;i++){var qx=x+4+((i*13)%46),qy=1+((i*7)%18);
        if(bay(qx,qy)<0.16) p.px(qx,qy,C.leafL);}}},
-  {id:"bare",name:"Bare tree",w:46,d:27,boxes:[{dx:6,w:34,d:27}],
+  {id:"bare",name:"Bare tree",w:46,d:27,zones:["park","city"],boxes:[{dx:6,w:34,d:27}],
    note:"Winter. A real fork of limbs instead of a stick — and only the limbs hit, so it plays kinder than it looks.",
    bg:function(p,x,wy){
      var tx=x+20;
@@ -1187,7 +1187,7 @@ var GROUPS=[
      limbLine(p,tx+9,15,tx+12,6,C.barkD,C.barkD,1);
      limbLine(p,tx+1,12,tx+7,5,C.barkD,C.barkD,1);
      [[-14,10],[-2,3],[12,5],[19,14]].forEach(function(q){p.px(tx+q[0],q[1],C.barkD);});}},
-  {id:"blossom",name:"Blossom tree",w:56,d:34,boxes:[{dx:3,w:50,d:34}],
+  {id:"blossom",name:"Blossom tree",w:56,d:34,zones:["park","city"],boxes:[{dx:3,w:50,d:34}],
    note:"Deepest thing on the sheet. Pink enough to read as a landmark from across the screen, low enough to be a real problem.",
    bg:function(p,x,wy){
      var tx=x+26;
@@ -1468,9 +1468,23 @@ function groundMix(id,d){
   return 0;
 }
 function zoneName(id){ return ZONE_NAMES[id]||id; }
-/* Which zone you are IN: the leg you have entered, not whichever weighs most. The
-   scenery cross-fades early on purpose so a place appears before you reach it. */
-function zoneAt(d){ return legId(legIndex(d)); }
+/* Which zone you are IN - used for the banner, the bird species and the HUD readout.
+   Whichever place currently OWNS the horizon, not whichever leg you have nominally
+   entered. The scenery cross-fades over FADE, so the new place takes the horizon at
+   the halfway point, about FADE/2 before its leg starts; naming it at the leg start
+   left the banner saying PARK over a full city skyline for five or six seconds.
+
+   Do NOT go back to naming it on any weight at all - that announced the city a whole
+   FADE early, while it was still a smudge on the horizon. The crossover is the point
+   where it stops being a suggestion and starts being where you are. */
+function zoneAt(d){
+  var i=legIndex(d), best=legId(i), bw=-1;
+  for(var k=Math.max(0,i-1);k<=i+1;k++){
+    var w=legW(k,d);
+    if(w>bw){ bw=w; best=legId(k); }
+  }
+  return best;
+}
 function firstStart(id){
   for(var i=0;i<ROUTE.length;i++) if(ROUTE[i]===id) return legStart(i);
   return 0;
@@ -2103,9 +2117,10 @@ function step(dt){
   G.world+=P.s*dt; G.run+=P.s*dt;
   G.stage=stageAt(G.run);
   /* the banner names where you are, not which difficulty step fired - and it waits
-     a beat after the handover so it lands once the new place is actually on screen */
+     a short beat so it lands just after the horizon has turned over rather than on
+     the exact frame it does */
   var zn=zoneAt(G.run);
-  if(zn!==G.zone){ G.zone=zn; G.zoneDelay=1.0; }
+  if(zn!==G.zone){ G.zone=zn; G.zoneDelay=0.6; }
   if(G.zoneDelay>0){
     G.zoneDelay-=dt;
     if(G.zoneDelay<=0){ showBanner(zoneName(G.zone).toUpperCase()); Snd.stage(); }

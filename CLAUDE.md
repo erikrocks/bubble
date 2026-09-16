@@ -234,6 +234,25 @@ The later legs sit past most runs, so the tuning drawer has a **Start in** contr
 begins a run at a place's first appearance purely to look at it. Those runs set `PREVIEW`
 and record no score, medal or run count.
 
+## Naming the zone at the right moment
+
+This has been wrong in both directions, so the reasoning matters.
+
+The horizon cross-fades over `FADE` (1100px), which means a place is visible long before
+its leg starts and the two zones swap dominance at the **halfway point**, `FADE/2` before
+the boundary. Three candidate moments:
+
+| Trigger | City announced at | Verdict |
+|---|---|---|
+| Any weight at all | 1600px | Too early - a smudge on the horizon |
+| Leg start (`legIndex`) | 2700px | Too late - a full skyline while it still says PARK |
+| **Horizon handover (max weight)** | **2150px** | Right |
+
+The banner now fires 0.6s after the handover, so on the city it lands at ~2186px instead
+of ~2760px - about nine seconds earlier at the speed you are going there. `zoneAt` drives
+the banner, the bird species and the HUD readout together, so all three turn over on the
+same event.
+
 ## High scores
 
 Copied from KUDR. Supabase REST called with plain `fetch` — **no Supabase JS library**, so
@@ -313,9 +332,11 @@ Measured across a run: streetlamp weight is 0 for the whole beach and the whole 
 and 0 in the park core; the park lamp is 0 everywhere except the park; the leafy bough is
 0 on the boardwalk, the beach and the sea.
 
-Benches (`slat`, `scroll`, `stone`) and the wire bin are `["park","city","boardwalk"]` -
-right on a promenade, wrong on sand. **Still untagged:** `bollard`, about 15% of beach
-ground spawns.
+Benches (`slat`, `scroll`, `stone`), the wire bin and the bollard are
+`["park","city","boardwalk"]` - right on a promenade, wrong on sand. The two boughs that
+ship switched off (`bare`, `blossom`) are tagged park/city as well, so enabling them in
+/admin cannot hang a tree over the sea. **Nothing is untagged any more, and nothing new
+should be.**
 
 The rule this keeps arriving at: an untagged item is weighted `1-zw("sea")`, which means
 *everywhere on land*. That was fine when the game was one street. With five zones, leaving
@@ -517,3 +538,6 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **15 Sep 2026** — Benches and the wire bin tagged park/city/boardwalk. They had been
   untagged, so roughly 40% of beach ground spawns were park benches and city bins standing
   on the sand.
+- **15 Sep 2026** — Bollard and the two off-by-default boughs tagged, so no obstacle is
+  untagged any more. The zone banner moved from the leg start to the horizon handover: it
+  was naming the city about nine seconds after the skyline had taken over.
