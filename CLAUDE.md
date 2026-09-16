@@ -313,8 +313,13 @@ Measured across a run: streetlamp weight is 0 for the whole beach and the whole 
 and 0 in the park core; the park lamp is 0 everywhere except the park; the leafy bough is
 0 on the boardwalk, the beach and the sea.
 
-**Still untagged, and still turning up on the sand:** slat bench, scrolled bench, bollard
-and wire bin, which between them are about 40% of beach ground spawns.
+Benches (`slat`, `scroll`, `stone`) and the wire bin are `["park","city","boardwalk"]` -
+right on a promenade, wrong on sand. **Still untagged:** `bollard`, about 15% of beach
+ground spawns.
+
+The rule this keeps arriving at: an untagged item is weighted `1-zw("sea")`, which means
+*everywhere on land*. That was fine when the game was one street. With five zones, leaving
+a piece of furniture untagged is a decision to put it on the beach.
 
 ## Adding an obstacle without it being invisible
 
@@ -509,3 +514,6 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   stand counter, beach umbrella, dinghy) on about a third of instances. The Ferris wheel
   that came with the first attempt went with it. Leafy bough tagged park/city so it stops
   hanging over the sea.
+- **15 Sep 2026** — Benches and the wire bin tagged park/city/boardwalk. They had been
+  untagged, so roughly 40% of beach ground spawns were park benches and city bins standing
+  on the sand.
