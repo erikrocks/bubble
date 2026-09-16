@@ -92,32 +92,19 @@ enough to read as one building repeated.
 
 ## The launch flow
 
-`START` selects one of four, switchable in the /admin drawer so they can be played
-against each other rather than argued about. All four end in `launchBubble()`:
+`title -> ready -> blow -> fly -> dead`
 
-| Style | Actions | Size decided by |
-|---|---|---|
-| `classic` | hold, let go, tap | how long you held |
-| `quick` | hold, let go | how long you held (launch is the same action) |
-| `taps` | tap, tap | how long you wait — it fills on its own, no holding |
-| `meter` | tap | when you tap into a sweep that never reaches max, so it cannot pop |
+**Tap, tap.** One tap starts the bubble filling on its own; the next launches it, and that
+launch tap is also the first gust of wind. **Nothing is held** during the start, which is
+what makes it work in landscape on a phone. Leaving it to fill too long pops it on the
+wand, so waiting for a big bubble is the risk you take.
 
-`quick` is the only one where launching gives no chance to grab the wind, so it gets a
-`hangT` of 0.55s during which gravity is scaled to 18%. Without it you are falling before
-your thumb is back down.
+Chosen by playing four candidates against each other (hold/let-go/tap, hold/let-go with a
+gravity hang, tap/tap, and a sweeping size meter). The others and the `armed` state they
+needed are gone — don't reintroduce a hold-to-blow without testing it on a phone.
 
-## The launch flow (classic, in detail)
-
-`title -> ready -> blow -> armed -> fly -> dead`
-
-**`armed` is the important one.** Releasing the blow no longer launches: the bubble sits
-on the wand at whatever size you stopped at, indefinitely, and the *next* press launches
-it — and that same press counts as your first gust of wind. Sizing and launching are two
-decisions now, which matters most on touch, where the old flow made you release and
-re-grab inside about a second or the bubble hit the pavement.
-
-Death restarts straight into blowing on one press (no separate "press to restart"), with
-a 0.45s guard so the press that killed you cannot restart you.
+After a death the first tap only brings the next kid to the wand; the tap after that
+starts filling. Restarting and committing to a size stay separate actions.
 
 ## Birds have to scale with the bubble
 
