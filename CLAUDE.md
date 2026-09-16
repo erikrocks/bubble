@@ -253,6 +253,51 @@ of ~2760px - about nine seconds earlier at the speed you are going there. `zoneA
 the banner, the bird species and the HUD readout together, so all three turn over on the
 same event.
 
+## Day and night
+
+The run is a round trip, so the light is too. `nightAt(d)` returns 0 for daylight and 1
+for full dark:
+
+| Where | Light |
+|---|---|
+| Park, city, boardwalk, beach (outbound) | day |
+| The crossing | dusk falls - starts as the sea takes the horizon, complete two thirds across |
+| Beach, boardwalk, city (homeward) | night |
+| Park, at the top of the next lap | sunrise across the leg |
+
+**The first lap opens in daylight** - `lap===0` is special-cased, because starting a new
+player in the dark makes the game look broken rather than atmospheric. You have to earn
+the night. It begins around 190m; a lap is 18,100px (302m).
+
+The crossing is `SEA_LEG` = 3400px rather than the usual 2000. A sunset needs room to
+happen in, and it gives the sea a second job. Legs are therefore **no longer evenly
+spaced** - `legStart`/`legIndex` go through the `LEGCUM` table, and anything that does
+arithmetic on `LEG` directly is a bug waiting to happen.
+
+### How the dark is actually applied
+
+Three parts, and the order matters:
+
+1. **The sky palette** is mixed from `SKY_DAY` to `SKY_NIGHT` and the whole sky base is
+   rebuilt - but only when the light has moved 0.02, so it is about fifty rebuilds across
+   a whole sunset rather than one per frame. Stars and the moon are **baked into the sky
+   base**, not drawn over it.
+2. **`tintNight`** mixes every pixel toward a deep blue at the end of `drawWorld`, with two
+   exemptions: any pixel still exactly matching the sky base (which is how stars and the
+   moon survive at full brightness), and a small set of `LIT` colours.
+3. **Light sources** must be painted at their exact palette colour to land in that `LIT`
+   set, so lit windows and lamp glass go through `lit(p,fn)`, which drops the atmospheric
+   fade for the moment it takes to stamp them. Miss that and the lamp is just another grey
+   square. Lit skyline windows and lit shopfronts only appear above `NIGHT>0.25`.
+
+The title screen is pinned to day (`nightAt` is passed 0 while the phase is `title`), or
+the attract loop's distance would put the menu in the dark.
+
+### Seeing it without a 300m run
+
+The `/admin` jump list carries the homeward legs and the sunrise as separate entries, since
+they are the same places in different light and no one is going to run there on purpose.
+
 ## High scores
 
 Copied from KUDR. Supabase REST called with plain `fetch` — **no Supabase JS library**, so
@@ -541,3 +586,7 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **15 Sep 2026** — Bollard and the two off-by-default boughs tagged, so no obstacle is
   untagged any more. The zone banner moved from the leg start to the horizon handover: it
   was naming the city about nine seconds after the skyline had taken over.
+- **16 Sep 2026** — Night. The crossing was extended to 3400px and the light now falls
+  across it, holds through the whole way home, and comes back up over the park at the top
+  of the next lap. Lamps, lit skyline windows and lit shopfronts are exempted from the
+  tint so they read as the only warm thing on the street.
