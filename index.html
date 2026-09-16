@@ -129,13 +129,27 @@ button.who:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 .brow .ini{font-family:"Silkscreen",monospace; font-size:12px; letter-spacing:.08em}
 .brow .val{margin-left:auto; font-variant-numeric:tabular-nums}
 .bmsg{font-size:13px; color:#b9c4dd; text-align:center; padding:28px 0}
-.initials{display:flex; gap:8px; align-items:center; pointer-events:auto}
-.initials input{width:5.5ch; text-transform:uppercase; text-align:center; letter-spacing:.18em;
-  font:400 18px/1 "Silkscreen",monospace; color:var(--ink); background:#fff;
-  border:1px solid var(--line2); border-radius:2px; padding:8px 6px}
-.initials button{font:500 12.5px/1 "Instrument Sans",sans-serif; border-radius:2px; padding:9px 12px;
-  cursor:pointer; border:1px solid var(--line2); background:var(--surface); color:var(--ink2)}
-.initials button.go{background:var(--accent); border-color:var(--accent); color:#fff}
+.hiscore{pointer-events:auto; display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:12px 18px 14px; border:2px solid var(--accent); border-radius:4px;
+  background:rgba(13,16,32,.72); box-shadow:0 0 0 3px rgba(201,65,127,.18)}
+.hs-head{margin:0; font-family:"Silkscreen",monospace; font-size:clamp(11px,2.4vw,15px);
+  letter-spacing:.1em; color:#ffd9ec; text-shadow:0 2px 0 rgba(0,0,0,.45)}
+.hs-sub{margin:0; font-size:12.5px; color:#dfe5f5}
+.slots{display:flex; gap:10px; margin-top:2px}
+.slot{display:flex; flex-direction:column; align-items:center; gap:3px}
+.slot .arw{font:400 11px/1 "Instrument Sans",sans-serif; color:#cfd9ef; background:transparent;
+  border:0; cursor:pointer; padding:3px 8px; border-radius:2px}
+.slot .arw:hover{background:rgba(255,255,255,.14); color:#fff}
+.slot .ch{width:2.1em; text-align:center; font-family:"Silkscreen",monospace;
+  font-size:clamp(20px,4.6vw,30px); line-height:1.15; color:#fff; background:rgba(255,255,255,.1);
+  border:2px solid rgba(255,255,255,.35); border-radius:3px; padding:2px 0; cursor:pointer}
+.slot.on .ch{border-color:var(--accent); background:rgba(201,65,127,.28);
+  box-shadow:0 0 0 2px rgba(201,65,127,.35)}
+.hs-btns{display:flex; gap:8px; margin-top:6px}
+.hs-btns button{font:500 13px/1 "Instrument Sans",sans-serif; border-radius:2px; padding:10px 16px;
+  cursor:pointer; border:1px solid rgba(255,255,255,.35); background:transparent; color:#e8edf8}
+.hs-btns button.go{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600}
+.hs-btns button:focus-visible,.slot .arw:focus-visible,.slot .ch:focus-visible{outline:2px solid #fff; outline-offset:2px}
 .tools{display:flex; gap:6px; align-items:center; padding:9px 12px}
 .tools button{font:500 12px/1 "Instrument Sans",sans-serif; color:var(--ink2); background:var(--surface);
   border:1px solid var(--line2); border-radius:2px; padding:7px 10px; cursor:pointer; white-space:nowrap}
@@ -220,10 +234,14 @@ button.chip:hover{border-color:var(--accent); color:var(--ink)}
     <span class="newbest" id="ov-newbest" hidden>New best</span>
     <span class="medal" id="ov-medal" hidden>First corner</span>
     <p class="sub" id="ov-best">best 0.0 m</p>
-    <div class="initials" id="initials" hidden>
-      <input id="ini-in" maxlength="3" autocomplete="off" spellcheck="false" aria-label="Your initials">
-      <button class="go" id="ini-save" type="button">Save</button>
-      <button id="ini-skip" type="button">Skip</button>
+    <div class="hiscore" id="initials" hidden>
+      <p class="hs-head">You made the top 10</p>
+      <p class="hs-sub">Enter your initials</p>
+      <div class="slots" id="ini-slots"></div>
+      <div class="hs-btns">
+        <button class="go" id="ini-save" type="button">Save</button>
+        <button id="ini-skip" type="button">Skip</button>
+      </div>
     </div>
     <span class="kbd" id="dead-prompt">Play again?</span>
   </div>
@@ -2315,34 +2333,81 @@ function closeBoard(){ boardOpen=false; boardEl.hidden=true; game.focus(); }
   function closeOrOpen(){ boardOpen?closeBoard():openBoard(); }
 })();
 
-/* initials, asked only when the run actually beats 10th place */
-var iniRow=document.getElementById("initials"), iniIn=document.getElementById("ini-in"),
+/* Initials, asked only when the run actually beats 10th place.
+   Three arcade slots rather than a text field: it needs no keyboard, which matters
+   because this is played in landscape on a phone, and it says "three letters" by
+   being three letters. The first version was an unlabelled white box. */
+var ALPHA="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+var iniRow=document.getElementById("initials"),
+    slotsEl=document.getElementById("ini-slots"),
     deadPrompt=document.getElementById("dead-prompt");
+var iniIdx=[0,0,0], iniSlot=0, slotEls=[];
+(function(){
+  for(var i=0;i<3;i++){
+    (function(i){
+      var d=document.createElement("div"); d.className="slot";
+      var up=document.createElement("button"); up.type="button"; up.className="arw"; up.textContent="\u25b2";
+      up.setAttribute("aria-label","Letter "+(i+1)+" up");
+      var ch=document.createElement("button"); ch.type="button"; ch.className="ch"; ch.textContent="A";
+      ch.setAttribute("aria-label","Letter "+(i+1));
+      var dn=document.createElement("button"); dn.type="button"; dn.className="arw"; dn.textContent="\u25bc";
+      dn.setAttribute("aria-label","Letter "+(i+1)+" down");
+      up.addEventListener("click",function(e){ e.stopPropagation(); iniSlot=i; bump(i,1); });
+      dn.addEventListener("click",function(e){ e.stopPropagation(); iniSlot=i; bump(i,-1); });
+      ch.addEventListener("click",function(e){ e.stopPropagation(); iniSlot=i; paintSlots(); });
+      d.appendChild(up); d.appendChild(ch); d.appendChild(dn);
+      slotsEl.appendChild(d);
+      slotEls.push({box:d,ch:ch});
+    })(i);
+  }
+})();
+function bump(i,dir){
+  iniIdx[i]=(iniIdx[i]+dir+26)%26;
+  paintSlots();
+}
+function paintSlots(){
+  for(var i=0;i<3;i++){
+    slotEls[i].ch.textContent=ALPHA[iniIdx[i]];
+    slotEls[i].box.classList.toggle("on",i===iniSlot);
+  }
+}
 function askInitials(value){
   qualifies(value).then(function(ok){
     if(!ok||G.phase!=="dead") return;
     nameOpen=true;
+    iniIdx=[0,0,0]; iniSlot=0; paintSlots();
     iniRow.hidden=false; deadPrompt.hidden=true;
-    iniIn.value=""; try{ iniIn.focus(); }catch(e){}
   });
 }
 function endInitials(){ nameOpen=false; iniRow.hidden=true; deadPrompt.hidden=false; game.focus(); }
 iniRow.addEventListener("pointerdown",function(e){ e.stopPropagation(); });
 document.getElementById("ini-skip").addEventListener("click",function(e){ e.stopPropagation(); endInitials(); });
-document.getElementById("ini-save").addEventListener("click",function(e){
-  e.stopPropagation();
-  var v=(iniIn.value||"").toUpperCase().replace(/[^A-Z]/g,"").slice(0,3);
-  if(v.length<3){ iniIn.focus(); return; }
+document.getElementById("ini-save").addEventListener("click",function(e){ e.stopPropagation(); saveInitials(); });
+function saveInitials(){
+  var v=ALPHA[iniIdx[0]]+ALPHA[iniIdx[1]]+ALPHA[iniIdx[2]];
   var val=toScore(G.run);
   endInitials();
   submitScore(v,val).then(function(ok){
     if(ok){ boardRows={all:null,month:null,week:null}; if(boardOpen) refreshBoard(boardPeriod); }
   });
-});
-iniIn.addEventListener("keydown",function(e){
-  e.stopPropagation();
-  if(e.key==="Enter") document.getElementById("ini-save").click();
-});
+}
+/* a keyboard still works: type letters, arrow around, Enter to save */
+window.addEventListener("keydown",function(e){
+  if(!nameOpen) return;
+  var k=e.key;
+  if(/^[a-zA-Z]$/.test(k)){
+    e.preventDefault();
+    iniIdx[iniSlot]=ALPHA.indexOf(k.toUpperCase());
+    if(iniSlot<2) iniSlot++;
+    paintSlots(); return;
+  }
+  if(k==="ArrowUp"){ e.preventDefault(); bump(iniSlot,1); return; }
+  if(k==="ArrowDown"){ e.preventDefault(); bump(iniSlot,-1); return; }
+  if(k==="ArrowRight"){ e.preventDefault(); iniSlot=Math.min(2,iniSlot+1); paintSlots(); return; }
+  if(k==="ArrowLeft"||k==="Backspace"){ e.preventDefault(); iniSlot=Math.max(0,iniSlot-1); paintSlots(); return; }
+  if(k==="Enter"){ e.preventDefault(); saveInitials(); return; }
+  if(k==="Escape"){ e.preventDefault(); endInitials(); return; }
+},true);
 
 /* ================= who's blowing ================= */
 (function(){
