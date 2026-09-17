@@ -118,15 +118,17 @@ canvas{display:block; width:100%; height:auto; image-rendering:pixelated; touch-
    folded into a corner of the canvas, and a tap target to get back out - the tool bar
    with the Exit button is one of the things that just disappeared. Desktop fullscreen
    keeps the lot: there is room for it there, and it works. */
-.fsx{display:none; position:absolute; top:8px; right:8px; z-index:6; width:34px; height:34px;
-  align-items:center; justify-content:center; padding:0; border:1px solid rgba(255,255,255,.34);
-  border-radius:3px; background:rgba(13,16,32,.5); color:#fff; cursor:pointer;
-  font:15px/1 "Instrument Sans",sans-serif; -webkit-tap-highlight-color:transparent}
+.fsbar{display:none; position:absolute; top:8px; right:8px; z-index:6; gap:6px}
+.fsx{width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+  padding:0; border:1px solid rgba(255,255,255,.34); border-radius:3px;
+  background:rgba(13,16,32,.5); color:#fff; cursor:pointer;
+  font:14px/1 "Instrument Sans",sans-serif; -webkit-tap-highlight-color:transparent}
 .fsx:hover{border-color:var(--accent)}
+.fsx[disabled]{opacity:.35; cursor:default}
 
 @media (pointer:coarse),(max-height:560px){
   .frame.fs .chars,.frame.fs .tools{display:none}
-  .frame.fs .fsx{display:flex}
+  .frame.fs .fsbar{display:flex}
   .frame.fs .hud{position:absolute; top:0; left:0; right:auto; z-index:3; margin:0;
     border-top:0; background:transparent; pointer-events:none; flex-wrap:nowrap}
   .frame.fs .hud div{flex:0 0 auto; display:flex; align-items:baseline; gap:5px;
@@ -265,7 +267,7 @@ button.chip:hover{border-color:var(--accent); color:var(--ink)}
   </div>
   <div class="overlay" id="ov-pause" hidden>
     <h2>Paused</h2>
-    <span class="kbd">P or Esc to resume</span>
+    <span class="kbd">Tap, P or Esc to resume</span>
   </div>
   <div class="banner" id="banner"></div>
   <div class="board" id="board" hidden>
@@ -275,7 +277,10 @@ button.chip:hover{border-color:var(--accent); color:var(--ink)}
     <button class="kbd" id="bclose" style="border:0;cursor:pointer">Close</button>
   </div>
   <p class="launch" id="launch-hint">Tap again to launch</p>
-  <button type="button" class="fsx" id="btn-exit" aria-label="Exit fullscreen" title="Exit fullscreen">&#10005;</button>
+  <div class="fsbar" id="fs-bar">
+    <button type="button" class="fsx" id="btn-fs-pause" aria-label="Pause" title="Pause">&#10073;&#10073;</button>
+    <button type="button" class="fsx" id="btn-exit" aria-label="Exit fullscreen" title="Exit fullscreen">&#10005;</button>
+  </div>
   <div class="overlay" id="ov-dead" hidden>
     <h2 id="ov-cause">Popped</h2>
     <p class="big" id="ov-dist">0.0 m</p>
@@ -1931,7 +1936,7 @@ function launchBubble(){
   if(hint) hint.classList.remove("show");
 }
 function startRun(){
-  G.kid=rollKid(); G.phase="ready"; G.R=R_MIN; G.y=wandY(); G.x=WAND_X-2+R_MIN;
+  G.kid=rollKid(); G.phase="ready"; syncFsPause(); G.R=R_MIN; G.y=wandY(); G.x=WAND_X-2+R_MIN;
   G.v=0; G.world=PREVIEW; G.run=PREVIEW; G.obs=[]; G.birds=[]; G.parts=[];
   G.clip=0; G.campY=G.y; G.campT=0;
   G.seed=(Math.random()*2147483647)|0; G.nextX=G.world+GW+120;
@@ -1991,16 +1996,28 @@ function toTitle(){
   seedDrifters();
   refreshTitleStats();
 }
+var btnFsP=null;
+function syncFsPause(){
+  if(btnFsP===null) btnFsP=document.getElementById("btn-fs-pause")||false;
+  if(!btnFsP) return;
+  var paused=(G.phase==="paused");
+  btnFsP.innerHTML=paused?"&#9654;":"&#10073;&#10073;";
+  btnFsP.setAttribute("aria-label",paused?"Resume":"Pause");
+  btnFsP.title=paused?"Resume":"Pause";
+  /* exactly togglePause's own guard - anything else and the button lies about
+     whether it will do something */
+  btnFsP.disabled=(G.phase==="title"||G.phase==="dead");
+}
 function togglePause(){
   if(G.phase==="paused"){
     G.phase=G.prev; ov.pause.hidden=true;
     ov.ready.hidden=(G.phase!=="ready");     /* the prompt comes back with its phase */
-    Snd.wind(false); return;
+    Snd.wind(false); syncFsPause(); return;
   }
   if(G.phase==="title"||G.phase==="dead") return;
   G.prev=G.phase; G.phase="paused"; G.hold=false; Snd.wind(false); Snd.blowStop();
   ov.ready.hidden=true;                      /* pausing from `ready` stacked two overlays */
-  ov.pause.hidden=false;
+  ov.pause.hidden=false; syncFsPause();
 }
 function showBanner(text){
   banner.textContent=text; banner.classList.add("show"); G.bannerT=1.6;
@@ -2102,7 +2119,7 @@ function pop(why){
     if(med&&(!STATS.bestMedal||med.m>STATS.bestMedal.m)) STATS.bestMedal=med;
     queueSave();
   }
-  G.phase="dead"; G.deadT=0; G.hold=false;
+  G.phase="dead"; G.deadT=0; G.hold=false; syncFsPause();
   ov.cause.textContent=CAUSE[why]||"Popped";
   ov.dist.textContent=(G.run/60).toFixed(1)+" m";
   ov.best.textContent=PREVIEW?"preview \u2014 not counted"
@@ -2373,13 +2390,14 @@ function hudTick(){
   if(G.phase==="title"){
     hud.d.textContent="0.0 m"; hud.b.textContent=(G.best/60).toFixed(1)+" m";
     hud.s.textContent="\u2014"; hud.dia.textContent="\u2014"; hud.sp.textContent="\u2014";
-    return;
+    syncFsPause(); return;
   }
   hud.d.textContent=(G.run/60).toFixed(1)+" m";
   hud.b.textContent=(G.best/60).toFixed(1)+" m";
   hud.s.textContent=zoneName(zoneAt(G.run));
   hud.dia.textContent=(G.R*2).toFixed(0)+" px";
   hud.sp.textContent=Math.round(speedAt(G.run))+" px/s";
+  syncFsPause();
   hud.d.style.color=G.clip>0?"var(--accent)":"";
 }
 
@@ -2498,6 +2516,12 @@ if(elFS||rootFS){
      into a press(). */
   var btnExit=document.getElementById("btn-exit");
   btnExit.addEventListener("pointerdown",function(e){ e.stopPropagation(); });
+  /* Stripping the tool bar takes the Pause button with it, and a phone has no P key,
+     so fullscreen needs its own. Same stopPropagation rule as the X: the frame turns
+     a pointerdown into a gust of wind. */
+  var btnFsPause=document.getElementById("btn-fs-pause");
+  btnFsPause.addEventListener("pointerdown",function(e){ e.stopPropagation(); });
+  btnFsPause.addEventListener("click",function(e){ e.stopPropagation(); togglePause(); });
   btnExit.addEventListener("click",function(e){
     e.stopPropagation();
     var ex=document.exitFullscreen||document.webkitExitFullscreen;

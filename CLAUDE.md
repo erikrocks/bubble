@@ -468,10 +468,16 @@ hide the page around the game when that path is taken.
 bar as well as the canvas. On a phone in landscape that chrome leaves a canvas too small
 to play, so `@media (pointer:coarse),(max-height:560px)` strips it: the player row and
 tool bar go, the HUD collapses to Distance and Best floating over the top-left of the
-canvas, and `.fsx` — a corner ✕ — appears. **The ✕ is not optional.** Stripping the tool
-bar takes the Exit fullscreen button with it, and a phone has no Esc key. It calls
-`stopPropagation` on `pointerdown` because the frame turns any pointerdown into a gust
-of wind.
+canvas, and `.fsbar` — a corner pause button and a ✕ — appears. **Neither is optional.** Stripping
+the tool bar takes both the Pause and the Exit fullscreen buttons with it, and a phone has
+no P or Esc key. Both call `stopPropagation` on `pointerdown` because the frame turns any
+pointerdown into a gust of wind.
+
+The pause glyph flips ❙❙ / ▶ through `syncFsPause()`, which is called from `togglePause`,
+from `startRun`, from `pop` and from `hudTick` - the first three so it cannot lag a phase
+change, the last as a backstop. Its `disabled` test is **exactly** `togglePause`'s own
+guard (title and dead), or the button lies about whether pressing it will do anything.
+Tapping the screen resumes as well, which is why the pause overlay says "Tap, P or Esc".
 
 Desktop fullscreen is deliberately left alone: there is room for the HUD there and it
 already worked.
@@ -613,3 +619,5 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   shapes, a rotation with everything switched off, leaderboard HTML injection, tab-away
   timestep blowups, and 4000 simulated seconds of random input without a crash, a NaN or
   an illegal state transition.
+- **17 Sep 2026** — Fullscreen got a pause button beside the ✕. Without it, phone
+  fullscreen had no way to pause at all: no tool bar, no keyboard.
