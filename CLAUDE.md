@@ -234,6 +234,22 @@ The later legs sit past most runs, so the tuning drawer has a **Start in** contr
 begins a run at a place's first appearance purely to look at it. Those runs set `PREVIEW`
 and record no score, medal or run count.
 
+## The frame is not the play area
+
+`.frame` wraps the canvas **and** the HUD, the player row, the tool bar and the panels,
+but the game's `pointerdown` listener is on the frame. Everything inside it therefore has
+to be filtered out, and `e.target.tagName==="BUTTON"` is not enough to do it:
+
+- a character portrait is a `<canvas>` **inside** a `<button>`, so a finger landing on the
+  picture picked the kid *and* started the run;
+- the HUD is plain `<dd>`s, so tapping the distance readout - directly under the play area
+  on a phone - blew and launched a bubble.
+
+The filter is `e.target.closest("button,.hud,.chars,.tools,.board,.hiscore")`. It matches
+the nearest chrome ancestor rather than the target's own tag, and it leaves taps on the
+fullscreen letterbox working, because in stripped fullscreen the HUD is `pointer-events:
+none` and the event lands on the canvas anyway.
+
 ## Naming the zone at the right moment
 
 This has been wrong in both directions, so the reasoning matters.
@@ -590,3 +606,10 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   across it, holds through the whole way home, and comes back up over the park at the top
   of the next lap. Lamps, lit skyline windows and lit shopfronts are exempted from the
   tint so they read as the only warm thing on the street.
+- **17 Sep 2026** — QA pass. Found and fixed: tapping a character portrait or the HUD
+  started the game (see above); pausing from `ready` stacked two overlays; the board threw
+  if the server answered with a string or a list of nulls; a corrupt save could set
+  `RULES.ceiling` to any string. Confirmed *not* broken: corrupt localStorage in seventeen
+  shapes, a rotation with everything switched off, leaderboard HTML injection, tab-away
+  timestep blowups, and 4000 simulated seconds of random input without a crash, a NaN or
+  an illegal state transition.

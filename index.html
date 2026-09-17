@@ -1992,9 +1992,14 @@ function toTitle(){
   refreshTitleStats();
 }
 function togglePause(){
-  if(G.phase==="paused"){ G.phase=G.prev; ov.pause.hidden=true; Snd.wind(false); return; }
+  if(G.phase==="paused"){
+    G.phase=G.prev; ov.pause.hidden=true;
+    ov.ready.hidden=(G.phase!=="ready");     /* the prompt comes back with its phase */
+    Snd.wind(false); return;
+  }
   if(G.phase==="title"||G.phase==="dead") return;
   G.prev=G.phase; G.phase="paused"; G.hold=false; Snd.wind(false); Snd.blowStop();
+  ov.ready.hidden=true;                      /* pausing from `ready` stacked two overlays */
   ov.pause.hidden=false;
 }
 function showBanner(text){
@@ -2404,7 +2409,15 @@ function release(){
 }
 var frame=document.querySelector(".frame");
 frame.addEventListener("pointerdown",function(e){
-  if(e.target&&e.target.tagName==="BUTTON") return;
+  /* The frame wraps the HUD, the player row, the tool bar and the panels as well as
+     the canvas, so a tap has to be filtered or the chrome plays the game. Matching
+     `e.target.tagName==="BUTTON"` was not enough on two counts: a character portrait
+     is a <canvas> INSIDE a <button>, so a finger landing on the picture started the
+     run as well as picking the kid; and the HUD is plain <dd>s, so tapping the
+     distance readout - which sits directly under the play area on a phone - blew and
+     launched a bubble. Match the closest chrome ancestor instead. */
+  if(e.target&&e.target.closest&&
+     e.target.closest("button,.hud,.chars,.tools,.board,.hiscore")) return;
   e.preventDefault(); game.focus(); press();
 });
 window.addEventListener("pointerup",release);
@@ -2638,7 +2651,16 @@ async function loadScores(period){
     if(since) url+="&created_at=gte."+encodeURIComponent(since.toISOString());
     var res=await fetch(url,{headers:supaHeaders(),signal:netSignal()});
     if(!res.ok) return null;
-    return await res.json();
+    var rows=await res.json();
+    /* Never hand renderBoard something it cannot map over. A proxy, a captive portal
+       or a changed error shape can answer 200 with a string or a list of nulls, and
+       the board is the one part of this game allowed to fail quietly. */
+    if(!Array.isArray(rows)) return null;
+    return rows.filter(function(r){ return r&&typeof r==="object"; })
+               .map(function(r){
+                 return {initials:String(r.initials==null?"":r.initials).slice(0,3).toUpperCase(),
+                         score:Number(r.score)||0};
+               });
   }catch(e){ return null; }
 }
 async function submitScore(initials,value){
@@ -2905,7 +2927,7 @@ function saveBest(){ queueSave(); }
     }
   });
   if(d.rules){
-    if(d.rules.ceiling) RULES.ceiling=d.rules.ceiling;
+    if(["soft","hard","open"].indexOf(d.rules.ceiling)>=0) RULES.ceiling=d.rules.ceiling;
     if(typeof d.rules.birds==="boolean") RULES.birds=d.rules.birds;
   }
   /* A saved rotation only records what existed when it was saved. Anything added
