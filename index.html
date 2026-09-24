@@ -349,12 +349,13 @@ function blendAt(d,W,x,y,c){var i=(y*W+x)*4,a=c[3]/255,ia=1-a;
 function painter(d,W,H){
   return {
     W:W,H:H,
-    a:1, oy:0, force:null, fade:0,
+    a:1, oy:0, force:null, fade:0, mk:null,
     setA:function(v){this.a=v;},
     setFade:function(v){this.fade=v;},
     px:function(x,y,c){x=Math.round(x);y=Math.round(y)+this.oy;
       if(!c)return; if(this.force) c=this.force;
       if(x<0||y<0||x>=W||y>=H)return; var i=(y*W+x)*4;
+      if(this.mk) this.mk[i>>2]=1;
       var al=(c[3]===undefined?255:c[3])*this.a;
       var r=c[0],g=c[1],b=c[2];
       if(this.fade>0){
@@ -785,7 +786,7 @@ var GROUPS=[
 ]},
 {id:"shelter",cls:"ground",name:"Tall on the ground",blurb:"The pieces that force you UP. Everything else on the sidewalk can be cleared by a lazy hover \u2014 these cannot.",items:[
   {id:"hedge",name:"Topiary",w:30,h:33,cw:22,zones:["park"],edge:true,
-   boxes:[{dx:11,w:15,top:33,bot:22},{dx:8,w:21,top:22,bot:7},{dx:14,w:7,top:7,bot:0}],
+   boxes:[{dx:8,w:1,top:17,bot:15},{dx:9,w:2,top:21,bot:11},{dx:11,w:1,top:28,bot:7},{dx:12,w:2,top:32,bot:7},{dx:14,w:7,top:33,bot:0},{dx:21,w:4,top:33,bot:7},{dx:25,w:1,top:28,bot:7},{dx:26,w:2,top:21,bot:7},{dx:28,w:1,top:17,bot:15}],
    note:"Two clipped balls on one stem. Sculptural and obviously deliberate \u2014 stacking is what stops a single ball reading as a lollipop tree.",
    draw:function(p,x,b){
      p.rect(x+17,b-9,3,9,C.bark); p.vl(x+17,b-8,7,C.barkD);
@@ -800,7 +801,7 @@ var GROUPS=[
      }
      p.hl(x+11,b,17,C.shadow);}},
   {id:"planter",name:"Planter",w:36,h:28,cw:34,zones:["park"],edge:true,
-   boxes:[{dx:5,w:27,top:28,bot:13},{dx:1,w:34,top:13,bot:0}],
+   boxes:[{dx:1,w:4,top:13,bot:0},{dx:5,w:4,top:23,bot:0},{dx:9,w:4,top:27,bot:0},{dx:13,w:13,top:28,bot:0},{dx:26,w:3,top:25,bot:0},{dx:29,w:3,top:23,bot:0},{dx:32,w:3,top:13,bot:0}],
    note:"A stone trough with a shrub in it. Obviously placed by a person, which keeps it from reading as a stray bit of hedge.",
    draw:function(p,x,b){
      p.blob(x+12,b-16,9,7,C.hedge,C.hedgeL,C.hedgeD);
@@ -912,7 +913,7 @@ var GROUPS=[
      p.hl(x,b,14,C.shadow);}}
 ]},
 {id:"atsea",cls:"ground",name:"In the water",blurb:"The crossing. Nothing stands on a floor out here, so what there is sticks up out of the swell.",items:[
-  {id:"buoy",name:"Buoy",w:14,h:17,cw:12,zones:["sea"],edge:true,floats:true,
+  {id:"buoy",name:"Buoy",boxes:[{dx:2,w:1,top:2,bot:0},{dx:3,w:2,top:12,bot:0},{dx:5,w:4,top:17,bot:0},{dx:9,w:2,top:12,bot:0},{dx:11,w:1,top:2,bot:0}],w:14,h:17,cw:12,zones:["sea"],edge:true,floats:true,
    note:"Channel marker with a lamp on top. Low, bobbing, easy to clip if you are skimming the water.",
    draw:function(p,x,b){var y=b-17;
      p.rect(x+3,y+6,8,11,C.buoyA); p.vl(x+3,y+7,9,C.kiteB);
@@ -920,7 +921,7 @@ var GROUPS=[
      p.rect(x+5,y+2,4,4,C.ironD); p.rect(x+6,y+3,2,2,C.lamp2);
      p.px(x+6,y,C.ironD); p.px(x+7,y,C.ironD);
      p.hl(x+2,b-1,10,C.deepD);}},
-  {id:"dinghy",name:"Moored dinghy",w:34,h:15,cw:32,zones:["sea"],edge:true,floats:true,
+  {id:"dinghy",name:"Moored dinghy",boxes:[{dx:1,w:1,top:2,bot:0},{dx:2,w:11,top:7,bot:0},{dx:13,w:8,top:15,bot:0},{dx:21,w:11,top:7,bot:0},{dx:32,w:1,top:2,bot:0}],w:34,h:15,cw:32,zones:["sea"],edge:true,floats:true,
    note:"A little boat riding the swell. Wide and low \u2014 the water's version of a bench.",
    draw:function(p,x,b,W,v){var y=b-15;
      p.rect(x+13,y,2,9,C.wood); p.rect(x+15,y+1,6,5,C.buoyB); p.hl(x+15,y+1,6,C.gullL);
@@ -999,7 +1000,8 @@ var GROUPS=[
      p.hl(x+1,b,8,C.shadow);}}
 ]},
 {id:"oversea",cls:"air",name:"Over the water",blurb:"Weather, mostly.",items:[
-  {id:"squall",name:"Rain squall",w:62,d:27,boxes:[{dx:6,w:50,d:27}],zones:["sea"],
+  {id:"squall",name:"Rain squall",w:62,d:27,boxes:[{dx:6,w:50,d:27}],
+   vboxes:[[{dx:6,w:1,d:14},{dx:7,w:1,d:27},{dx:8,w:3,d:15},{dx:11,w:6,d:27},{dx:17,w:4,d:17},{dx:21,w:6,d:27},{dx:27,w:3,d:17},{dx:30,w:6,d:27},{dx:36,w:4,d:14},{dx:40,w:6,d:27},{dx:46,w:4,d:15},{dx:50,w:5,d:27},{dx:55,w:1,d:15}],[{dx:6,w:1,d:12},{dx:7,w:1,d:27},{dx:8,w:3,d:14},{dx:11,w:6,d:27},{dx:17,w:4,d:16},{dx:21,w:6,d:27},{dx:27,w:3,d:17},{dx:30,w:6,d:27},{dx:36,w:4,d:17},{dx:40,w:6,d:27},{dx:46,w:4,d:15},{dx:50,w:5,d:27},{dx:55,w:1,d:13}],[{dx:6,w:1,d:14},{dx:7,w:1,d:27},{dx:8,w:3,d:15},{dx:11,w:6,d:27},{dx:17,w:4,d:15},{dx:21,w:6,d:27},{dx:27,w:3,d:16},{dx:30,w:6,d:27},{dx:36,w:4,d:15},{dx:40,w:6,d:27},{dx:46,w:4,d:15},{dx:50,w:5,d:27},{dx:55,w:1,d:16}]],zones:["sea"],
    note:"A dark bank dragging rain behind it. The rain falls, and it falls only as far as the obstacle reaches \u2014 the bottom of the drops is the bottom of the hitbox.",
    draw:function(p,x,b,W,v,t){
      t=t||0;
@@ -1028,7 +1030,7 @@ var GROUPS=[
      }}},
 ]},
 {id:"overbeach",cls:"air",name:"Over the sand",blurb:"Three ways to be made to fly low on a beach.",items:[
-  {id:"palm",name:"Palm fronds",w:46,d:27,boxes:[{dx:3,w:40,d:27}],zones:["beach"],
+  {id:"palm",name:"Palm fronds",w:46,d:27,boxes:[{dx:3,w:8,d:27},{dx:11,w:3,d:24},{dx:14,w:1,d:21},{dx:16,w:3,d:21},{dx:19,w:4,d:18},{dx:23,w:8,d:16},{dx:31,w:4,d:19},{dx:35,w:4,d:22},{dx:39,w:3,d:25},{dx:42,w:1,d:26}],zones:["beach"],
    note:"The beach's tree. Leaning trunk in the sand, fronds spraying out over you.",
    bg:function(p,x,wy){
      /* drawn from the crown DOWN so the top always meets the fronds at tx; drawing it
@@ -1054,7 +1056,7 @@ var GROUPS=[
      });
      p.rect(cx-2,cy-2,5,4,C.palmD);
      p.px(cx-3,cy+3,C.kiteB); p.px(cx+3,cy+3,C.kiteB);}},
-  {id:"kite",name:"Kite",w:24,d:24,boxes:[{dx:5,w:14,d:24}],zones:["beach"],
+  {id:"kite",name:"Kite",w:24,d:24,boxes:[{dx:5,w:3,d:16},{dx:8,w:1,d:24},{dx:9,w:2,d:20},{dx:11,w:1,d:24},{dx:12,w:1,d:20},{dx:13,w:2,d:24},{dx:15,w:3,d:16},{dx:18,w:1,d:12}],zones:["beach"],
    note:"Flying high on a long line. Only the kite itself is solid \u2014 the string is scenery, so this one is narrow and deep.",
    bg:function(p,x,wy){
      for(var j=0;j<wy-20;j++){
@@ -1132,7 +1134,7 @@ var GROUPS=[
        var bx2=x+14+m*8;
        p.rect(bx2,wy-7,6,6,BALLS[(m+2)%5]); p.hl(bx2,wy-7,6,C.cream);
      }}},
-  {id:"cloudbank",name:"Low cloud",w:78,d:19,boxes:[{dx:4,w:70,d:19}],zones:["boardwalk"],
+  {id:"cloudbank",name:"Low cloud",w:78,d:19,boxes:[{dx:4,w:5,d:16},{dx:9,w:12,d:18},{dx:21,w:17,d:19},{dx:38,w:3,d:18},{dx:41,w:19,d:19},{dx:60,w:10,d:17},{dx:70,w:3,d:14}],zones:["boardwalk"],
    note:"A bank of white cloud drifting in off the sea. Soft-edged but solid \u2014 the boardwalk's only weather.",
    draw:function(p,x){
      [[16,9,15,7],[38,7,17,8],[58,10,14,6],[28,12,13,6],[48,13,12,5]].forEach(function(q){
@@ -1162,7 +1164,7 @@ var GROUPS=[
      p.hl(x+11,25,20,C.ironD);}}
 ]},
 {id:"tree",cls:"air",name:"Tree",blurb:"Rooted in the sidewalk, trunk hazed back behind the play line, canopy hanging into it. The deepest things in the level.",items:[
-  {id:"leafy",name:"Leafy bough",w:54,d:32,zones:["park","city"],boxes:[{dx:2,w:50,d:32}],
+  {id:"leafy",name:"Leafy bough",w:54,d:32,zones:["park","city"],boxes:[{dx:2,w:11,d:30},{dx:13,w:34,d:32},{dx:47,w:3,d:27},{dx:50,w:2,d:25}],
    note:"Full summer crown sitting right on its trunk. Deep enough that you have to commit to going low — the headline overhead piece.",
    bg:function(p,x,wy){
      var tx=x+24;
@@ -1182,7 +1184,7 @@ var GROUPS=[
      p.blob(x+7,21,8,7,C.leaf,C.leafL,C.leafD);
      for(var i=0;i<40;i++){var qx=x+4+((i*13)%46),qy=1+((i*7)%18);
        if(bay(qx,qy)<0.16) p.px(qx,qy,C.leafL);}}},
-  {id:"bare",name:"Bare tree",w:46,d:27,zones:["park","city"],boxes:[{dx:6,w:34,d:27}],
+  {id:"bare",name:"Bare tree",w:46,d:27,zones:["park","city"],boxes:[{dx:6,w:4,d:16},{dx:10,w:5,d:19},{dx:15,w:2,d:21},{dx:17,w:3,d:25},{dx:20,w:9,d:27},{dx:29,w:3,d:24},{dx:32,w:8,d:20}],
    note:"Winter. A real fork of limbs instead of a stick — and only the limbs hit, so it plays kinder than it looks.",
    bg:function(p,x,wy){
      var tx=x+20;
@@ -1201,7 +1203,7 @@ var GROUPS=[
      limbLine(p,tx+9,15,tx+12,6,C.barkD,C.barkD,1);
      limbLine(p,tx+1,12,tx+7,5,C.barkD,C.barkD,1);
      [[-14,10],[-2,3],[12,5],[19,14]].forEach(function(q){p.px(tx+q[0],q[1],C.barkD);});}},
-  {id:"blossom",name:"Blossom tree",w:56,d:34,zones:["park","city"],boxes:[{dx:3,w:50,d:34}],
+  {id:"blossom",name:"Blossom tree",w:56,d:34,zones:["park","city"],boxes:[{dx:3,w:10,d:32},{dx:13,w:36,d:34},{dx:49,w:3,d:31},{dx:52,w:1,d:28}],
    note:"Deepest thing on the sheet. Pink enough to read as a landmark from across the screen, low enough to be a real problem.",
    bg:function(p,x,wy){
      var tx=x+26;
@@ -1340,7 +1342,7 @@ var GROUPS=[
      p.rect(x+13,12,10,2,C.cream); p.rect(x+13,16,7,2,C.cream);}}
 ]},
 {id:"pole",cls:"air",name:"Poles",blurb:"Both stand on the sidewalk and reach out over the street. The pole is scenery; what it holds up is not.",items:[
-  {id:"lamp",name:"Streetlamp",w:44,d:19,zones:["city","boardwalk"],boxes:[{dx:2,w:40,d:19}],
+  {id:"lamp",name:"Streetlamp",w:44,d:19,zones:["city","boardwalk"],boxes:[{dx:8,w:12,d:19},{dx:20,w:8,d:16},{dx:28,w:11,d:13}],
    note:"Pole at the back, cast arm reaching out over the street, lit head on the end. The glow gives you something to aim under.",
    bg:function(p,x,wy){
      p.rect(x+34,9,5,wy-9,C.iron); p.vl(x+34,9,wy-9,C.ironL); p.vl(x+38,9,wy-9,C.ironD);
@@ -2058,6 +2060,20 @@ function spawn(){
 function hit(o){ return hitsAt(o,G.x,G.y,G.R); }
 /* the same test for anything round - the player, or a bubble drifting past on the
    title screen, which is the only reason it takes coordinates at all */
+/* The bubble is a circle, so test it as one. Every box used to be checked against a
+   SQUARE of half-width r: identical on a flat face, but a square's corner reaches
+   r*sqrt(2) - 1.16R against a bubble you can see only R wide - so every corner of
+   every obstacle killed you through up to 3px of clear air on a big bubble. This is
+   the closest-point test with the same r, so faces behave exactly as before and only
+   corners change, always in the player's favour. Rects extend to +/-INF where the
+   old half-open tests had no bound (air boxes hang from above the screen, ground
+   ones sink below the pavement). */
+var HIT_INF=1e6;
+function circleRect(px,py,r,x0,x1,y0,y1){
+  var qx=px<x0?x0:(px>x1?x1:px), qy=py<y0?y0:(py>y1?y1:py);
+  var dx=px-qx, dy=py-qy;
+  return dx*dx+dy*dy<r*r;
+}
 function hitsAt(o,px,py,pr){
   var r=pr*0.82, sx=o.x-G.world, it=o.it;
   if(o.cls==="ground"){
@@ -2068,24 +2084,24 @@ function hitsAt(o,px,py,pr){
     var gb=it.boxes;
     if(gb){
       for(var i=0;i<gb.length;i++){
-        var bx=gb[i], a0=sx+bx.dx, a1=a0+bx.w;
-        if(px+r<a0||px-r>a1) continue;
-        if(py+r>WALKY-bx.top&&py-r<WALKY-(bx.bot||0)) return true;
+        var bx=gb[i], a0=sx+bx.dx;
+        if(circleRect(px,py,r,a0,a0+bx.w,WALKY-bx.top,WALKY-(bx.bot||0))) return true;
       }
       return false;
     }
     var cw=it.cw||it.w, x0=sx+(it.w-cw)/2;
-    if(px+r<x0||px-r>x0+cw) return false;
-    return py+r>WALKY-it.h;
+    return circleRect(px,py,r,x0,x0+cw,WALKY-it.h,HIT_INF);
   }
-  var bs=it.boxes||[{dx:0,w:it.w,d:it.d}];
-  for(var i=0;i<bs.length;i++){
-    var bx=bs[i], a0=bx.w?sx+bx.dx:0, a1=bx.w?a0+bx.w:GW;
-    if(px+r<a0||px-r>a1) continue;
+  /* `vboxes` is one box set per art variant, for obstacles whose SHAPE changes with the
+     instance's v (the squall draws one of three cloud banks); `boxes` stays as the
+     envelope, which is what depthOf uses for the pairing-gap check */
+  var bs=(it.vboxes&&it.vboxes[(o.v||0)%it.vboxes.length])||it.boxes||[{dx:0,w:it.w,d:it.d}];
+  for(var j=0;j<bs.length;j++){
+    var b2=bs[j], c0=b2.w?sx+b2.dx:-HIT_INF, c1=b2.w?c0+b2.w:HIT_INF;
     /* `up` boxes stand on the pavement instead of hanging from the top, which is how
        one obstacle can be a shop AND the stall outside it, with a gap between them */
-    if(bx.up){ if(py+r>WALKY-bx.h) return true; }
-    else if(py-r<bx.d) return true;
+    if(b2.up){ if(circleRect(px,py,r,c0,c1,WALKY-b2.h,HIT_INF)) return true; }
+    else if(circleRect(px,py,r,c0,c1,-HIT_INF,b2.d)) return true;
   }
   return false;
 }
@@ -2250,7 +2266,7 @@ function step(dt){
    exemptions: anything still matching the sky base exactly (bare sky, stars, the moon),
    and the handful of colours that are meant to be a light source. That is what turns
    the lamps into the only warm thing on the street once it is properly dark. */
-var NIGHT_TINT=hexc("#0a1228");
+var NIGHT_TINT=hexc("#0a1228"), RIM_NIGHT=hexc("#8ea3cf");
 var LIT=(function(){
   var o={};
   ["lampOn","lampGlow","lamp2","gold"].forEach(function(k){
@@ -2258,18 +2274,28 @@ var LIT=(function(){
   });
   return o;
 })();
+/* HAZ marks every pixel painted by something that can pop you - obstacles, birds -
+   and the kid. Those take a lighter tint than the scenery. With one tint for
+   everything, a park bench against the dark verge fell from a brightness contrast of
+   ~110 to ~11 out of 255: the night was atmospheric and the benches were invisible.
+   The scenery keeps the full dark; the things you have to steer round stay readable. */
+var HAZ=new Uint8Array(GW*GH), NIGHT_SCENE=0.62, NIGHT_HAZ=0.30;
 function tintNight(d,n){
   if(n<=0.004) return;
-  var k=n*0.62, ik=1-k, tr=NIGHT_TINT[0]*k, tg=NIGHT_TINT[1]*k, tb=NIGHT_TINT[2]*k;
+  var k=n*NIGHT_SCENE, ik=1-k, tr=NIGHT_TINT[0]*k, tg=NIGHT_TINT[1]*k, tb=NIGHT_TINT[2]*k;
+  var h=n*NIGHT_HAZ, ih=1-h, hr=NIGHT_TINT[0]*h, hg=NIGHT_TINT[1]*h, hb=NIGHT_TINT[2]*h;
   for(var i=0;i<d.length;i+=4){
     var r=d[i],g=d[i+1],b=d[i+2];
     if(r===skyBase[i]&&g===skyBase[i+1]&&b===skyBase[i+2]) continue;
     if(LIT[(r<<16)|(g<<8)|b]) continue;
-    d[i]=r*ik+tr; d[i+1]=g*ik+tg; d[i+2]=b*ik+tb;
+    if(HAZ[i>>2]){ d[i]=r*ih+hr; d[i+1]=g*ih+hg; d[i+2]=b*ih+hb; }
+    else { d[i]=r*ik+tr; d[i+1]=g*ik+tg; d[i+2]=b*ik+tb; }
   }
 }
 function drawWorld(t){
   setNight(nightAt(G.phase==="title"?0:G.run));
+  var markHaz=NIGHT>0.004;
+  if(markHaz) HAZ.fill(0);
   gimg.data.set(skyBase);
   gp.setA(0.55); drawClouds(gp,G.world*0.12); gp.setA(1);
   var wPark=zw("park",G.run), wCity=zw("city",G.run), wWalk=zw("boardwalk",G.run),
@@ -2308,6 +2334,17 @@ function drawWorld(t){
     if(prev!==cur&&tG<1) paint(prev,1);
     paint(cur,tG);
   })();
+  /* Moonlight rim. By day the keyline is dark, which is what separates an obstacle from
+     a light street. At night the street is dark too, so a dark keyline does nothing and
+     dark furniture - iron benches, hydrants, bins - dissolved into it. The keyline turns
+     pale as the light goes, and furniture that has no keyline by day gets one on top,
+     faded in with the dusk: the top edge is the one you are trying to clear. */
+  var rimEdge=C.edge, rimNew=null;
+  if(markHaz){
+    rimEdge=mixc(C.edge,RIM_NIGHT,NIGHT);
+    rimNew=withA(rimEdge,Math.round(255*Math.min(1,NIGHT*1.6)));
+    gp.mk=HAZ;
+  }
   G.obs.forEach(function(o){
     var sx=Math.round(o.x-G.world);
     if(o.cls==="ground"){
@@ -2316,15 +2353,15 @@ function drawWorld(t){
          drawing lower would put hitbox above the art. Up is the forgiving direction. */
       var base=WALKY;
       if(o.it.floats) base=WALKY-Math.round(Math.max(0,waveAt(sx+(o.it.w||0)/2+G.world,t)));
-      if(o.it.edge){
-        gp.force=C.edge; gp.oy=-1; o.it.draw(gp,sx,base,GW,o.v||0,t);
+      if(o.it.edge||rimNew){
+        gp.force=o.it.edge?rimEdge:rimNew; gp.oy=-1; o.it.draw(gp,sx,base,GW,o.v||0,t);
         gp.force=null; gp.oy=0;
       }
       o.it.draw(gp,sx,base,GW,o.v||0,t);
       return;
     }
     var ax=o.it.w?sx:0;
-    gp.force=C.edge; gp.oy=1; o.it.draw(gp,ax,0,GW,o.v||0,t); gp.force=null; gp.oy=0;
+    gp.force=rimEdge; gp.oy=1; o.it.draw(gp,ax,0,GW,o.v||0,t); gp.force=null; gp.oy=0;
     o.it.draw(gp,ax,0,GW,o.v||0,t);
   });
   if(G.phase==="fly"&&RULES.ceiling!=="hard"&&G.clip>0){
@@ -2337,6 +2374,7 @@ function drawWorld(t){
   var z=zoneAt(G.run);
   var bird=(z==="boardwalk"||z==="beach"||z==="sea")?drawGull:((z==="park")?drawJay:drawDove);
   G.birds.forEach(function(b){ bird(gp,b.x,b.y,b.f); });
+  gp.mk=null;
   if(G.phase==="title"){
     if(G.tb) for(var di=0;di<G.tb.length;di++){
       var b=G.tb[di];
@@ -2350,7 +2388,7 @@ function drawWorld(t){
   }
   if(G.phase!=="title"){
     var kx=kidX()-G.world;
-    if(kx>-28) kidSel().draw(gp,kx,WALKY);
+    if(kx>-28){ if(markHaz) gp.mk=HAZ; kidSel().draw(gp,kx,WALKY); gp.mk=null; }
   }
   G.parts.forEach(function(q){
     var px2=Math.round(q.x),py=Math.round(q.y);
