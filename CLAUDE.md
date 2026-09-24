@@ -287,6 +287,26 @@ checked pixel-identical before and after:
 Worst night contrast went from 11 to ~20-27, and most obstacles now read at least as
 well at night as by day.
 
+## Nothing optional may be able to stop the game
+
+- **Sound.** Every `Snd` entry point is wrapped: the first Web Audio failure switches
+  sound off and returns quietly. `tone()`, `burst()` and `blowStart()` used to run
+  unguarded inside `press()`, `pop()` and `launchBubble()`, so a half-working context -
+  an interrupted mobile audio session, an in-app webview - threw on the second tap and
+  froze everything. Simulated with a context that fails at `createOscillator` and one
+  that fails at the second `createBuffer`: both now play a full run, silently.
+- **The frame loop** calls `requestAnimationFrame(loop)` as its FIRST line. When it was
+  the last, any exception anywhere in a frame stopped the game permanently.
+- **The leaderboard check** is a network call that can take seconds. Its reply only
+  counts for the run that asked (`G.runSeq`, bumped in `startRun`), and Save posts
+  `pendingScore` - the score that was actually checked - never `G.run`. Before, a slow
+  reply from a 90m death landing on the screen of a 2m death opened the initials panel
+  and posted **2.0m** to the public board.
+- **The initials panel** blocks taps while it is open, so its buttons must always be on
+  screen. On short screens (`max-height:440px`) `#ov-dead.asking` compacts the death
+  screen and puts Save/Skip beside the letters. Before, fullscreen on a 568x320 phone
+  put both buttons below the bottom edge. Checked at 568x320, 667x375 and 740x360.
+
 ## The frame is not the play area
 
 `.frame` wraps the canvas **and** the HUD, the player row, the tool bar and the panels,
@@ -677,3 +697,6 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **24 Sep 2026** — Second QA pass. Collision became a true circle test; twelve hitboxes
   were refitted to their art (never growing); the squall got per-variant boxes; night got
   a hazard mask and a moonlight rim so obstacles stay visible after dark.
+- **24 Sep 2026** — Sound made fail-safe and the frame loop self-scheduling; the
+  leaderboard race that could post the wrong score fixed; the initials panel kept on
+  screen on short phones in fullscreen.

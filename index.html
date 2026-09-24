@@ -199,6 +199,24 @@ button.who:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 .hs-btns button{font:500 13px/1 "Instrument Sans",sans-serif; border-radius:2px; padding:10px 16px;
   cursor:pointer; border:1px solid rgba(255,255,255,.35); background:transparent; color:#e8edf8}
 .hs-btns button.go{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600}
+/* The initials panel sits under the result lines, and together they are ~400px tall. In
+   fullscreen on a small phone the frame IS the screen - 320px on an SE in landscape - so
+   Save and Skip were pushed off the bottom, and while that panel is open a tap does not
+   reach the game: nothing to press, no keyboard. On short screens, while asking, the
+   screen compacts: tighter spacing, a smaller readout, the "best" line dropped (the HUD
+   corner shows it), and Save/Skip beside the letters instead of under them. */
+@media (max-height:440px){
+  #ov-dead.asking{gap:4px; padding-block:6px}
+  #ov-dead.asking h2{font-size:15px}
+  #ov-dead.asking .big{font-size:22px}
+  #ov-dead.asking .sub{display:none}
+  #ov-dead.asking .hiscore{display:grid; grid-template-columns:auto auto; column-gap:16px; row-gap:4px;
+    align-items:center; padding:7px 14px 9px}
+  #ov-dead.asking .hs-head{grid-column:1 / -1; text-align:center}
+  #ov-dead.asking .hs-sub{display:none}
+  #ov-dead.asking .hs-btns{flex-direction:column; margin-top:0; gap:6px}
+  #ov-dead.asking .hs-btns button{padding:9px 14px}
+}
 .hs-btns button:focus-visible,.slot .arw:focus-visible,.slot .ch:focus-visible{outline:2px solid #fff; outline-offset:2px}
 .tools{display:flex; gap:6px; align-items:center; padding:9px 12px}
 .tools button{font:500 12px/1 "Instrument Sans",sans-serif; color:var(--ink2); background:var(--surface);
@@ -1887,7 +1905,7 @@ var Snd=(function(){
     var g=ctx.createGain(); g.gain.value=vol||0.3;
     src.connect(bq); bq.connect(g); g.connect(master); src.start(t);
   }
-  return {
+  var api={
     init:init,
     enabled:function(v){ if(v===undefined) return ok&&master&&master.gain.value>0;
       if(master) master.gain.value=v?0.22:0; ok=ok&&true; },
@@ -1916,6 +1934,18 @@ var Snd=(function(){
                      tone(1047,1047,0.22,"square",0.14,0.2); }
   };
   function blowOscAllowed(){ return !blowOsc; }
+  /* Sound must never be able to stop the game. These calls run inside press(), pop()
+     and launchBubble(), so one throw - an interrupted mobile audio session, an in-app
+     webview with half a Web Audio - used to escape into the frame loop and freeze
+     everything on the second tap. The first failure now switches sound off, quietly. */
+  Object.keys(api).forEach(function(k){
+    var fn=api[k];
+    api[k]=function(){
+      try{ return fn.apply(null,arguments); }
+      catch(e){ ok=false; ready=false; blowOsc=null; blowGain=null; return undefined; }
+    };
+  });
+  return api;
 })();
 
 /* ================= medals ================= */
@@ -1938,6 +1968,7 @@ function launchBubble(){
   if(hint) hint.classList.remove("show");
 }
 function startRun(){
+  G.runSeq=(G.runSeq||0)+1;          /* invalidates any board check still in flight */
   G.kid=rollKid(); G.phase="ready"; syncFsPause(); G.R=R_MIN; G.y=wandY(); G.x=WAND_X-2+R_MIN;
   G.v=0; G.world=PREVIEW; G.run=PREVIEW; G.obs=[]; G.birds=[]; G.parts=[];
   G.clip=0; G.campY=G.y; G.campT=0;
@@ -1945,7 +1976,7 @@ function startRun(){
   G.deadT=0; G.stage=0; G.zone=null; G.zoneDelay=0; G.bannerT=0;
   G.sq=0; G.sqV=0; G.birdT=7+Math.random()*7;
   ov.title.hidden=true; ov.ready.hidden=false; ov.dead.hidden=true; ov.pause.hidden=true;
-  if(typeof iniRow!=="undefined"&&iniRow){ iniRow.hidden=true; deadPrompt.hidden=false; nameOpen=false; }
+  if(typeof iniRow!=="undefined"&&iniRow){ iniRow.hidden=true; deadPrompt.hidden=false; nameOpen=false; ov.dead.classList.remove("asking"); }
   banner.classList.remove("show");
   if(hint) hint.classList.remove("show");
 }
@@ -2833,22 +2864,30 @@ function paintSlots(){
     slotEls[i].box.classList.toggle("on",i===iniSlot);
   }
 }
+/* The board check is a network call that can take seconds on a phone. It used to
+   accept its answer during ANY death, and Save posted whatever G.run was by then - so a
+   slow reply from a 90m run, landing on the screen of a 2m run started since, opened
+   the initials panel and posted the 2m score to the public board. The reply now only
+   counts for the run that asked, and Save posts the score that was actually checked. */
+var pendingScore=0;
 function askInitials(value){
+  var seq=G.runSeq;
   qualifies(value).then(function(ok){
-    if(!ok||G.phase!=="dead") return;
-    nameOpen=true;
+    if(!ok||G.phase!=="dead"||seq!==G.runSeq) return;
+    pendingScore=value;
+    nameOpen=true; ov.dead.classList.add("asking");
     iniIdx=[0,1,2].map(function(i){ return Math.max(0,ALPHA.indexOf(lastIni.charAt(i))); });
     iniSlot=0; paintSlots();
     iniRow.hidden=false; deadPrompt.hidden=true;
   });
 }
-function endInitials(){ nameOpen=false; iniRow.hidden=true; deadPrompt.hidden=false; game.focus(); }
+function endInitials(){ nameOpen=false; iniRow.hidden=true; deadPrompt.hidden=false; ov.dead.classList.remove("asking"); game.focus(); }
 iniRow.addEventListener("pointerdown",function(e){ e.stopPropagation(); });
 document.getElementById("ini-skip").addEventListener("click",function(e){ e.stopPropagation(); endInitials(); });
 document.getElementById("ini-save").addEventListener("click",function(e){ e.stopPropagation(); saveInitials(); });
 function saveInitials(){
   var v=ALPHA[iniIdx[0]]+ALPHA[iniIdx[1]]+ALPHA[iniIdx[2]];
-  var val=toScore(G.run);
+  var val=pendingScore;
   lastIni=v; queueSave();
   endInitials();
   submitScore(v,val).then(function(ok){
@@ -3021,6 +3060,8 @@ function saveBest(){ queueSave(); }
 toTitle();
 var last=performance.now(), acc=0, tick=0;
 function loop(now){
+  /* scheduled first, so a frame that throws costs one frame instead of the whole game */
+  requestAnimationFrame(loop);
   var dt=Math.min(0.1,(now-last)/1000); last=now; acc+=dt;
   while(acc>=1/60){ step(1/60); acc-=1/60; }
   for(var i=G.parts.length-1;i>=0;i--){
@@ -3029,7 +3070,6 @@ function loop(now){
   }
   drawWorld(now/1000);
   if((tick++&5)===0) hudTick();
-  requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 })();
