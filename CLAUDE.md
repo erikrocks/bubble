@@ -234,6 +234,59 @@ The later legs sit past most runs, so the tuning drawer has a **Start in** contr
 begins a run at a place's first appearance purely to look at it. Those runs set `PREVIEW`
 and record no score, medal or run count.
 
+## Collision is a circle, and hitboxes can only ever shrink toward the art
+
+**The bubble is tested as a circle.** `hitsAt` used to test a *square* of half-width
+0.82R against every box. On a flat face that is the intended 18% forgiveness, but a
+square's corner reaches 0.82*sqrt(2) = 1.16R - further than the bubble you can see - so
+every corner of every obstacle popped a big bubble through up to 3px of clear air.
+`circleRect` is a closest-point test with the same 0.82R: faces behave exactly as before,
+corners only ever got more forgiving.
+
+**How fairness was measured.** For every obstacle, every reachable bubble centre (soft
+ceiling pops above R/3, the pavement below WALKY-0.82R), every radius and every art
+variant: if `hitsAt` says hit, how far was the bubble's edge from the nearest pixel of
+art, across all animation frames unioned? Anything over ~2px is a pop through clear air.
+Before this pass every obstacle had one; the worst were the streetlamp (a box over an arm
+that rises to the right), the palm (a box over a V of drooping fronds), the dinghy (a
+32px wall around a 2px mast) and the clouds and boughs (boxes under rounded bottoms).
+
+**Refit rule.** Twelve obstacles got bands fitted to their art, column by column, then
+**clipped to the old collider** - a refit may remove collider, never add it. That was
+verified pixel by pixel against the previous version: zero collider added anywhere, and
+the only art no longer solid is the kid in the dinghy (the kid is scenery everywhere).
+Tallest/deepest bands are unchanged, so the pairing-gap check and difficulty are too.
+Art that deliberately sits outside a box - the kite's tail, frond tips, rain streaks -
+stays pass-through.
+
+`vboxes` holds one box set per art variant, for an obstacle whose SHAPE depends on the
+instance's `v`. Only the squall needs it (three cloud banks). `boxes` stays as the
+envelope, which is what `depthOf` reads.
+
+**Still deliberately solid:** the space between a hanging obstacle and the ceiling. A
+small bubble hugging the top can be popped above the outer fronds of a palm or over the
+end of an awning with sky visibly between them. Hanging things are treated as solid up
+to the top edge so that there is no sneaking over trees; opening that would need boxes
+with a top as well as a bottom.
+
+## Night must not hide the hazards
+
+One tint for everything made the night atmospheric and the furniture invisible: a park
+bench's brightness contrast against the verge fell from ~110 to ~11 out of 255, a cooler
+was 60% camouflaged. Two things fix it, and both are night-only - daytime frames were
+checked pixel-identical before and after:
+
+- **`HAZ`**: the painter can record the pixels it touches (`gp.mk`). Obstacles, birds
+  and the kid draw with it on, and `tintNight` gives those pixels `NIGHT_HAZ` (0.30)
+  instead of the scenery's `NIGHT_SCENE` (0.62). Scenery stays properly dark.
+- **Moonlight rim**: dark things - iron benches, hydrants, bins - read by day *because*
+  they are dark on a light street. At night that is gone, so the keyline shifts from
+  `C.edge` toward `RIM_NIGHT` as it gets dark, and ground furniture with no keyline gets
+  one along its top edge, faded in with the dusk.
+
+Worst night contrast went from 11 to ~20-27, and most obstacles now read at least as
+well at night as by day.
+
 ## The frame is not the play area
 
 `.frame` wraps the canvas **and** the HUD, the player row, the tool bar and the panels,
@@ -621,3 +674,6 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   an illegal state transition.
 - **17 Sep 2026** — Fullscreen got a pause button beside the ✕. Without it, phone
   fullscreen had no way to pause at all: no tool bar, no keyboard.
+- **24 Sep 2026** — Second QA pass. Collision became a true circle test; twelve hitboxes
+  were refitted to their art (never growing); the squall got per-variant boxes; night got
+  a hazard mask and a moonlight rim so obstacles stay visible after dark.
