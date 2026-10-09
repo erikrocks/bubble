@@ -709,13 +709,28 @@ function mixc(a,b,t){
   return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),
           Math.round(a[2]+(b[2]-a[2])*t),255];
 }
-/* The sky never moves, so its dither is always screen-keyed (B4 directly, never BAYX).
-   skyAt runs inside every faded draw: when it read BAYX, the treeline faded toward a sky
-   pattern that slid along with the trees instead of the real one behind them. */
+/* What a faded draw mixes toward: the sky's AVERAGE colour for that row, not the dithered
+   pixel at that spot. The sky's speckle is fixed to the screen, so mixing toward it printed
+   that fixed speckle into every faded thing scrolling past - background trees, skyline,
+   shopfronts - and 35% of a background tree's pixels changed colour each time it moved
+   one pixel. Mixing toward the row average, the texture comes from the tree alone and
+   travels with it. Cached per height and rebuilt whenever the sky palette changes. */
+var SKY_VER=0, SKYROW=null, SKYROW_KEY="";
 function skyAt(x,y,H){
-  var v=y/H, i=Math.floor(v*5+(B4[((y&3)<<2)|(x&3)]/16-0.5)*0.85);
-  if(i<0)i=0; if(i>4)i=4;
-  return SKY[i];
+  var key=H+":"+SKY_VER;
+  if(SKYROW_KEY!==key){
+    SKYROW=[];
+    for(var yy=0;yy<H;yy++){
+      var r=0,g=0,b=0;
+      for(var k=0;k<16;k++){
+        var i=Math.floor((yy/H)*5+(k/16-0.5)*0.85); if(i<0)i=0; if(i>4)i=4;
+        r+=SKY[i][0]; g+=SKY[i][1]; b+=SKY[i][2];
+      }
+      SKYROW.push([r/16,g/16,b/16,255]);
+    }
+    SKYROW_KEY=key;
+  }
+  return SKYROW[y<0?0:(y>=H?H-1:y)];
 }
 function drawSky(p,W,H){
   for(var y=0;y<H;y++)for(var x=0;x<W;x++){
@@ -827,7 +842,7 @@ var GROUPS=[
    draw:function(p,x,b){var y=b-14;
      p.rect(x+1,y+2,10,12,C.ironD);
      for(var j=3;j<13;j++)for(var i=2;i<10;i++) if(((i+j)&1)===0) p.px(x+i,y+j,C.iron);
-     for(var i2=2;i2<10;i2++) if(bay(i2,3)<0.5) p.px(x+i2,y+3,C.cream);
+     for(var i2=2;i2<10;i2++) if(B4[12|(i2&3)]/16<0.5) p.px(x+i2,y+3,C.cream);   /* already bin-relative: bypasses BAYX */
      p.hl(x,y+1,12,C.ironL); p.hl(x,y+2,12,C.ironD);
      p.hl(x+1,b,10,C.shadow);}},
   {id:"mailbox",name:"Mailbox",w:14,h:16,cw:13,zones:["city"],note:"Rounded blue box on legs. The most colorful ground piece — good for a landmark.",
@@ -1703,6 +1718,7 @@ var skyImg=skyCanvas.getContext("2d").createImageData(GW,GH);
 var skyBase=null, skyBuiltAt=-1;
 function buildSky(n){
   for(var i=0;i<5;i++) SKY[i]=mixc(SKY_DAY[i],SKY_NIGHT[i],n);
+  SKY_VER++;
   var pp=painter(skyImg.data,GW,GH);
   pp.a=1; pp.fade=0; pp.force=null; pp.oy=0;
   drawSky(pp,GW,GH);
@@ -1856,7 +1872,7 @@ function drawSkyline(p,off){
     p.hl(bx,top,w,FARW);
     for(var wy2=top+4;wy2<WALKY-8;wy2+=5)
       for(var wx=bx+3;wx<bx+w-3;wx+=5){
-        var hq=hash(i*31+wx+wy2);
+        var hq=hash(i*31+(wx-bx)+wy2);         /* keyed to the building, not the screen */
         if(hq>=0.62) continue;
         if(NIGHT>0.25&&hq<0.26){                 /* somebody is still up */
           (function(ax,ay){ lit(p,function(){ p.rect(ax,ay,2,2,C.lampOn); }); })(wx,wy2);

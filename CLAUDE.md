@@ -605,7 +605,18 @@ inspectable) and replaying them through the game loop. Two problems, both fixed:
   screen, the soft edges of trees (`blob`) and the cloud obstacles stood still while the
   shape slid through them, flickering on a 4-frame cycle - which read as those obstacles
   running at a lower frame rate than the rest. Obstacles set `BAYX` to their own x, the
-  treeline to its world offset; everything else leaves it 0.
+  treeline to its world offset; everything else leaves it 0. A sprite that already keys
+  dither to its own coordinates (the wire bin) must read `B4` directly, or BAYX shifts it
+  twice.
+- **Faded things mix toward the sky's row average** (`skyAt`), never the dithered sky
+  pixel. The sky's speckle is screen-fixed, so fading toward it printed that fixed
+  speckle into everything scrolling past: 35% of a background tree's pixels, 48% of the
+  skyline's, changed colour on every 1px move. Skyline windows are also chosen relative
+  to their building, not the screen.
+
+**How to check for crawl:** draw a layer or sprite, move it exactly 1px, draw it again,
+shift back and compare. Any differing pixel is texture sliding through the shape. Every
+obstacle, front and back, and every background layer measured 0% after these fixes.
 
 ## Deploying
 
@@ -767,3 +778,6 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   and cut from 1100px to 480px. The sky lookup inside faded draws went back to
   screen-keyed dither - pinning it with BAYX made the background trees blend toward a
   sliding sky.
+- **9 Oct 2026** — Background trees, skyline and shopfronts stopped crawling: fades mix
+  toward the sky's row average, skyline windows are keyed to their building. Measured
+  0% crawl on every layer and obstacle.
