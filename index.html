@@ -267,7 +267,7 @@ button.chip:hover{border-color:var(--accent); color:var(--ink)}
 <div class="sheet">
 <div class="masthead">
   <h1>Bubble</h1>
-  <p class="tagline"><b>Tap</b> to start filling, <b>tap again</b> to launch, then <b>hold</b> for wind. Big is slow, small is twitchy.<br><span style="font-size:12.5px;color:var(--ink3);font-family:'JetBrains Mono',monospace">226 &times; 104 &middot; 19.5:9, phone in landscape</span></p>
+  <p class="tagline"><b>Hold</b> to blow, <b>let go</b> to float it off, then <b>hold</b> for wind. Big is slow, small is twitchy.<br><span style="font-size:12.5px;color:var(--ink3);font-family:'JetBrains Mono',monospace">226 &times; 104 &middot; 19.5:9, phone in landscape</span></p>
 </div>
 
 <p class="rotate">Turn your phone sideways &mdash; Bubble is built for landscape.</p>
@@ -276,12 +276,12 @@ button.chip:hover{border-color:var(--accent); color:var(--ink)}
   <div class="overlay clear" id="ov-title">
     <p class="title">BUBBLE</p>
     <p class="tbest" id="t-best" hidden>BEST 0.0 m</p>
-    <p class="titlesub" id="t-stats">Tap to blow a bubble</p>
-    <p class="howto">Tap once and it fills on its own. Tap again to launch &mdash; the longer you leave it the bigger it gets, but leave it too long and it pops on the wand. Then <b>hold</b> for wind.</p>
+    <p class="titlesub" id="t-stats">Hold to blow a bubble</p>
+    <p class="howto">Hold to blow, let go and it floats off the wand. The longer you hold, the bigger it gets &mdash; but hold too long and it pops. Then <b>hold</b> for wind.</p>
     <span class="kbd">Tap anywhere to start</span>
   </div>
   <div class="overlay bare" id="ov-ready" hidden>
-    <span class="kbd">Tap to blow</span>
+    <span class="kbd">Hold to blow</span>
   </div>
   <div class="overlay" id="ov-pause" hidden>
     <h2>Paused</h2>
@@ -294,7 +294,7 @@ button.chip:hover{border-color:var(--accent); color:var(--ink)}
     <div class="blist" id="blist"></div>
     <button class="kbd" id="bclose" style="border:0;cursor:pointer">Close</button>
   </div>
-  <p class="launch" id="launch-hint">Tap again to launch</p>
+  <p class="launch" id="launch-hint">Let go to float it off</p>
   <div class="fsbar" id="fs-bar">
     <button type="button" class="fsx" id="btn-fs-pause" aria-label="Pause" title="Pause">&#10073;&#10073;</button>
     <button type="button" class="fsx" id="btn-exit" aria-label="Exit fullscreen" title="Exit fullscreen">&#10005;</button>
@@ -329,7 +329,7 @@ button.chip:hover{border-color:var(--accent); color:var(--ink)}
     <button type="button" id="btn-pause">Pause</button>
     <button type="button" id="btn-full" hidden>Fullscreen</button>
     <button type="button" id="btn-board">High scores</button>
-    <span style="font-size:12px;color:var(--ink3)">Space / tap to blow &middot; P to pause</span>
+    <span style="font-size:12px;color:var(--ink3)">Space / hold to blow &middot; P to pause</span>
   </div>
 </div>
 
@@ -1428,7 +1428,7 @@ var GROUPS=[
    so the bubble sits further left to keep the look-ahead honest. */
 var GW=226, GH=104, GZ=4, WALKY=92, LANE=54, WAND_X=44;
 var R_REF=10, R_MIN=4, R_MAX=20;
-var P={g:180,w:420,c:4.6,p:1.35,inf:15,s:60};
+var P={g:180,w:420,c:4.6,p:1.35,inf:15,s:60,f:0.8};
 var TUNE_DEFAULT=Object.assign({},P);
 var BASE_SPEED=60, SPEED_CAP=38, SPEED_RATE=200;
 var RULES={ceiling:"soft",birds:true};
@@ -1962,8 +1962,13 @@ var G={phase:"title",R:R_MIN,y:0,x:0,v:0,hold:false,world:0,obs:[],parts:[],bird
        run:0,best:0,seed:7,nextX:0,campY:0,campT:0,clip:0,kid:null,deadT:0,
        prev:null,stage:0,zone:null,zoneDelay:0,bannerT:0,attract:0,sq:0,sqV:0,birdT:0};
 function rnd(){ G.seed=(G.seed*1664525+1013904223)&0x7fffffff; return G.seed/0x7fffffff; }
+/* Floats off. Letting go launches with the wind off, which in a plain hold-and-release
+   means the bubble is already dropping while your finger comes back down - the wonk.
+   So it leaves the wand the way a real one does: a small lift, and gravity easing back
+   in over P.f seconds (smoothstep in step()). Chosen in the Launch Lab against classic,
+   puffs and flick. */
 function launchBubble(){
-  G.phase="fly"; G.v=-6;
+  G.phase="fly"; G.v=-10; G.flyT=0;
   Snd.blowStop(); Snd.launch();
   if(hint) hint.classList.remove("show");
 }
@@ -2044,12 +2049,15 @@ function syncFsPause(){
 function togglePause(){
   if(G.phase==="paused"){
     G.phase=G.prev; ov.pause.hidden=true;
-    ov.ready.hidden=(G.phase!=="ready");     /* the prompt comes back with its phase */
+    /* the prompt comes back with its phase - and a bubble left on the wand by a pause
+       is waiting for a finger, so it asks for one */
+    ov.ready.hidden=!(G.phase==="ready"||(G.phase==="blow"&&!G.hold));
     Snd.wind(false); syncFsPause(); return;
   }
   if(G.phase==="title"||G.phase==="dead") return;
   G.prev=G.phase; G.phase="paused"; G.hold=false; Snd.wind(false); Snd.blowStop();
   ov.ready.hidden=true;                      /* pausing from `ready` stacked two overlays */
+  if(hint) hint.classList.remove("show");
   ov.pause.hidden=false; syncFsPause();
 }
 function showBanner(text){
@@ -2193,10 +2201,9 @@ function step(dt){
   }
   if(G.phase==="dead"){ G.deadT+=dt; if(G.deadT>0.45) ov.dead.hidden=false; return; }
   if(G.phase==="ready"||G.phase==="blow"){
-    if(G.phase==="blow"){
-      /* It fills on its own. Nothing to hold - one tap starts it, the next launches,
-         which is what works in landscape on a phone. Let it fill too far and it pops
-         on the wand, so waiting for a big one is the risk. */
+    if(G.phase==="blow"&&G.hold){
+      /* Fills while you hold. Hold too long and it pops on the wand, so going for a
+         big one is the risk. */
       G.R+=P.inf*dt*(1-0.45*(G.R-R_MIN)/(R_MAX-R_MIN));
       Snd.blowAt(G.R);
       if(G.R>=R_MAX){ pop("over"); return; }
@@ -2207,6 +2214,8 @@ function step(dt){
   }
   P.s=speedAt(G.run);
   var k=Math.pow(R_REF/G.R,P.p), a=P.g*k;
+  G.flyT=(G.flyT||0)+dt;
+  if(G.flyT<P.f){ var u=G.flyT/Math.max(0.05,P.f); a*=u*u*(3-2*u); }   /* floating off the wand */
   if(G.hold) a-=P.w*k;
   G.v+=a*dt; G.v-=G.v*P.c*dt; G.y+=G.v*dt;
   G.x+=(LANE-G.x)*Math.min(1,dt*4);
@@ -2445,7 +2454,7 @@ function refreshTitleStats(){
   var tb=document.getElementById("t-best");
   if(!STATS.runs&&!G.best){
     if(tb) tb.hidden=true;
-    tStats.textContent="Tap to blow a bubble";
+    tStats.textContent="Hold to blow a bubble";
     return;
   }
   if(tb){ tb.hidden=false; tb.textContent="BEST "+(G.best/60).toFixed(1)+" m"; }
@@ -2477,14 +2486,12 @@ function press(){
   if(G.phase==="paused"){ togglePause(); return; }
   if(G.phase==="title"){ startRun(); return; }   /* clearing the title is its own tap */
   if(G.phase==="dead"){ if(G.deadT>0.45) startRun(); return; }
-  if(G.phase==="blow"){
-    launchBubble();
-    G.hold=true; Snd.wind(true);      /* the launch tap is also your first gust */
-    return;
-  }
-  if(G.phase==="ready"){
-    G.phase="blow"; ov.ready.hidden=true; Snd.blowStart();
+  if(G.phase==="ready"||G.phase==="blow"){
+    /* blow is only ever filling while a finger is down; after a pause the bubble sits
+       on the wand until the next press picks it back up */
+    G.phase="blow"; G.hold=true; ov.ready.hidden=true; Snd.blowStart();
     if(hint) hint.classList.add("show");
+    return;
   }
   G.hold=true;
   if(G.phase==="fly") Snd.wind(true);
@@ -2492,7 +2499,7 @@ function press(){
 function release(){
   if(!G.hold) return;
   G.hold=false; Snd.wind(false);
-  if(G.phase==="blow") Snd.blowAt(G.R);
+  if(G.phase==="blow") launchBubble();     /* letting go is the launch */
 }
 var frame=document.querySelector(".frame");
 frame.addEventListener("pointerdown",function(e){
@@ -2521,8 +2528,9 @@ window.addEventListener("keyup",function(e){
   if(e.code==="Space"||e.code==="ArrowUp"){ e.preventDefault(); release(); }
 });
 window.addEventListener("blur",function(){
-  release();
+  /* pause FIRST: release() during blow is a launch, and losing focus is not letting go */
   if(G.phase==="fly"||G.phase==="blow") togglePause();
+  release();
 });
 document.addEventListener("visibilitychange",function(){
   if(document.hidden&&(G.phase==="fly"||G.phase==="blow")) togglePause();
@@ -2650,7 +2658,8 @@ var SPEC=[
  {key:"w",  label:"Wind force",  unit:"px/s²",min:80, max:700,step:10},
  {key:"c",  label:"Drag",        unit:"/s",        min:1,  max:8,  step:0.1},
  {key:"p",  label:"Size effect", unit:"exp",       min:0,  max:2,  step:0.05},
- {key:"inf",label:"Blow rate",   unit:"px/s",      min:4,  max:26, step:1}
+ {key:"inf",label:"Blow rate",   unit:"px/s",      min:4,  max:26, step:1},
+ {key:"f",  label:"Float-off",   unit:"s",         min:0.1,max:1.8,step:0.05}
 ];
 (function(){
   var host=document.getElementById("sliders");

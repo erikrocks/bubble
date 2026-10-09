@@ -94,24 +94,28 @@ enough to read as one building repeated.
 
 `title -> ready -> blow -> fly -> dead`
 
-**Three taps, and the first one is free.** Tap to clear the title, tap to start it
-filling, tap to launch — and that launch tap is also the first gust of wind. **Nothing is
-held** during the start, which is what makes it work in landscape on a phone. Leaving it
-to fill too long pops it on the wand, so waiting for a big bubble is the risk you take.
+**Floats off.** Hold to blow, let go to launch, then hold for wind. The first tap only
+clears the title (`press()` returns after `startRun()`), and after a death the first tap
+only brings the next kid to the wand, with a 0.45s guard.
 
-The first tap doing nothing but clearing the title is deliberate, and `press()` **returns**
-after `startRun()` so it cannot fall through into the `ready` branch within the same call.
-It used to, and the effect was that the tap dismissing the instructions also started the
-fill: you never saw the kid, the wand or the street before you were committed. `ready` is
-therefore a bare prompt over a clean, undimmed scene — no scrim, no paragraph. The
-explaining happens on the title screen, where nothing is ticking.
+Plain hold-and-release felt wonky for one reason: letting go fixed the size *and*
+launched, with the wind off, so the bubble was already dropping while the finger came
+back down - 4 to 17px before you could catch it. So the launch is a small lift
+(`G.v=-10`) and gravity eases back in over `P.f` seconds (0.8, smoothstep), the way a
+real bubble drifts off a wand. Measured: the drop before your finger is back is now ~0px
+at a 0.2-0.35s reaction, and 2px for a small bubble at 0.5s. `P.f` is a slider in /admin.
 
-Chosen by playing four candidates against each other (hold/let-go/tap, hold/let-go with a
-gravity hang, tap/tap, and a sweeping size meter). The others and the `armed` state they
-needed are gone — don't reintroduce a hold-to-blow without testing it on a phone.
+Chosen by playing four prototypes side by side in a separate "Launch Lab" page - classic
+hold-and-release, floats off, puffs (tap to count, hold to go) and flick (slide up to
+launch, finger never leaves). The tap-tap flow it replaced filled on its own and was
+dropped for feeling detached.
 
-Death restarts into the `ready` prompt, not straight into blowing, with a 0.45s guard so
-the press that killed you cannot restart you.
+Rules that matter:
+- **`blow` only fills while `G.hold`.** A pause mid-blow drops the hold, and the bubble
+  then waits on the wand with the "Hold to blow" prompt until a finger comes back.
+- **`release()` during `blow` IS the launch**, so anything that is not a person letting
+  go must not reach it first. Losing window focus pauses *before* releasing for exactly
+  this reason; the other order launched the bubble when you switched apps.
 
 ## Overlays anchor to the canvas, not the frame
 
@@ -443,8 +447,8 @@ player's, not settings.
 ## Who's blowing
 
 A row of kid portraits under the game picks the character, or "Anyone" for a random kid
-each run. It persists as `kid` in `localStorage`. the player asked for this, and only ever
-plays as Pigtails.
+each run. It persists as `kid` in `localStorage`. It was requested by the player it was
+built for, who only ever plays as Pigtails.
 
 ## Two lamps, and neither is allowed everywhere
 
@@ -601,14 +605,14 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   three shapes. The white cloud moved from the crossing to the boardwalk — mixing fair and
   stormy weather in one place read as a mistake, and the boardwalk's ceiling was thin.
 - **15 Sep 2026** — Tuning drawer moved behind `/admin`, with a reset-to-defaults button.
-  Pigtails wears pink at the player's request (it was blue only because the original yellow
+  Pigtails wears pink by request (it was blue only because the original yellow
   merged with her blonde hair; pink has no such problem).
 - **15 Sep 2026** — High-score board added, copied from KUDR: same Supabase pattern, own
   table in the same project. Verified the RLS behaviour against the live table first.
 - **15 Sep 2026** — The route became a repeating round trip (Erik's idea): out to the sea
   and back through every place in reverse. Added the crossing itself — open water underfoot,
   buoy, moored dinghy, lighthouse rock, low cloud and a rain squall. Added a character
-  select row, because the player only wants to play as the pigtails girl.
+  select row, because the main player only wants to play as the pigtails girl.
 - **15 Sep 2026** — Fixed hitboxes that did not match their art. Ground items can now be
   described as stacked bands; the fry stand, car and umbrella were killing players in empty
   sky beside their narrow upper halves.
@@ -700,3 +704,5 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **24 Sep 2026** — Sound made fail-safe and the frame loop self-scheduling; the
   leaderboard race that could post the wrong score fixed; the initials panel kept on
   screen on short phones in fullscreen.
+- **9 Oct 2026** — Launch changed to "floats off": hold to blow, let go and it drifts off
+  the wand with gravity easing back in, then hold for wind. Picked from four prototypes.
