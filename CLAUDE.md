@@ -622,6 +622,11 @@ inspectable) and replaying them through the game loop. Two problems, both fixed:
   the sky's row average instead. Obstacles keep their holes - they move over scenery, not
   bare dithered sky, and measured clean.
 
+- **Background clouds are opaque**: white mixed toward the sky's row colour, more toward
+  the rim. They were ~25% white over the sky, so the sky's dither showed through and they
+  read as behind it, and their edge holes flickered (59.6% of cloud pixels per 1px drift;
+  now 0%).
+
 **How to check for crawl:** compare the **composite**, sky included, inside the object's
 full outline (holes too). Measuring only the object's own pixels missed the holes and
 read 0% while the edges were visibly flickering. draw a layer or sprite, move it exactly 1px, draw it again,
@@ -793,3 +798,4 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   0% crawl on every layer and obstacle.
 - **9 Oct 2026** — Background tree edges made solid: the sky's dither was flickering
   through the edge holes as the trees slid. 0% flicker measured on the composite.
+- **9 Oct 2026** — Background clouds made solid so they sit in front of the sky.

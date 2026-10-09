@@ -1895,12 +1895,20 @@ function drawSkyline(p,off){
    rounder; and they drift a little faster, since at 0.12 parallax a phone showed them
    stepping a whole 10-screen-pixel game pixel only ~7 times a second. */
 function drawClouds(p,off){
+  /* Solid, not see-through. They used to be ~25% white laid over the sky, so the sky's
+     light/dark dither showed straight through and they read as a smudge BEHIND the sky;
+     and their soft edges were holes, which flicker as a cloud slides over that dither.
+     Now every cloud pixel is opaque - white mixed toward the sky's row colour, more so
+     toward the edge - so a cloud sits in front of the sky with nothing to see through. */
   for(var i=0;i<8;i++){
     var cx=Math.round(((i*200+hash(i)*140)-off)%(GW+120)); if(cx<-60) cx+=GW+120;
     var cy=8+Math.floor(hash(i+41)*24), rx=6+Math.floor(hash(i+13)*6), ry=3+Math.floor(hash(i+29)*2);
     for(var y=cy-ry;y<=cy+ry;y++)for(var x=cx-rx;x<=cx+rx;x++){
       var q=Math.pow((x-cx)/rx,2)+Math.pow((y-cy)/ry,2);
-      if(q<1&&(q<0.5||bay(x-cx+64,y-cy+64)<0.55)) p.px(x,y,[255,255,255,110]);
+      if(q>=1) continue;
+      var k=q<0.45?0.5:(q<0.75?0.68:0.84);          /* how far toward the sky */
+      var sk=skyAt(x,y,p.H);
+      p.px(x,y,[255+(sk[0]-255)*k,255+(sk[1]-255)*k,255+(sk[2]-255)*k,255]);
     }
   }
 }
@@ -2419,7 +2427,7 @@ function drawWorld(t){
   var markHaz=NIGHT>0.004;
   if(markHaz) HAZ.fill(0);
   gimg.data.set(skyBase);
-  gp.setA(0.55); drawClouds(gp,G.world*0.2); gp.setA(1);
+  drawClouds(gp,G.world*0.2);
   var wPark=zw("park",G.run), wCity=zw("city",G.run), wWalk=zw("boardwalk",G.run),
       wBeach=zw("beach",G.run), wCross=zw("sea",G.run);
   var wSea=Math.max(wWalk,Math.max(wBeach,wCross));
