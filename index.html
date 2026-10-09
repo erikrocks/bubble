@@ -202,6 +202,16 @@ button.who:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 .brow .ini{font-family:"Silkscreen",monospace; font-size:12px; letter-spacing:.08em}
 .brow .val{margin-left:auto; font-variant-numeric:tabular-nums}
 .bmsg{font-size:13px; color:#b9c4dd; text-align:center; padding:28px 0}
+/* Ten rows, the tabs and Close are ~370px; a phone in landscape gives ~360-410. On short
+   screens the board tightens, and in the app the menu bar steps aside while it is open
+   (hudTick) - it sat on top of rows 9 and 10. */
+@media (max-height:440px){
+  .board{gap:6px; padding-block:8px}
+  .board h2{font-size:17px; margin:0}
+  .btabs button{padding-block:5px}
+  .blist{gap:1px; min-height:0}
+  .brow{padding-block:1px; font-size:12.5px; line-height:1.35}
+}
 .hiscore{pointer-events:auto; display:flex; flex-direction:column; align-items:center; gap:6px;
   padding:12px 18px 14px; border:2px solid var(--accent); border-radius:4px;
   background:rgba(13,16,32,.72); box-shadow:0 0 0 3px rgba(201,65,127,.18)}
@@ -2489,7 +2499,7 @@ var hud={d:document.getElementById("h-dist"),b:document.getElementById("h-best")
          sp:document.getElementById("h-speed")};
 var APP=/[?&]app=/.test(location.search);
 function hudTick(){
-  if(APP) document.documentElement.classList.toggle("menu",G.phase==="title"||(G.phase==="dead"&&!nameOpen));
+  if(APP) document.documentElement.classList.toggle("menu",!boardOpen&&(G.phase==="title"||(G.phase==="dead"&&!nameOpen)));
   if(G.phase==="title"){
     hud.d.textContent="0.0 m"; hud.b.textContent=(G.best/60).toFixed(1)+" m";
     hud.s.textContent="\u2014"; hud.dia.textContent="\u2014"; hud.sp.textContent="\u2014";
@@ -2837,11 +2847,11 @@ function refreshBoard(period){
   loadScores(period).then(function(rows){ boardRows[period]=rows; if(boardPeriod===period) renderBoard(); });
 }
 function openBoard(){
-  boardOpen=true; boardEl.hidden=false;
+  boardOpen=true; boardEl.hidden=false; if(APP) document.documentElement.classList.remove("menu");
   if(G.phase==="fly"||G.phase==="blow") togglePause();
   refreshBoard(boardPeriod);
 }
-function closeBoard(){ boardOpen=false; boardEl.hidden=true; game.focus(); }
+function closeBoard(){ boardOpen=false; boardEl.hidden=true; game.focus(); if(APP) hudTick(); }
 (function(){
   var tabs=document.getElementById("btabs");
   [["All time","all"],["This month","month"],["This week","week"]].forEach(function(t){
