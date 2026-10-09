@@ -148,7 +148,15 @@ it is a death. Three rules keep that honest, all in the `RULES.birds` block:
   size needs to shift its own radius, so R=20 gets 2.9s and R=5 gets 1.3s. Making them
   pass wide instead was the obvious fix and the wrong one: camping stopped being punished
   at all. Measured: a parked bubble is hit essentially every time, one that reacts never is.
-- The camp threshold is `termFall(R) * 0.35` — a third of a second of that bubble's own
+- **Camping birds are off until 800px ("Let's go!")**, and their patience tightens from 5s
+  to 2.4s by Rush hour (`CAMP_FROM`/`CAMP_FULL`). They used to fire from 0m, so floating
+  in the empty opening park drew a bird at 2.4m.
+- The camp threshold is `termFall(R) * 0.35` **capped at the bubble's own diameter**
+  (floor 5px). Uncapped, a tiny bubble's 135px/s free-fall made it 47px, half the screen,
+  so tiny bubbles counted as camping whatever they did: a bird every 2.4s even while
+  bobbing. Measured after: tiny bubbles bobbing 6px get ~0.5/min; parking dead still
+  still draws one at every size. Original rule follows:
+- The camp threshold was `termFall(R) * 0.35` — a third of a second of that bubble's own
   free-fall — not a flat pixel count. Patience stretches with size too. A flat 14px
   asked a big bubble for a third of its whole manoeuvring budget.
 - Bird flight bobs as `y0 + sin(x)*2.2`, **not** `y += sin(x)*0.28`. The second form
@@ -732,3 +740,7 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 
 - **9 Oct 2026** — App mode for the native wrappers (`?app=`), and saving on going hidden.
   First Android build runs on the emulator: bundled game, immersive, landscape-locked.
+- **9 Oct 2026** — From the first phone playtest: no camping birds in the opening stretch,
+  the camping threshold capped at the bubble's diameter (tiny bubbles were always
+  "camping"), and the clouds made smaller, rounder and rigid - their dither was keyed
+  to the screen, so the edges crawled as they moved.

@@ -1665,6 +1665,7 @@ function rollKid(){
 }
 
 /* ================= the ramp ================= */
+var CAMP_FROM=800, CAMP_FULL=2400;   /* camping birds: from "Let's go!", fully strict by Rush hour */
 var STAGES=[
  {name:"Just float",      from:0},
  {name:"Watch the ground",from:240},
@@ -1854,13 +1855,18 @@ function drawSkyline(p,off){
     if(hash(i+7)<0.3){ p.rect(bx+Math.floor(w/2)-1,top-5,3,5,col); }
   }
 }
+/* Clouds were flat (up to 6:1) and their dithered edges were keyed to SCREEN pixels,
+   so as a cloud slid along its edge pattern changed under it and crawled. The dither is
+   now keyed to the cloud itself, so it moves as one rigid shape; they are smaller and
+   rounder; and they drift a little faster, since at 0.12 parallax a phone showed them
+   stepping a whole 10-screen-pixel game pixel only ~7 times a second. */
 function drawClouds(p,off){
-  for(var i=0;i<7;i++){
-    var cx=Math.round(((i*230+hash(i)*160)-off)%(GW+150)); if(cx<-80) cx+=GW+150;
-    var cy=8+Math.floor(hash(i+41)*26), rx=10+Math.floor(hash(i+13)*10), ry=3+Math.floor(hash(i+29)*3);
+  for(var i=0;i<8;i++){
+    var cx=Math.round(((i*200+hash(i)*140)-off)%(GW+120)); if(cx<-60) cx+=GW+120;
+    var cy=8+Math.floor(hash(i+41)*24), rx=6+Math.floor(hash(i+13)*6), ry=3+Math.floor(hash(i+29)*2);
     for(var y=cy-ry;y<=cy+ry;y++)for(var x=cx-rx;x<=cx+rx;x++){
       var q=Math.pow((x-cx)/rx,2)+Math.pow((y-cy)/ry,2);
-      if(q<1&&(q<0.5||bay(x,y)<0.55)) p.px(x,y,[255,255,255,110]);
+      if(q<1&&(q<0.5||bay(x-cx+64,y-cy+64)<0.55)) p.px(x,y,[255,255,255,110]);
     }
   }
 }
@@ -2287,11 +2293,20 @@ function step(dt){
     /* "Moved enough" has to mean something different at each size: a third of a
        second of that bubble's own free-fall. Flat 14px asked a big bubble for a
        third of its whole manoeuvring budget and a small one for nothing. */
-    var need=Math.max(5,termFall*0.35);
-    var patience=2.4+Math.max(0,G.R-10)*0.09;
-    if(Math.abs(G.y-G.campY)>need){ G.campY=G.y; G.campT=0; }
+    /* "Moved enough": a third of a second of this bubble's own free-fall, so a big
+       slow one is not asked for more than it can do - but never more than its own
+       diameter. A tiny bubble falls at ~135px/s, which made the threshold 47px, half
+       the screen: it counted as camping whatever you did. Moving your own width is
+       moving, at any size. */
+    var need=Math.max(5,Math.min(2*G.R,termFall*0.35));
+    /* No camping birds in the opening stretch - floating in an empty park is the
+       point of it - and patience then tightens from 5s to its full 2.4s by Rush hour. */
+    var campOn=G.run>=CAMP_FROM;
+    var ramp=Math.min(1,Math.max(0,(G.run-CAMP_FROM)/(CAMP_FULL-CAMP_FROM)));
+    var patience=(5-2.6*ramp)+Math.max(0,G.R-10)*0.09;
+    if(!campOn||Math.abs(G.y-G.campY)>need){ G.campY=G.y; G.campT=0; }
     else G.campT+=dt;
-    if(G.campT>patience&&G.birds.length<2){
+    if(campOn&&G.campT>patience&&G.birds.length<2){
       G.campT=0; G.campY=G.y;
       /* This one is aimed AT you - that is the whole point of it. It is made fair by
          TIME, not by missing: the lead comes from how long a bubble this size needs to
@@ -2370,7 +2385,7 @@ function drawWorld(t){
   var markHaz=NIGHT>0.004;
   if(markHaz) HAZ.fill(0);
   gimg.data.set(skyBase);
-  gp.setA(0.55); drawClouds(gp,G.world*0.12); gp.setA(1);
+  gp.setA(0.55); drawClouds(gp,G.world*0.2); gp.setA(1);
   var wPark=zw("park",G.run), wCity=zw("city",G.run), wWalk=zw("boardwalk",G.run),
       wBeach=zw("beach",G.run), wCross=zw("sea",G.run);
   var wSea=Math.max(wWalk,Math.max(wBeach,wCross));
