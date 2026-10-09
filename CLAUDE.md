@@ -353,6 +353,17 @@ seconds later, and the horizon took 11-15 seconds to blend. With the fade centre
 on the same event. The /admin jumps start `FADE/2` past the boundary, so a preview opens
 on the place at full strength.
 
+## Ground pieces must suit the ground
+
+Spawn weights follow the horizon (`zw`), which blends `FADE/2` past each boundary, but
+the ground turns over AT the boundary. Unchecked, that put beach furniture on open water
+and buoys on sand at every crossing - 6% of all ground pieces over two laps. `pickFor`
+now takes the spawn x and `surfaceOK` requires a sea-only piece to have water, and
+anything else dry ground, for its whole time on screen. When nothing qualifies a ground
+pick returns null rather than falling back, so the changeover gets a short gap instead
+(longest empty ground stretch went 7.5s -> 9.6s; overhead pieces still spawn). Measured
+after: 0 of 4,456 ground pieces on the wrong surface.
+
 ## Day and night
 
 The run is a round trip, so the light is too. `nightAt(d)` returns 0 for daylight and 1
@@ -799,3 +810,5 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **9 Oct 2026** — Background tree edges made solid: the sky's dither was flickering
   through the edge holes as the trees slid. 0% flicker measured on the composite.
 - **9 Oct 2026** — Background clouds made solid so they sit in front of the sky.
+- **9 Oct 2026** — No more beach furniture on the water or buoys on the sand at the
+  crossing; background clouds toned down.

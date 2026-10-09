@@ -1661,10 +1661,30 @@ function poolFor(cls,tall){
   return out;
 }
 /* weighted by where you are: park things thin out, city things arrive */
-function pickFor(cls,tall){
+/* A ground piece has to suit the ground it will actually sit on. Spawn weights follow the
+   horizon, which blends FADE/2 past each boundary, but the ground itself turns over AT
+   the boundary - so for a few seconds beach furniture spawned on open water and buoys on
+   sand (6% of ground pieces over two laps, all at the crossing). A sea-only piece now
+   needs water, and anything else needs dry ground, for the whole time it is on screen:
+   from when the world is GW short of it until it has passed. */
+function seaOnly(it){ return !!it.zones&&it.zones.length>0&&it.zones.every(function(z){ return z==="sea"; }); }
+function surfaceOK(it,x){
+  var water=seaOnly(it), w=it.w||20;
+  for(var k=0;k<=4;k++){
+    var sea=groundMix("sea",x-GW+(GW+w)*k/4);
+    if(water?sea<0.999:sea>0.001) return false;
+  }
+  return true;
+}
+function pickFor(cls,tall,x){
   var d=G.run, pool=poolFor(cls,tall), w=[], tot=0, i;
-  for(i=0;i<pool.length;i++){ var q=itemW(pool[i],d); w.push(q); tot+=q; }
+  for(i=0;i<pool.length;i++){
+    var q=itemW(pool[i],d);
+    if(cls==="ground"&&x!==undefined&&q>0&&!surfaceOK(pool[i],x)) q=0;
+    w.push(q); tot+=q;
+  }
   if(tot<=0.001){
+    if(cls==="ground") return null;          /* a gap beats a bench in the sea */
     for(i=0;i<pool.length;i++){ if(!pool[i].zones) return pool[i]; }
     return pool.length?pool[0]:null;
   }
@@ -1906,7 +1926,7 @@ function drawClouds(p,off){
     for(var y=cy-ry;y<=cy+ry;y++)for(var x=cx-rx;x<=cx+rx;x++){
       var q=Math.pow((x-cx)/rx,2)+Math.pow((y-cy)/ry,2);
       if(q>=1) continue;
-      var k=q<0.45?0.5:(q<0.75?0.68:0.84);          /* how far toward the sky */
+      var k=q<0.45?0.62:(q<0.75?0.76:0.88);         /* how far toward the sky */
       var sk=skyAt(x,y,p.H);
       p.px(x,y,[255+(sk[0]-255)*k,255+(sk[1]-255)*k,255+(sk[2]-255)*k,255]);
     }
@@ -2147,7 +2167,7 @@ function showBanner(text){
 
 /* ================= level ================= */
 function addFrom(cls,x,tall){
-  var it=pickFor(cls,tall); if(!it) return;
+  var it=pickFor(cls,tall,x); if(!it) return;
   G.obs.push({cls:cls,it:it,x:x,v:Math.floor(rnd()*97)});
 }
 function spawn(){
@@ -2159,7 +2179,7 @@ function spawn(){
   else {
     var pairChance=0.30+Math.min(0.25,(G.run-2400)/12000), paired=false;
     if(rnd()<pairChance){
-      var gi=pickFor("ground",true), ai=pickFor("air",true);
+      var gi=pickFor("ground",true,G.nextX), ai=pickFor("air",true);
       /* a bus shelter parked under a shopfront reads as part of the building -
          two big boxy things sharing an edge. Keep them apart. */
       /* a shop that already has a stall outside it makes its own gap; pairing it
