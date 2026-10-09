@@ -709,14 +709,17 @@ function mixc(a,b,t){
   return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),
           Math.round(a[2]+(b[2]-a[2])*t),255];
 }
+/* The sky never moves, so its dither is always screen-keyed (B4 directly, never BAYX).
+   skyAt runs inside every faded draw: when it read BAYX, the treeline faded toward a sky
+   pattern that slid along with the trees instead of the real one behind them. */
 function skyAt(x,y,H){
-  var v=y/H, i=Math.floor(v*5+(bay(x,y)-0.5)*0.85);
+  var v=y/H, i=Math.floor(v*5+(B4[((y&3)<<2)|(x&3)]/16-0.5)*0.85);
   if(i<0)i=0; if(i>4)i=4;
   return SKY[i];
 }
 function drawSky(p,W,H){
   for(var y=0;y<H;y++)for(var x=0;x<W;x++){
-    var v=y/H,i=Math.floor(v*5+(bay(x,y)-0.5)*0.85); if(i<0)i=0; if(i>4)i=4;
+    var v=y/H,i=Math.floor(v*5+(B4[((y&3)<<2)|(x&3)]/16-0.5)*0.85); if(i<0)i=0; if(i>4)i=4;
     p.px(x,y,SKY[i]);
   }
 }
@@ -1509,7 +1512,7 @@ var ROUTE=["park","city","boardwalk","beach","sea","beach","boardwalk","city"];
 /* The crossing is longer than the other legs on purpose: it is where the light goes,
    and a sunset needs room to happen in. Legs are no longer a uniform LEG apart, so
    everything goes through LEGCUM rather than arithmetic on LEG. */
-var FIRST=2700, LEG=2000, SEA_LEG=3400, FADE=1100;
+var FIRST=2700, LEG=2000, SEA_LEG=3400, FADE=480;
 var LEGLEN=ROUTE.map(function(id,i){ return i===0?FIRST:(id==="sea"?SEA_LEG:LEG); });
 var LEGCUM=(function(){ var o=[0]; for(var i=0;i<LEGLEN.length;i++) o.push(o[i]+LEGLEN[i]); return o; })();
 var LOOP=LEGCUM[ROUTE.length];              /* one full lap, out and back */
@@ -1541,16 +1544,18 @@ function nightAt(d){
   if(r<seaB) return ease((r-(seaA-FADE*0.5))/((seaA+SEA_LEG*0.66)-(seaA-FADE*0.5)));
   return 1;                                                  /* night all the way home */
 }
+/* The horizon cross-fade is CENTRED on the leg boundary, where the ground turns over and
+   the banner fires, so the change of place is one event. It used to run the whole FADE
+   before the boundary: the word appeared, then the ground changed 5-7 seconds later, and
+   the horizon took 11-15 seconds to blend. */
 function legW(i,d){
-  var a=legStart(i), b=legStart(i+1), w=1;
+  var a=legStart(i), b=legStart(i+1), h=FADE/2, w=1;
   if(i>0){
-    var inS=a-FADE;
-    if(d<=inS) return 0;
-    if(d<a) w=(d-inS)/FADE;
+    if(d<=a-h) return 0;
+    if(d<a+h) w=(d-(a-h))/FADE;
   }
-  if(d>=b) return 0;
-  var outS=b-FADE;
-  if(d>outS) w=Math.min(w,(b-d)/FADE);
+  if(d>=b+h) return 0;
+  if(d>b-h) w=Math.min(w,(b+h-d)/FADE);
   return w;
 }
 /* a place can be on the route more than once, so take the strongest leg that is it */
@@ -1565,7 +1570,7 @@ function zw(id,d){
    water painted at 35% over sand for eighteen seconds reads as a flooded beach, not as
    an approaching sea. Underfoot gets its own short fade that starts AT the boundary,
    so the sand stays sand right up to the crossing and then turns over in four seconds. */
-var GROUND_FADE=280;
+var GROUND_FADE=240;
 function groundMix(id,d){
   var i=legIndex(d), a=legStart(i);
   var t=Math.min(1,Math.max(0,(d-a)/GROUND_FADE));
@@ -1603,11 +1608,11 @@ var ZONES=(function(){
   var seen={}, out=[];
   ROUTE.forEach(function(id,i){
     if(seen[id]) return;
-    seen[id]=1; out.push({id:id,name:ZONE_NAMES[id],from:legStart(i)});
+    seen[id]=1; out.push({id:id,name:ZONE_NAMES[id],from:i===0?0:legStart(i)+FADE/2});   /* past the blend */
   });
   for(var i=5;i<ROUTE.length;i++)
-    out.push({id:ROUTE[i],name:ZONE_NAMES[ROUTE[i]]+" \u00b7 night",from:legStart(i)+120});
-  out.push({id:"park",name:"Sunrise",from:LOOP+60});
+    out.push({id:ROUTE[i],name:ZONE_NAMES[ROUTE[i]]+" \u00b7 night",from:legStart(i)+FADE/2+60});
+  out.push({id:"park",name:"Sunrise",from:LOOP+FADE/2+60});
   return out;
 })();
 

@@ -337,22 +337,21 @@ none` and the event lands on the canvas anyway.
 
 ## Naming the zone at the right moment
 
-This has been wrong in both directions, so the reasoning matters.
+The change of place is **one event at the leg boundary**: the horizon cross-fade is
+centred on it (`legW` ramps over `FADE/2` either side), the ground turns over there
+(`groundMix`, `GROUND_FADE` 240px), and `zoneAt` - the strongest leg - flips there too, so
+the banner lands 0.6s after the ground starts changing.
 
-The horizon cross-fades over `FADE` (1100px), which means a place is visible long before
-its leg starts and the two zones swap dominance at the **halfway point**, `FADE/2` before
-the boundary. Three candidate moments:
+It took three tries. Naming on any weight announced a place while it was a smudge on the
+horizon; naming at the leg start left a full skyline under the old name. Naming at the
+horizon handover with the fade running the whole `FADE` (1100px) *before* the boundary
+looked right on paper, but on a phone the word arrived and then the ground changed 5-7
+seconds later, and the horizon took 11-15 seconds to blend. With the fade centred and
+`FADE` at 480px, the blend is 5-6 seconds and the word and the ground arrive together.
 
-| Trigger | City announced at | Verdict |
-|---|---|---|
-| Any weight at all | 1600px | Too early - a smudge on the horizon |
-| Leg start (`legIndex`) | 2700px | Too late - a full skyline while it still says PARK |
-| **Horizon handover (max weight)** | **2150px** | Right |
-
-The banner now fires 0.6s after the handover, so on the city it lands at ~2186px instead
-of ~2760px - about nine seconds earlier at the speed you are going there. `zoneAt` drives
-the banner, the bird species and the HUD readout together, so all three turn over on the
-same event.
+`zoneAt` drives the banner, the bird species and the HUD readout, so all three turn over
+on the same event. The /admin jumps start `FADE/2` past the boundary, so a preview opens
+on the place at full strength.
 
 ## Day and night
 
@@ -764,3 +763,7 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   to the screen, so the edges crawled as they moved.
 - **9 Oct 2026** — Smooth motion on 120Hz phones (render-time position lead) and dither
   pinned to moving obstacles. Both found by measuring frame timing on the phone itself.
+- **9 Oct 2026** — Place changes became one event: horizon blend centred on the boundary
+  and cut from 1100px to 480px. The sky lookup inside faded draws went back to
+  screen-keyed dither - pinning it with BAYX made the background trees blend toward a
+  sliding sky.
