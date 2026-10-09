@@ -423,8 +423,12 @@ Periods are **calendar** periods (week starts Monday), not rolling windows, so e
 board resets together. Initials render through `textContent`, never `innerHTML` — that is
 other people's text.
 
-**As of 9 Oct 2026 the project's hostname stopped resolving** - paused or removed for
-inactivity. The game shows "Couldn't reach the board" and plays on, as designed.
+**It did pause, on 9 Oct 2026** - the hostname stopped resolving entirely, which is easy
+to mistake for deletion. Restoring from the dashboard brought it back in ~3 minutes with
+every score intact and the same URL and key. To stop it recurring,
+`.github/workflows/keep-leaderboard-awake.yml` reads one row from each board daily. A red
+run there means the project has paused anyway; GitHub also disables scheduled workflows
+in a public repo after 60 days without a commit, and emails before it does.
 
 Shares KUDR's project rather than having its own. Free-tier Supabase **pauses after ~7
 days with no activity**; one project serving two games halves what can go quietly to
