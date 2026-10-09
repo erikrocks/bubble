@@ -149,6 +149,29 @@ body.fs-root .frame{border:0; border-radius:0}
 .frame:-webkit-full-screen{background:#0b0e1a; border:0; border-radius:0; display:flex;
   flex-direction:column; justify-content:center; align-items:center}
 .frame:-webkit-full-screen canvas{width:100%; height:auto; max-height:100vh}
+/* ---- App mode ----
+   The native wrappers load the page with ?app=<platform>. The game fills the screen with
+   no page around it, the HUD and controls take their stripped-fullscreen form, and the
+   kid picker plus Sound / High scores come back as a bar along the bottom BETWEEN runs
+   only (title, and the death screen unless initials are being asked for). Without that
+   bar there would be no way to pick a kid in the app at all. */
+html.app,html.app body{height:100%; background:#0b0e1a; overflow:hidden}
+html.app .masthead,html.app .rotate,html.app details.opts,html.app #btn-full,html.app #btn-exit,
+html.app #btn-pause,html.app .tools > span,html.app .chars > span{display:none}
+html.app .sheet{max-width:none; padding:0; margin:0}
+html.app .frame{position:fixed; inset:0; border:0; border-radius:0; display:flex; flex-direction:column;
+  justify-content:center; align-items:center; background:#0b0e1a; box-shadow:none}
+html.app .frame canvas{width:100%; height:auto; max-height:100vh; max-height:100dvh}
+html.app .frame .overlay{aspect-ratio:auto; inset:0; min-height:0}
+html.app .frame .banner{aspect-ratio:auto; inset:14% 0 auto; display:block; padding-top:0; text-align:center}
+html.app .frame .launch{aspect-ratio:auto; inset:auto 0 16%; display:block; padding-bottom:0; text-align:center}
+html.app.menu .frame.fs .chars,html.app.menu .frame.fs .tools{display:flex; position:absolute; bottom:0; z-index:5;
+  background:rgba(13,16,32,.74); border-top:0; flex-wrap:nowrap}
+html.app.menu .frame.fs .chars{left:0; padding:6px 10px; gap:5px; border-top-right-radius:4px}
+html.app.menu .frame.fs .tools{right:0; padding:6px 10px; border-top-left-radius:4px}
+html.app button.who canvas{width:34px}
+html.app button.who.any{height:42px; padding:0 8px}
+html.app.menu #ov-title,html.app.menu #ov-dead{padding-bottom:64px}
 .chars{display:flex; gap:6px; align-items:center; padding:9px 12px; flex-wrap:wrap;
   border-top:1px solid var(--line); background:var(--surface)}
 .chars > span{font-family:"Silkscreen",monospace; font-size:9px; letter-spacing:.1em;
@@ -2464,7 +2487,9 @@ function refreshTitleStats(){
 var hud={d:document.getElementById("h-dist"),b:document.getElementById("h-best"),
          s:document.getElementById("h-stage"),dia:document.getElementById("h-dia"),
          sp:document.getElementById("h-speed")};
+var APP=/[?&]app=/.test(location.search);
 function hudTick(){
+  if(APP) document.documentElement.classList.toggle("menu",G.phase==="title"||(G.phase==="dead"&&!nameOpen));
   if(G.phase==="title"){
     hud.d.textContent="0.0 m"; hud.b.textContent=(G.best/60).toFixed(1)+" m";
     hud.s.textContent="\u2014"; hud.dia.textContent="\u2014"; hud.sp.textContent="\u2014";
@@ -2502,6 +2527,7 @@ function release(){
   if(G.phase==="blow") launchBubble();     /* letting go is the launch */
 }
 var frame=document.querySelector(".frame");
+if(APP){ document.documentElement.classList.add("app"); frame.classList.add("fs"); }
 frame.addEventListener("pointerdown",function(e){
   /* The frame wraps the HUD, the player row, the tool bar and the panels as well as
      the canvas, so a tap has to be filtered or the chrome plays the game. Matching
@@ -2534,6 +2560,9 @@ window.addEventListener("blur",function(){
 });
 document.addEventListener("visibilitychange",function(){
   if(document.hidden&&(G.phase==="fly"||G.phase==="blow")) togglePause();
+  /* saves are debounced; an app sent to the background can be killed before the timer
+     fires, so going hidden writes straight away */
+  if(document.hidden){ try{ flushSave(); }catch(e){} }
 });
 
 /* sound + pause buttons */

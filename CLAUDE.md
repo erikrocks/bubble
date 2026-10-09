@@ -423,6 +423,9 @@ Periods are **calendar** periods (week starts Monday), not rolling windows, so e
 board resets together. Initials render through `textContent`, never `innerHTML` — that is
 other people's text.
 
+**As of 9 Oct 2026 the project's hostname stopped resolving** - paused or removed for
+inactivity. The game shows "Couldn't reach the board" and plays on, as designed.
+
 Shares KUDR's project rather than having its own. Free-tier Supabase **pauses after ~7
 days with no activity**; one project serving two games halves what can go quietly to
 sleep. The trade, which KUDR's notes made the other way: the two games' keys can now read
@@ -558,6 +561,22 @@ Tapping the screen resumes as well, which is why the pause overlay says "Tap, P 
 
 Desktop fullscreen is deliberately left alone: there is room for the HUD there and it
 already worked.
+
+## App mode (the Android and iOS wrappers)
+
+The native apps live in a separate project, `~/Desktop/bubble-app` - not in this repo,
+because GitHub Pages would publish them. They bundle this `index.html` (copied in at every
+build, never by hand) and open it with `?app=<platform>`. That query string is the only
+switch: `APP` adds `html.app` and the frame's stripped-fullscreen `fs` class.
+
+In app mode the game fills the screen with no page around it; the Fullscreen button, the
+✕ and the tool bar's Pause are hidden (the corner pause stays). The kid picker and the
+Sound / High scores buttons come back as a bar along the bottom **between runs only** -
+the title, and the death screen unless initials are being asked for - toggled through
+`html.menu` in `hudTick`. Without that bar there is no way to pick a kid in the app.
+
+Going hidden (`visibilitychange`) now saves immediately rather than through the 500ms
+debounce: an app sent to the background can be killed before the timer fires.
 
 ## Deploying
 
@@ -706,3 +725,6 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   screen on short phones in fullscreen.
 - **9 Oct 2026** — Launch changed to "floats off": hold to blow, let go and it drifts off
   the wand with gravity easing back in, then hold for wind. Picked from four prototypes.
+
+- **9 Oct 2026** — App mode for the native wrappers (`?app=`), and saving on going hidden.
+  First Android build runs on the emulator: bundled game, immersive, landscape-locked.
