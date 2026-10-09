@@ -590,6 +590,24 @@ the title, and the death screen unless initials are being asked for - toggled th
 Going hidden (`visibilitychange`) now saves immediately rather than through the 500ms
 debounce: an app sent to the background can be killed before the timer fires.
 
+## Motion on a 120Hz phone
+
+Measured on a Pixel 10 Pro (120Hz, rock-steady 8.3ms frames) by reading frame timestamps
+out of the running app over Chrome's debugging protocol (debug builds make the WebView
+inspectable) and replaying them through the game loop. Two problems, both fixed:
+
+- **Drawn where things are, not where they were.** Physics is a fixed 60Hz; the screen
+  is 120. Drawing the last physics state showed each position twice, and above 60px/s the
+  scroll moved in a mix of 1px and 2px jumps - at top speed 114 of 180 moves were 2px.
+  `loop()` now draws with `G.world` and `G.y` advanced by `acc` (time since the last
+  step) and restores them afterwards. Every move is 1px, zero 2px jumps. Collision still
+  uses true physics positions; the drawn lead is under a pixel.
+- **Dither pinned to the thing being drawn.** `bay()` subtracts `BAYX`. Keyed to the
+  screen, the soft edges of trees (`blob`) and the cloud obstacles stood still while the
+  shape slid through them, flickering on a 4-frame cycle - which read as those obstacles
+  running at a lower frame rate than the rest. Obstacles set `BAYX` to their own x, the
+  treeline to its world offset; everything else leaves it 0.
+
 ## Deploying
 
 Push to `main`; Pages rebuilds in about a minute. Don't trust
@@ -744,3 +762,5 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
   the camping threshold capped at the bubble's diameter (tiny bubbles were always
   "camping"), and the clouds made smaller, rounder and rigid - their dither was keyed
   to the screen, so the edges crawled as they moved.
+- **9 Oct 2026** — Smooth motion on 120Hz phones (render-time position lead) and dither
+  pinned to moving obstacles. Both found by measuring frame timing on the phone itself.

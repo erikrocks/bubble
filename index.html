@@ -394,7 +394,12 @@ button.chip:hover{border-color:var(--accent); color:var(--ink)}
 var hexc=function(h){var n=parseInt(h.slice(1),16);return [n>>16&255,n>>8&255,n&255,255];};
 var withA=function(c,a){return [c[0],c[1],c[2],a];};
 var B4=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
-var bay=function(x,y){return B4[((y&3)<<2)|(x&3)]/16;};
+/* BAYX pins the dither to whatever is being drawn. Keyed to the screen, a moving tree's
+   or cloud's soft edges stood still while the shape slid through them, so the edges
+   flickered on a 4-frame cycle and the obstacle looked like it updated at its own, lower
+   frame rate. Moving things set BAYX to their own x before drawing; 0 is screen-keyed. */
+var BAYX=0;
+var bay=function(x,y){return B4[((y&3)<<2)|((x-BAYX)&3)]/16;};
 function blendAt(d,W,x,y,c){var i=(y*W+x)*4,a=c[3]/255,ia=1-a;
   d[i]=c[0]*a+d[i]*ia; d[i+1]=c[1]*a+d[i+1]*ia; d[i+2]=c[2]*a+d[i+2]*ia; d[i+3]=255;}
 function painter(d,W,H){
@@ -2394,10 +2399,11 @@ function drawWorld(t){
     drawSea(gp,G.world*0.25,34+wBeach*10+wCross*22);
     gp.setA(1); gp.setFade(0);
   }
-  if(wPark>0.005){ gp.setFade(0.5); gp.setA(wPark); drawTreeline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
+  if(wPark>0.005){ BAYX=-Math.round(G.world*0.4); gp.setFade(0.5); gp.setA(wPark); drawTreeline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); BAYX=0; }
   if(wCity>0.005){ gp.setFade(0.62); gp.setA(wCity); drawSkyline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
   gp.setFade(0.5);
-  G.obs.forEach(function(o){ if(o.cls==="air"&&o.it.bg) o.it.bg(gp,Math.round(o.x-G.world),WALKY,GW,o.v||0); });
+  G.obs.forEach(function(o){ if(o.cls==="air"&&o.it.bg){ BAYX=Math.round(o.x-G.world); o.it.bg(gp,BAYX,WALKY,GW,o.v||0); } });
+  BAYX=0;
   gp.setFade(0);
   drawWalk(gp,GW,GH,WALKY,G.world);
   /* Paint the place you are LEAVING at full strength, then fade the new one in on top.
@@ -2435,6 +2441,7 @@ function drawWorld(t){
   }
   G.obs.forEach(function(o){
     var sx=Math.round(o.x-G.world);
+    BAYX=sx;
     if(o.cls==="ground"){
       /* Anything floating rides the same wave the water is drawn from. It only ever
          lifts ABOVE the nominal line, never below: the collider stays at WALKY, so
@@ -2452,6 +2459,7 @@ function drawWorld(t){
     gp.force=rimEdge; gp.oy=1; o.it.draw(gp,ax,0,GW,o.v||0,t); gp.force=null; gp.oy=0;
     o.it.draw(gp,ax,0,GW,o.v||0,t);
   });
+  BAYX=0;
   if(G.phase==="fly"&&RULES.ceiling!=="hard"&&G.clip>0){
     var danger=Math.min(1,G.clip/(G.R*0.667));
     for(var dx=0;dx<GW;dx+=2){
@@ -3131,7 +3139,16 @@ function loop(now){
     var q=G.parts[i]; q.x+=q.vx*dt; q.y+=q.vy*dt; q.vy+=110*dt; q.life-=dt*1.8;
     if(q.life<=0) G.parts.splice(i,1);
   }
+  /* Physics runs at a fixed 60Hz; a phone screen runs at 120. Drawing the last physics
+     state as-is showed each position twice and let the scroll jump 1px then 2px as the
+     speed rose past 60px/s - judder. Each frame is drawn where the world actually is at
+     that instant (acc = time since the last physics step), so every move is a single
+     pixel at an even rhythm. Collision still uses the true physics positions; the drawn
+     lead is under one step, below a pixel. */
+  var lead=(G.phase==="fly")?acc:0, w0=G.world, y0=G.y;
+  if(lead>0){ G.world+=P.s*lead; G.y+=G.v*lead; }
   drawWorld(now/1000);
+  G.world=w0; G.y=y0;
   if((tick++&5)===0) hudTick();
 }
 requestAnimationFrame(loop);
