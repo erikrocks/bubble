@@ -614,7 +614,17 @@ inspectable) and replaying them through the game loop. Two problems, both fixed:
   skyline's, changed colour on every 1px move. Skyline windows are also chosen relative
   to their building, not the screen.
 
-**How to check for crawl:** draw a layer or sprite, move it exactly 1px, draw it again,
+- **Background trees have solid soft edges** (`painter.softEdge`, set only around
+  `drawTreeline`). A blob's soft edge is normally a hole, and over a scrolling layer each
+  hole is a window onto the sky's fixed light/dark dither - as the tree slides, the sky
+  pixel under each hole flips, and the edges flicker. Erik spotted it ("the sky is going
+  light to dark between the pixels of the tree"); the edge pixel is now filled half-way to
+  the sky's row average instead. Obstacles keep their holes - they move over scenery, not
+  bare dithered sky, and measured clean.
+
+**How to check for crawl:** compare the **composite**, sky included, inside the object's
+full outline (holes too). Measuring only the object's own pixels missed the holes and
+read 0% while the edges were visibly flickering. draw a layer or sprite, move it exactly 1px, draw it again,
 shift back and compare. Any differing pixel is texture sliding through the shape. Every
 obstacle, front and back, and every background layer measured 0% after these fixes.
 
@@ -781,3 +791,5 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **9 Oct 2026** — Background trees, skyline and shopfronts stopped crawling: fades mix
   toward the sky's row average, skyline windows are keyed to their building. Measured
   0% crawl on every layer and obstacle.
+- **9 Oct 2026** — Background tree edges made solid: the sky's dither was flickering
+  through the edge holes as the trees slid. 0% flicker measured on the composite.

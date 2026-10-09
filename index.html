@@ -427,8 +427,16 @@ function painter(d,W,H){
       for(var y=Math.floor(cy-ry);y<=cy+ry;y++)for(var x=Math.floor(cx-rx);x<=cx+rx;x++){
         var q=Math.pow((x-cx)/rx,2)+Math.pow((y-cy)/ry,2);
         if(q>1) continue;
-        if(q>0.72&&bay(x,y)>0.55) continue;
         var c2=(y-cy)/ry<-0.48?cl:((y-cy)/ry>0.34||q>0.66?cd:c);
+        if(q>0.72&&bay(x,y)>0.55){
+          /* A soft edge is normally a HOLE. Over a scrolling background layer that is a
+             window onto the sky's fixed light/dark dither, and as the hole slides the sky
+             pixel under it flips - the edges flicker. softEdge layers fill the hole with
+             the edge colour half-way to the sky's row average instead: same softness,
+             nothing to see through. */
+          if(!this.softEdge) continue;
+          var sk=skyAt(x,y,this.H); c2=[(c2[0]+sk[0])/2,(c2[1]+sk[1])/2,(c2[2]+sk[2])/2,255];
+        }
         this.px(x,y,c2);
       }
     }
@@ -2420,7 +2428,7 @@ function drawWorld(t){
     drawSea(gp,G.world*0.25,34+wBeach*10+wCross*22);
     gp.setA(1); gp.setFade(0);
   }
-  if(wPark>0.005){ BAYX=-Math.round(G.world*0.4); gp.setFade(0.5); gp.setA(wPark); drawTreeline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); BAYX=0; }
+  if(wPark>0.005){ BAYX=-Math.round(G.world*0.4); gp.softEdge=true; gp.setFade(0.5); gp.setA(wPark); drawTreeline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); gp.softEdge=false; BAYX=0; }
   if(wCity>0.005){ gp.setFade(0.62); gp.setA(wCity); drawSkyline(gp,G.world*0.4); gp.setA(1); gp.setFade(0); }
   gp.setFade(0.5);
   G.obs.forEach(function(o){ if(o.cls==="air"&&o.it.bg){ BAYX=Math.round(o.x-G.world); o.it.bg(gp,BAYX,WALKY,GW,o.v||0); } });
