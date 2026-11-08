@@ -437,6 +437,14 @@ that know.
 board cannot be read is deliberate: the game must never ask for initials it would then
 fail to save. Nothing in the frame loop awaits or throws.
 
+**Rude initials are blocked** (added 8 Nov 2026, for the Play Store - the players are
+kids and the board is public). `BLOCKED` in index.html is a list of three-letter words,
+stored ROT13 so the public repo doesn't spell them out. While the letters spell one, Save
+is greyed and the panel says "Try different letters"; board rows that match are dropped
+when the board is read. The database refuses the same list through a CHECK constraint,
+`bubble_scores_initials_ok` (SQL in `~/Desktop/bubble-app/play/leaderboard-initials-rule.sql`,
+deliberately not in this public repo). **Change both together.**
+
 Periods are **calendar** periods (week starts Monday), not rolling windows, so everyone's
 board resets together. Initials render through `textContent`, never `innerHTML` — that is
 other people's text.
