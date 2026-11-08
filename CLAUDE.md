@@ -441,9 +441,9 @@ fail to save. Nothing in the frame loop awaits or throws.
 kids and the board is public). `BLOCKED` in index.html is a list of three-letter words,
 stored ROT13 so the public repo doesn't spell them out. While the letters spell one, Save
 is greyed and the panel says "Try different letters"; board rows that match are dropped
-when the board is read. The database refuses the same list through a CHECK constraint,
-`bubble_scores_initials_ok` (SQL in `~/Desktop/bubble-app/play/leaderboard-initials-rule.sql`,
-deliberately not in this public repo). **Change both together.**
+when the board is read. **The database does not enforce it** - Erik's call (8 Nov 2026):
+front-end blocking is enough, since anyone posting straight to the API is also hidden on
+read.
 
 Periods are **calendar** periods (week starts Monday), not rolling windows, so everyone's
 board resets together. Initials render through `textContent`, never `innerHTML` — that is

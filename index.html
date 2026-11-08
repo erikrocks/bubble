@@ -2965,9 +2965,8 @@ var ALPHA="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
    a score at all. The last initials saved here come back pre-filled. */
 var lastIni="AAA";
 /* The board is public and the players are kids, so three letters that spell something
-   rude can't be saved. Stored as ROT13 so this file doesn't spell them out either; the
-   database refuses the same list (see CLAUDE.md, "Leaderboard"), so changing one means
-   changing both. Board rows that slip through anyway are not shown. */
+   rude can't be saved. Stored as ROT13 so this file doesn't spell them out either. The
+   database doesn't check (by choice), so board rows that slip in another way are hidden. */
 var BLOCKED=(function(){
   var o={}, w="NEF NFF NMM OWF PXF PAG PBP PBX PBK PHX PHZ PHA QPX QVP QVX QVD SNT SNC SPX SPH STG SXA SXH SHP SHX SHD SHK UBR UBE WVF WVM XXX XZF XBP XBX XHZ XLF ANM ATN ATE AVT AMV CVF CAF CFF FRK FUG FYG FKL GVG GJG INT JUE JGS KKK".split(" ");
   for(var i=0;i<w.length;i++) o[w[i].replace(/[A-Z]/g,function(c){ return String.fromCharCode((c.charCodeAt(0)-52)%26+65); })]=1;
