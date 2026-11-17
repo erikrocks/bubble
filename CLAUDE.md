@@ -851,6 +851,7 @@ The rest is feel:
 - **Overlays fade in** (`ovin`, 0.22s). All of the motion above is off under
   `prefers-reduced-motion`.
 - **`window.__bubbleBack()`** is what the Android wrapper calls on the phone's Back:
-  closes the board, cancels initials, or pauses a run and returns true; returns false on
-  the title and death screens, where the app then closes.
+  closes the board, cancels initials, or pauses a run and returns true (a second Back
+  while paused also returns true and changes nothing, so Back can never lose a run);
+  returns false on the title and death screens, where the app then closes.
 - The pause prompt says "Tap to resume" on touch devices instead of naming keys.

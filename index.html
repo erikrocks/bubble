@@ -2690,6 +2690,9 @@ window.__bubbleBack=function(){
   if(boardOpen){ closeBoard(); return true; }
   if(nameOpen){ endInitials(); return true; }
   if(G.phase==="fly"||G.phase==="blow"||G.phase==="ready"){ togglePause(); return true; }
+  /* Already paused: stay paused. A second Back must not throw the run away either -
+     Home leaves the app, and a tap resumes. */
+  if(G.phase==="paused") return true;
   return false;
 };
 if(APP){ document.documentElement.classList.add("app"); frame.classList.add("fs"); }
