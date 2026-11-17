@@ -70,18 +70,32 @@ canvas{display:block; width:100%; height:auto; image-rendering:pixelated; touch-
   pointer-events:none; user-select:none}
 .overlay.clear{background:rgba(13,16,32,.42)}
 .overlay.bare{background:transparent; backdrop-filter:none; justify-content:flex-end; padding-bottom:7%}
-.howto{margin:2px 0 0; font-size:12.5px; line-height:1.5; color:#dfe5f5; max-width:46ch}
-.howto b{color:#fff}
 .overlay[hidden]{display:none}
 .overlay h2{font-family:"Silkscreen",monospace; font-size:clamp(16px,3.4vw,26px); margin:0; letter-spacing:.06em; color:#fff}
 .overlay p{margin:0; font-size:14px; color:#dfe5f5; max-width:44ch}
 .overlay .big{font-family:"JetBrains Mono",monospace; font-size:clamp(22px,5vw,34px); color:#ffd9ec; font-variant-numeric:tabular-nums}
 .overlay .sub{font-family:"JetBrains Mono",monospace; font-size:13px; color:#b9c4dd}
-.title{font-family:"Silkscreen",monospace; font-size:clamp(30px,8vw,62px); letter-spacing:.06em; margin:0;
-  color:#fff; text-shadow:0 3px 0 #b02a68, 0 6px 14px rgba(0,0,0,.45)}
-.tbest{font-family:"Silkscreen",monospace; font-size:clamp(13px,3vw,21px); letter-spacing:.08em;
+/* `.overlay .title`, not `.title`: `.overlay p` sets 14px and outranks a bare class, which
+   is how the wordmark spent weeks at 14px - smaller than the line under it. */
+.overlay .title{font-family:"Silkscreen",monospace; font-weight:700; font-size:clamp(34px,min(9vw,20vh),72px);
+  letter-spacing:.08em; line-height:1; margin:0 0 2px; max-width:none;
+  color:#fff; text-shadow:0 4px 0 #b02a68, 0 8px 16px rgba(0,0,0,.45)}
+.overlay .steps{display:flex; flex-wrap:wrap; justify-content:center; gap:6px 18px; max-width:none;
+  font-size:13.5px; color:#dfe5f5}
+.steps span{white-space:nowrap}
+.steps b{color:#fff; font-weight:600}
+.steps span + span::before{content:"\203A"; margin-right:18px; color:#ff9cc8}
+.overlay .tbest{font-family:"Silkscreen",monospace; font-size:clamp(13px,3vw,21px); letter-spacing:.08em;
   color:#ffd9ec; margin:0; text-shadow:0 2px 0 rgba(0,0,0,.4)}
-.titlesub{font-family:"JetBrains Mono",monospace; font-size:13px; color:#cfd9ef; margin:0}
+.overlay .titlesub{font-family:"JetBrains Mono",monospace; font-size:12.5px; color:#cfd9ef; margin:0}
+/* screens arrive rather than snap on */
+.overlay,.board{animation:ovin .22s ease-out}
+@keyframes ovin{from{opacity:0}}
+/* a pop is felt as well as seen */
+canvas.shake{animation:shake .26s linear}
+@keyframes shake{0%{transform:translate(0,0)}15%{transform:translate(-4px,2px)}30%{transform:translate(3px,-3px)}
+  45%{transform:translate(-3px,-1px)}60%{transform:translate(2px,2px)}80%{transform:translate(-1px,0)}100%{transform:translate(0,0)}}
+@media(prefers-reduced-motion:reduce){.overlay,.board{animation:none} canvas.shake{animation:none}}
 .medal{font-family:"Silkscreen",monospace; font-size:12px; letter-spacing:.08em; color:#ffe79a;
   border:1px solid rgba(255,231,154,.5); border-radius:2px; padding:5px 9px}
 .newbest{font-family:"Silkscreen",monospace; font-size:11px; letter-spacing:.12em; color:#fff;
@@ -94,7 +108,7 @@ canvas{display:block; width:100%; height:auto; image-rendering:pixelated; touch-
 .launch{position:absolute; left:0; right:0; top:0; aspect-ratio:226/104;
   display:flex; align-items:flex-end; justify-content:center; padding-bottom:7%; pointer-events:none;
   font-family:"Silkscreen",monospace; font-size:clamp(10px,2.1vw,15px); letter-spacing:.12em;
-  color:#fff; text-shadow:0 2px 0 rgba(0,0,0,.55); opacity:0; transition:opacity .2s; margin:0}
+  color:#fff; text-shadow:0 2px 0 rgba(0,0,0,.6),0 0 8px rgba(0,0,0,.6); opacity:0; transition:opacity .2s; margin:0}
 .launch.show{opacity:1; animation:launchpulse 1.1s ease-in-out infinite}
 @keyframes launchpulse{0%,100%{opacity:1}50%{opacity:.45}}
 @media(prefers-reduced-motion:reduce){.launch.show{animation:none}}
@@ -134,8 +148,12 @@ canvas{display:block; width:100%; height:auto; image-rendering:pixelated; touch-
   .frame.fs .hud div{flex:0 0 auto; display:flex; align-items:baseline; gap:5px;
     padding:6px 10px; border-right:0}
   .frame.fs .hud div:nth-child(n+3){display:none}
-  .frame.fs .hud dd{margin:0; font-size:13px; text-shadow:0 1px 2px rgba(0,0,0,.75)}
-  .frame.fs .hud dt{text-shadow:0 1px 2px rgba(0,0,0,.75)}
+  /* white, not the page's teal: over a blue sky the teal numbers all but vanished */
+  .frame.fs .hud dd{margin:0; font-size:14px; color:#fff; text-shadow:0 1px 0 rgba(0,0,0,.55),0 0 6px rgba(0,0,0,.6)}
+  .frame.fs .hud dt{color:#e6ebf7; text-shadow:0 1px 0 rgba(0,0,0,.55),0 0 6px rgba(0,0,0,.6)}
+  /* nothing to measure and nothing to pause on the title; nothing to pause once popped */
+  .frame.fs.at-title .hud{display:none}
+  .frame.fs.idle #btn-fs-pause{display:none}
 }
 /* Root-element fullscreen: a fallback for hosts that refuse the frame, so the page
    around the game comes along with it and has to be hidden too. */
@@ -185,10 +203,10 @@ button.who.any{line-height:1; padding:0 10px; height:56px; font:500 12px/1 "Inst
 button.who.any[aria-pressed="true"]{background:var(--accent); color:#fff}
 button.who:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 .board{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
-  justify-content:center; gap:10px; padding:14px; background:rgba(13,16,32,.86);
-  pointer-events:auto; user-select:none}
+  justify-content:center; gap:10px; padding:14px; background:rgba(13,16,32,.97);
+  pointer-events:auto; user-select:none; z-index:5}   /* above the death screen, which comes later in the DOM and used to print through it */
 .board[hidden]{display:none}
-.board h2{color:#fff}
+.board h2{color:#fff; font-family:"Silkscreen",monospace; font-size:clamp(15px,3vw,22px); letter-spacing:.08em; margin:0}
 .btabs{display:flex; border:1px solid rgba(255,255,255,.28); border-radius:2px; overflow:hidden}
 .btabs button{font:500 12px/1 "Instrument Sans",sans-serif; color:#cfd9ef; background:transparent;
   border:0; border-right:1px solid rgba(255,255,255,.28); padding:7px 11px; cursor:pointer}
@@ -312,8 +330,8 @@ button.chip:hover{border-color:var(--accent); color:var(--ink)}
   <div class="overlay clear" id="ov-title">
     <p class="title">BUBBLE</p>
     <p class="tbest" id="t-best" hidden>BEST 0.0 m</p>
-    <p class="titlesub" id="t-stats">Hold to blow a bubble</p>
-    <p class="howto">Hold to blow, let go and it floats off the wand. The longer you hold, the bigger it gets &mdash; but hold too long and it pops. Then <b>hold</b> for wind.</p>
+    <p class="titlesub" id="t-stats" hidden></p>
+    <p class="steps"><span><b>Hold</b> to blow</span><span><b>Let go</b> to float</span><span><b>Hold</b> for wind</span></p>
     <span class="kbd">Tap anywhere to start</span>
   </div>
   <div class="overlay bare" id="ov-ready" hidden>
@@ -2082,6 +2100,7 @@ function startRun(){
   G.kid=rollKid(); G.phase="ready"; syncFsPause(); G.R=R_MIN; G.y=wandY(); G.x=WAND_X-2+R_MIN;
   G.v=0; G.world=PREVIEW; G.run=PREVIEW; G.obs=[]; G.birds=[]; G.parts=[];
   G.clip=0; G.campY=G.y; G.campT=0;
+  G.wind=[]; G.windT=0; G.bestAtStart=G.best; G.passedBest=false;
   G.seed=(Math.random()*2147483647)|0; G.nextX=G.world+GW+120;
   G.deadT=0; G.stage=0; G.zone=null; G.zoneDelay=0; G.bannerT=0;
   G.sq=0; G.sqV=0; G.birdT=7+Math.random()*7;
@@ -2130,7 +2149,7 @@ function stepDrifters(dt,t){
   }
 }
 function toTitle(){
-  G.phase="title"; G.attract=0; G.world=0; G.obs=[]; G.birds=[]; G.parts=[];
+  G.phase="title"; G.attract=0; G.world=0; G.obs=[]; G.birds=[]; G.parts=[]; G.wind=[];
   G.run=2600; G.seed=(Math.random()*2147483647)|0; G.kid=rollKid();
   G.nextX=-30;
   for(var i=0;i<8;i++) spawn();
@@ -2270,6 +2289,9 @@ function pop(why){
     G.parts.push({x:G.x,y:G.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,c:POP[i%3]});
   }
   Snd.blowStop(); Snd.wind(false); Snd.pop();
+  /* felt, not just seen: a short kick of the picture and a tick from the phone */
+  game.classList.remove("shake"); void game.offsetWidth; game.classList.add("shake");
+  try{ if(navigator.vibrate) navigator.vibrate(22); }catch(e){}
   var isBest=(PREVIEW===0)&&G.run>G.best;
   if(isBest) G.best=G.run;
   var med=null;
@@ -2322,6 +2344,20 @@ function step(dt){
   G.flyT=(G.flyT||0)+dt;
   if(G.flyT<P.f){ var u=G.flyT/Math.max(0.05,P.f); a*=u*u*(3-2*u); }   /* floating off the wand */
   if(G.hold) a-=P.w*k;
+  /* The wind is the whole game and it was invisible. While it blows, short streaks rise
+     under the bubble. Math.random, not rnd(): rnd() deals the level. */
+  if(G.hold){
+    G.windT-=dt;
+    if(G.windT<=0){
+      G.windT=0.038;
+      G.wind.push({x:G.x+(Math.random()*2-1)*G.R*0.85,y:G.y+G.R+3+Math.random()*8,life:1,len:3+(Math.random()*3|0)});
+    }
+  }
+  /* going past your own record is the best moment of a run; say so when it happens,
+     not only on the death screen. Not for a first-ever run, where everything is a record. */
+  if(!G.passedBest&&PREVIEW===0&&G.bestAtStart>300&&G.run>G.bestAtStart){
+    G.passedBest=true; showBanner("New best!");
+  }
   G.v+=a*dt; G.v-=G.v*P.c*dt; G.y+=G.v*dt;
   G.x+=(LANE-G.x)*Math.min(1,dt*4);
   /* wind shoves the underside: squash wide. Falling free: stretch long.
@@ -2446,6 +2482,7 @@ function tintNight(d,n){
     else { d[i]=r*ik+tr; d[i+1]=g*ik+tg; d[i+2]=b*ik+tb; }
   }
 }
+var WIND_HI=hexc("#ffffff"), WIND_LO=hexc("#4a6f9c"), SHADOW_C=hexc("#0b1020");
 function drawWorld(t){
   setNight(nightAt(G.phase==="title"?0:G.run));
   var markHaz=NIGHT>0.004;
@@ -2489,6 +2526,18 @@ function drawWorld(t){
     if(prev!==cur&&tG<1) paint(prev,1);
     paint(cur,tG);
   })();
+  /* The bubble's shadow on the ground: the one cue for how high it is. Wide and dark when
+     low, small and faint when high. Painted before the furniture so a bench covers it. */
+  if(G.phase!=="title"&&G.phase!=="dead"){
+    var sh=Math.max(0,Math.min(1,(WALKY-(G.y+G.R))/(WALKY*0.8)));
+    var shw=Math.max(2,Math.round(G.R*(0.95-0.5*sh))), sha=Math.round(86*(1-0.72*sh));
+    var shc=withA(SHADOW_C,sha), shc2=withA(SHADOW_C,Math.round(sha*0.55)), sxc=Math.round(G.x);
+    for(var sdx=-shw;sdx<=shw;sdx++){
+      var spx=sxc+sdx; if(spx<0||spx>=GW) continue;
+      blendAt(gimg.data,GW,spx,WALKY+1,shc);
+      if(Math.abs(sdx)<shw-1) blendAt(gimg.data,GW,spx,WALKY+2,shc2);
+    }
+  }
   /* Moonlight rim. By day the keyline is dark, which is what separates an obstacle from
      a light street. At night the street is dark too, so a dark keyline does nothing and
      dark furniture - iron benches, hydrants, bins - dissolved into it. The keyline turns
@@ -2548,6 +2597,13 @@ function drawWorld(t){
     var kx=kidX()-G.world;
     if(kx>-28){ if(markHaz) gp.mk=HAZ; kidSel().draw(gp,kx,WALKY); gp.mk=null; }
   }
+  if(G.wind) G.wind.forEach(function(q){
+    /* white with a blue-grey tail: white alone vanished against a pale daytime sky, and
+       the tail alone would vanish at night */
+    var wx=Math.round(q.x), wy=Math.round(q.y), wc=withA(WIND_HI,Math.round(235*q.life)), wd=withA(WIND_LO,Math.round(150*q.life));
+    if(wx<0||wx>=GW) return;
+    for(var k=0;k<q.len+2;k++){ var yy=wy+k; if(yy>=0&&yy<WALKY) blendAt(gimg.data,GW,wx,yy,k<q.len?wc:wd); }
+  });
   G.parts.forEach(function(q){
     var px2=Math.round(q.x),py=Math.round(q.y);
     if(px2>=0&&py>=0&&px2<GW&&py<GH) blendAt(gimg.data,GW,px2,py,withA(q.c,Math.round(255*q.life)));
@@ -2572,9 +2628,10 @@ function refreshTitleStats(){
   var tb=document.getElementById("t-best");
   if(!STATS.runs&&!G.best){
     if(tb) tb.hidden=true;
-    tStats.textContent="Hold to blow a bubble";
+    tStats.hidden=true;
     return;
   }
+  tStats.hidden=false;
   if(tb){ tb.hidden=false; tb.textContent="BEST "+(G.best/60).toFixed(1)+" m"; }
   tStats.textContent=STATS.runs+" run"+(STATS.runs===1?"":"s")+
     (STATS.bestMedal?" \u00b7 "+STATS.bestMedal.name:"");
@@ -2585,6 +2642,10 @@ var hud={d:document.getElementById("h-dist"),b:document.getElementById("h-best")
 var APP=/[?&]app=/.test(location.search);
 function hudTick(){
   if(APP) document.documentElement.classList.toggle("menu",!boardOpen&&(G.phase==="title"||(G.phase==="dead"&&!nameOpen)));
+  if(frame){
+    frame.classList.toggle("at-title",G.phase==="title");
+    frame.classList.toggle("idle",G.phase==="title"||G.phase==="dead");
+  }
   if(G.phase==="title"){
     hud.d.textContent="0.0 m"; hud.b.textContent=(G.best/60).toFixed(1)+" m";
     hud.s.textContent="\u2014"; hud.dia.textContent="\u2014"; hud.sp.textContent="\u2014";
@@ -2622,7 +2683,20 @@ function release(){
   if(G.phase==="blow") launchBubble();     /* letting go is the launch */
 }
 var frame=document.querySelector(".frame");
+/* The Android wrapper asks this when the phone's Back is pressed. true = "handled, stay";
+   false = nothing to back out of, so the app may close. Mid-run, Back pauses - quitting a
+   good run with one stray swipe from the screen edge was the alternative. */
+window.__bubbleBack=function(){
+  if(boardOpen){ closeBoard(); return true; }
+  if(nameOpen){ endInitials(); return true; }
+  if(G.phase==="fly"||G.phase==="blow"||G.phase==="ready"){ togglePause(); return true; }
+  return false;
+};
 if(APP){ document.documentElement.classList.add("app"); frame.classList.add("fs"); }
+/* a phone has no P and no Esc */
+if(APP||(window.matchMedia&&matchMedia("(pointer:coarse)").matches)){
+  var pk=document.querySelector("#ov-pause .kbd"); if(pk) pk.textContent="Tap to resume";
+}
 frame.addEventListener("pointerdown",function(e){
   /* The frame wraps the HUD, the player row, the tool bar and the panels as well as
      the canvas, so a tap has to be filtered or the chrome plays the game. Matching
@@ -3216,6 +3290,10 @@ function loop(now){
   for(var i=G.parts.length-1;i>=0;i--){
     var q=G.parts[i]; q.x+=q.vx*dt; q.y+=q.vy*dt; q.vy+=110*dt; q.life-=dt*1.8;
     if(q.life<=0) G.parts.splice(i,1);
+  }
+  if(G.wind) for(var wi=G.wind.length-1;wi>=0;wi--){
+    var wq=G.wind[wi]; wq.y-=62*dt; wq.x-=P.s*0.35*dt; wq.life-=dt*3.4;
+    if(wq.life<=0) G.wind.splice(wi,1);
   }
   /* Physics runs at a fixed 60Hz; a phone screen runs at 120. Drawing the last physics
      state as-is showed each position twice and let the scroll jump 1px then 2px as the

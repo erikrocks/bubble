@@ -820,3 +820,37 @@ curl -sS -o /tmp/live.html "https://bubble.eriksheridan.com/?cb=$RANDOM"; diff /
 - **9 Oct 2026** — Background clouds made solid so they sit in front of the sky.
 - **9 Oct 2026** — No more beach furniture on the water or buoys on the sand at the
   crossing; background clouds toned down.
+
+## Polish pass (17 Nov 2026)
+
+A fresh-eyes pass at phone size before the Play Store. Two were real bugs:
+
+- **The high-score board opened behind the death screen.** `#ov-dead` comes after `#board`
+  in the DOM, so with both visible the death text printed through the scores. `.board` now
+  has `z-index:5`. Any new overlay added after the board needs the same thought.
+- **The title wordmark was 14px.** `.overlay p{font-size:14px}` outranks a bare `.title`.
+  Title rules are written `.overlay .title` / `.overlay .tbest` / `.overlay .titlesub`
+  for that reason - keep the `.overlay` prefix on anything that styles a `<p>` in there.
+
+The rest is feel:
+
+- **Title screen**: big wordmark, a three-step line (`.steps`) instead of a paragraph. In
+  stripped fullscreen the HUD is hidden on the title (`.frame.at-title`) and the pause
+  button is hidden whenever there is nothing to pause (`.frame.idle` = title or dead);
+  both classes are set in `hudTick`.
+- **HUD in stripped fullscreen is white**, not the page's teal, which vanished on the sky.
+- **Wind streaks** (`G.wind`): short streaks rise under the bubble while the wind blows.
+  White with a blue-grey tail (`WIND_HI` / `WIND_LO`) so they read on a pale sky and at
+  night. Spawned with `Math.random`, never `rnd()` - `rnd()` deals the level.
+- **Ground shadow**: two rows at `WALKY+1..2`, wide and dark when low, small and faint
+  when high, painted before the furniture. Purely a height cue; no collision meaning.
+- **Pop**: the canvas gets a 0.26s `shake` class and the phone ticks
+  (`navigator.vibrate(22)`; the Android wrapper carries the VIBRATE permission for it).
+- **"New best!" banner mid-run**, once, when the run passes the best it started with
+  (`G.bestAtStart`, only when that was over 5 m, so not on a first run).
+- **Overlays fade in** (`ovin`, 0.22s). All of the motion above is off under
+  `prefers-reduced-motion`.
+- **`window.__bubbleBack()`** is what the Android wrapper calls on the phone's Back:
+  closes the board, cancels initials, or pauses a run and returns true; returns false on
+  the title and death screens, where the app then closes.
+- The pause prompt says "Tap to resume" on touch devices instead of naming keys.
