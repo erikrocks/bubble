@@ -1556,7 +1556,7 @@ var ROUTE=["park","city","boardwalk","beach","sea","beach","boardwalk","city"];
 /* The crossing is longer than the other legs on purpose: it is where the light goes,
    and a sunset needs room to happen in. Legs are no longer a uniform LEG apart, so
    everything goes through LEGCUM rather than arithmetic on LEG. */
-var FIRST=2700, LEG=2000, SEA_LEG=3400, FADE=480;
+var FIRST=2000, LEG=2000, SEA_LEG=3400, FADE=480;
 var LEGLEN=ROUTE.map(function(id,i){ return i===0?FIRST:(id==="sea"?SEA_LEG:LEG); });
 var LEGCUM=(function(){ var o=[0]; for(var i=0;i<LEGLEN.length;i++) o.push(o[i]+LEGLEN[i]); return o; })();
 var LOOP=LEGCUM[ROUTE.length];              /* one full lap, out and back */
@@ -1739,13 +1739,19 @@ function rollKid(){
 }
 
 /* ================= the ramp ================= */
-var CAMP_FROM=800, CAMP_FULL=2400;   /* camping birds: from "Let's go!", fully strict by Rush hour */
+/* The park is the tutorial, and it used to be ALL the park was: 40 seconds of one obstacle
+   at a time, with Rush hour arriving 5m before the city. Each lesson now gets about five
+   seconds instead of ten, Rush hour starts two-thirds of the way through the park, and the
+   park is the same length as every other leg. RUSH is the one number the later ramp hangs
+   off - pair chance, the closing gaps and the birds' patience are all measured from it. */
+var RUSH=1300;
+var CAMP_FROM=800, CAMP_FULL=RUSH+500;   /* camping birds: from "Mind your head", fully strict a little into Rush hour */
 var STAGES=[
  {name:"Just float",      from:0},
- {name:"Watch the ground",from:240},
- {name:"Let's go!",       from:800},
- {name:"Mind your head",  from:1250},
- {name:"Rush hour",       from:2400}
+ {name:"Watch the ground",from:120},
+ {name:"Let's go!",       from:450},
+ {name:"Mind your head",  from:800},
+ {name:"Rush hour",       from:RUSH}
 ];
 function stageAt(d){ for(var i=STAGES.length-1;i>=0;i--) if(d>=STAGES[i].from) return i; return 0; }
 function speedAt(d){ return BASE_SPEED+Math.min(SPEED_CAP,d/SPEED_RATE); }
@@ -2195,12 +2201,12 @@ function addFrom(cls,x,tall){
 }
 function spawn(){
   var st=stageAt(G.run), sp;
-  if(st===0){ G.nextX+=200; return; }
-  if(st===1){ addFrom("ground",G.nextX,false); sp=235; }
-  else if(st===2){ addFrom("ground",G.nextX,true); sp=175; }
-  else if(st===3){ if(rnd()<0.5) addFrom("air",G.nextX,true); else addFrom("ground",G.nextX,true); sp=180; }
+  if(st===0){ G.nextX+=100; return; }
+  if(st===1){ addFrom("ground",G.nextX,false); sp=190; }
+  else if(st===2){ addFrom("ground",G.nextX,true); sp=155; }
+  else if(st===3){ if(rnd()<0.5) addFrom("air",G.nextX,true); else addFrom("ground",G.nextX,true); sp=155; }
   else {
-    var pairChance=0.30+Math.min(0.25,(G.run-2400)/12000), paired=false;
+    var pairChance=0.30+Math.min(0.25,(G.run-RUSH)/12000), paired=false;
     if(rnd()<pairChance){
       var gi=pickFor("ground",true,G.nextX), ai=pickFor("air",true);
       /* a bus shelter parked under a shopfront reads as part of the building -
@@ -2216,7 +2222,7 @@ function spawn(){
       }
     }
     if(!paired){ if(rnd()<0.5) addFrom("air",G.nextX,true); else addFrom("ground",G.nextX,true); }
-    sp=Math.max(105,160-(G.run-2400)/42);
+    sp=Math.max(105,160-(G.run-RUSH)/42);
   }
   G.nextX+=sp;
 }

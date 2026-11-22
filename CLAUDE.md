@@ -537,6 +537,15 @@ blow rate 15). Response is `(10/radius)^1.35`, so size scales fall speed and lif
 together — which means hover duty is the same at every size, and what size really
 changes is tempo and how well you fit through gaps.
 
+**The ramp was compressed on 21 Nov 2026** ("park takes too long, get it harder faster").
+Stages now start at 0 / 120 / 450 / 800 / `RUSH`=1300 px (were 0 / 240 / 800 / 1250 /
+2400), early spacing is 190 / 155 / 155 px (was 235 / 175 / 180), and the park leg `FIRST`
+is 2000 px like every other leg (was 2700). Measured over 40 simulated runs: first obstacle
+at 6.4s (was 8.0s), 6 obstacles in seconds 20-30 (was 4), city at 31s (was 41s). Everything
+after Rush hour hangs off `RUSH`, so the whole later ramp arrives 1100 px sooner too. Scores
+on the board from before this date were set on the gentler ramp. Any older note below that
+quotes 1250 / 2400 / 2700 px predates this.
+
 `STAGES` is the difficulty ramp by distance, and `speedAt()` ramps scroll speed from
 60 to 98 px/s. **The ramp only works because some ground obstacles are tall** (bus
 shelter 38px in a 104px view). Before those existed, hovering mid-screen survived
