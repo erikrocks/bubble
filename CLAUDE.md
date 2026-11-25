@@ -864,3 +864,87 @@ The rest is feel:
   while paused also returns true and changes nothing, so Back can never lose a run);
   returns false on the title and death screens, where the app then closes.
 - The pause prompt says "Tap to resume" on touch devices instead of naming keys.
+
+## Kids, abilities and unlocks (24 Nov 2026)
+
+The six kids are now characters. **`KID_INFO` is the single place** that names them and
+says what each does; `KIDS` still holds only the drawings. Erik chose four of the names:
+the blonde pigtails kid is Vivian, the long brown hair kid is Evelyn, and two boys are Enzo
+and Remy. Juno and Sam are placeholders he has not ruled on. These are character names
+in a game and are there on purpose - they are not to be "scrubbed".
+
+| id | name | bubble | ability (field) | unlocked by finishing |
+|---|---|---|---|---|
+| tee | Enzo | classic | none | starter |
+| pigtails | Vivian | pink | world 18% faster (`speed`) | Park, 2000 px |
+| hoodie | Remy | green | 14% slower, one spare bubble (`speed`, `lives`) | City, 4000 px |
+| puff | Juno | yellow | gravity x0.72 (`g`) | Boardwalk, 6000 px |
+| longhair | Evelyn | purple | no birds at all (`nobirds`) | Beach, 8000 px |
+| cap | Sam | blue | collider x0.8 (`hit`) | The crossing, 11400 px |
+
+- **`unlock` is a leg index of `ROUTE`** and the distance is `legStart(unlock+1)`, so the
+  thresholds follow the route if leg lengths change. Unlocks are earned mid-run in `step`
+  (`earnUnlocks`), saved at once, and kept in `UNLOCKED` / the `unlocked` field of
+  `bubble.v1`. On load, `earnUnlocks(G.best)` grandfathers anyone who played before kids
+  were locked. `/admin` sees everyone (`isUnlocked`); admin preview runs unlock nothing.
+- **Enzo must stay exactly the old game.** Every multiplier defaults to 1; the test
+  `tests/physics.js` compares his flight with the previous commit bit for bit.
+- **Bubble colour** is a palette swap: `FILM` is `CROSS` or a tinted copy from `kidFilm`,
+  swapped in around the player's bubble in `drawWorld` and put back straight after, so the
+  title-screen bubbles stay rainbow.
+- **The spare bubble** (`spareLife`, and the guard at the top of `pop`): the first pop in
+  flight resets to a small bubble mid-screen with `G.safeT`=2.2s in which `pop` is a
+  no-op, except that the ground and ceiling push back and a touching bird is removed -
+  without those, an early `return` from `step` froze the world or let the bubble sink out
+  of the picture. Popping on the wand ("over") never uses the spare. `applyKid` sets
+  `G.lives`, at run start and when the kid is changed while the bubble is on the wand.
+- **Banners that land on a zone boundary go through `noteLater`** (unlocks, laps). The
+  zone's own name banner fires 0.6s after the boundary and would replace them.
+- **The picker** shows locked kids as a black silhouette with "?". Tapping one shows how to
+  meet them and changes nothing. The line that names a kid and their ability is `#t-kid`
+  on the title, and replaces the "best" line on the death screen (`showKidLine`).
+
+**Found by an independent QA pass before this shipped** (worth knowing as traps):
+- During the shield the obstacle loop's early `return` skipped the ground test, so an
+  unattended bubble inside a bench sank through the pavement. The shield's walls are now
+  enforced right after the position update in `step`, not only inside `pop`.
+- `earnUnlocks` runs at the top of `step`; popping on the same frame you cross a line
+  missed the unlock. `pop` now checks once more.
+- Silkscreen's "&" reads as "$": two unlocks at once are joined with "and".
+- Fireworks and the shield blink respect `prefers-reduced-motion` (`REDUCED`).
+- A locked portrait is a second canvas drawn with the painter's `force` colour, so only
+  the kid goes dark. A CSS filter blacked out the sky too.
+
+**Balance, not settled.** A lookahead bot (superhuman at dodging, so direction only):
+Evelyn never died, because birds - including the one sent when you sit still - are what
+ends a perfect player's run; Remy's respawn hands a big-bubble player an easy small one;
+Juno did worse than Enzo with big bubbles, since slow falling is slow diving. Tune from
+`KID_INFO` once real people have played them.
+
+## Winning: a lap (24 Nov 2026)
+
+Park, out over the sea, and home to the park again is the journey; Erik calls that
+winning. When `Math.floor(G.run/LOOP)` goes up: 7.5s of fireworks (`G.fw`, spawned and
+moved in `loop`, drawn AFTER `tintNight` because the lap ends in the dark and they are
+lights), a delayed "You made it home!" banner ("Lap 2!" and so on after that), and a
+"Home again" medal at `LOOP/60` m. The run is not ended or paused: it carries on into the
+next lap for as long as the player lasts.
+
+## The board knows who flew (24 Nov 2026)
+
+Scores carry `kid` (one of the six ids). It needs a `kid text` column on `bubble_scores`
+(`~/Desktop/bubble-app/play/leaderboard-add-character.sql`). **The game does not assume
+the column exists**: PostgREST answers an unknown column with 400, at which point
+`boardKidCol` goes false for the visit and the board is read and written without it. The
+kid sent is captured in `askInitials` at the moment of the pop (`kidAt`), because the
+picker stays live on the death screen. Names on the board are looked up from the id with
+`hasOwnProperty`; nothing from the server is rendered as a name.
+
+## Tests
+
+`~/Desktop/bubble-app/tests/` (the app repo, local only): `mkhook.py` writes a copy of the
+game with its internals on `window.__t`; `run.mjs` runs a test file inside that page in
+headless Chrome; `features.js` covers kids, unlocks, the spare bubble, fireworks and the
+board; `physics.js` is the Enzo-is-unchanged check. See the header of each. Two traps:
+the game's own loop keeps stepping while a test awaits, so hold the bubble (`holdOn`), and
+never let a test post to the real board (mock `fetch` or `__t.noNet()`).

@@ -198,6 +198,28 @@ button.who{padding:0; border:1px solid var(--line2); border-radius:3px; backgrou
   cursor:pointer; line-height:0; overflow:hidden}
 button.who canvas{display:block; width:46px; height:auto; image-rendering:pixelated}
 button.who[aria-pressed="true"]{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent)}
+/* not met yet: a silhouette and a question mark */
+button.who.locked{position:relative}
+button.who canvas.lk{display:none}
+button.who.locked canvas.un{display:none}
+button.who.locked canvas.lk{display:block; opacity:.82}
+button.who.locked::after{content:"?"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font:700 17px/1 "Silkscreen",monospace; color:#fff; text-shadow:0 2px 0 rgba(0,0,0,.5)}
+.overlay .kidline{font-family:"Silkscreen",monospace; font-size:10.5px; letter-spacing:.07em; color:#ffd9ec;
+  max-width:none; min-height:1.2em; text-shadow:0 1px 0 rgba(0,0,0,.45)}
+.medal.unlock{color:#b8ffd0; border-color:rgba(184,255,208,.55)}
+.brow .bk{font-family:"Instrument Sans",sans-serif; font-size:12px; color:#cfd9ef}
+/* a short phone has no room for everything the title can say */
+@media (max-height:360px){
+  #ov-title{gap:6px}
+  .overlay .title{font-size:clamp(30px,16vh,52px)}
+  .overlay .titlesub{display:none}
+  /* New best + a medal + a new friend can all land on one death screen */
+  #ov-dead{gap:5px}
+  #ov-dead h2{font-size:16px}
+  #ov-dead .big{font-size:24px}
+  #ov-dead .medal{padding:3px 8px; font-size:11px}
+}
 button.who.any{line-height:1; padding:0 10px; height:56px; font:500 12px/1 "Instrument Sans",sans-serif;
   color:var(--ink2); background:var(--surface)}
 button.who.any[aria-pressed="true"]{background:var(--accent); color:#fff}
@@ -332,6 +354,7 @@ button.chip:hover{border-color:var(--accent); color:var(--ink)}
     <p class="tbest" id="t-best" hidden>BEST 0.0 m</p>
     <p class="titlesub" id="t-stats" hidden></p>
     <p class="steps"><span><b>Hold</b> to blow</span><span><b>Let go</b> to float</span><span><b>Hold</b> for wind</span></p>
+    <p class="kidline" id="t-kid" aria-live="polite"></p>
     <span class="kbd">Tap anywhere to start</span>
   </div>
   <div class="overlay bare" id="ov-ready" hidden>
@@ -358,6 +381,7 @@ button.chip:hover{border-color:var(--accent); color:var(--ink)}
     <p class="big" id="ov-dist">0.0 m</p>
     <span class="newbest" id="ov-newbest" hidden>New best</span>
     <span class="medal" id="ov-medal" hidden>First corner</span>
+    <span class="medal unlock" id="ov-unlock" hidden>New friend</span>
     <p class="sub" id="ov-best">best 0.0 m</p>
     <div class="hiscore" id="initials" hidden>
       <p class="hs-head">You made the top 10</p>
@@ -537,10 +561,14 @@ var C={};
 
 
 var CROSS=["#10131f","#ff9ad5","#c78cf0","#79c6ff","#8ef2d4","#ffe79a","#ffffff"].map(hexc);
+/* FILM is the palette the bubble's skin is drawn from. It is CROSS for the classic
+   rainbow bubble and a tinted copy for a kid who has their own colour; drawWorld swaps it
+   in around the player's bubble and puts CROSS back. */
+var FILM=CROSS;
 function film(ang,x,y,t){
   var u=(ang/(Math.PI*2)+0.5+t*0.05)%1; if(u<0)u+=1;
   var f=u*5,i=Math.floor(f),fr=f-i;
-  return (bay(x,y)<fr)?CROSS[1+((i+1)%5)]:CROSS[1+(i%5)];
+  return (bay(x,y)<fr)?FILM[1+((i+1)%5)]:FILM[1+(i%5)];
 }
 function keyMix(R){ if(R>=8) return 1; if(R<=5) return 0.5; return 0.5+((R-5)/3)*0.5; }
 function drawBubbleE(d,W,H,cx,cy,rx,ry,t,pinchDown,alpha){
@@ -568,7 +596,7 @@ function drawBubbleE(d,W,H,cx,cy,rx,ry,t,pinchDown,alpha){
         else if(nd>0.71) c=withA(film(ang,x,y,t),nd>0.87?255:235);
         else if(h<0.29&&h>0.14) c=CROSS[6];
         else if(h2<0.10) c=withA(CROSS[5],235);
-        else if(bay(x,y)<0.12) c=withA(CROSS[3],75);
+        else if(bay(x,y)<(FILM===CROSS?0.12:0.30)) c=withA(FILM[3],FILM===CROSS?75:95);
       }
       if(c) blendAt(d,W,x,y,alpha!==undefined?withA(c,Math.round(c[3]*alpha)):c);
     }
@@ -1731,12 +1759,61 @@ function kidSel(){
 function kidX(){ return WAND_X-kidSel().anchor.dx; }
 function wandY(){ return WALKY+kidSel().anchor.dy; }
 var kidPick="random";   /* "random", or an id to always play as that kid */
-function rollKid(){
-  if(kidPick!=="random"){
-    for(var i=0;i<KIDS.length;i++) if(KIDS[i].id===kidPick) return kidPick;
-  }
-  return KIDS[Math.floor(Math.random()*KIDS.length)].id;
+/* ================= who they are ================= */
+/* Each kid has a name, a bubble colour and one thing they do differently. `unlock` is the
+   leg of ROUTE you have to FINISH, in one run, to get them (-1 = there from the start).
+   Every number that changes play is here and nowhere else:
+     speed  multiplies how fast the world goes by      g    multiplies gravity
+     lives  spare bubbles                              hit  multiplies the bubble's collider
+     nobirds  no birds are sent at all */
+var KID_INFO={
+  tee:     {who:"Enzo",   unlock:-1, perk:"The classic bubble",                      tint:null},
+  pigtails:{who:"Vivian", unlock:0,  perk:"Pink bubble \u00b7 flies faster",          tint:"#ff6fbf", speed:1.18},
+  hoodie:  {who:"Remy",   unlock:1,  perk:"Slow and steady \u00b7 one extra life",    tint:"#63d67a", speed:0.86, lives:1},
+  puff:    {who:"Juno",   unlock:2,  perk:"Floaty bubble \u00b7 falls slowly",        tint:"#ffcf4d", g:0.72},
+  longhair:{who:"Evelyn", unlock:3,  perk:"Birds leave her alone",                    tint:"#a98bff", nobirds:true},
+  cap:     {who:"Sam",    unlock:4,  perk:"Slippery bubble \u00b7 squeezes past close calls", tint:"#58b9ff", hit:0.8}
+};
+var UNLOCKED={tee:1};
+function kidInfo(id){ return KID_INFO[id||G.kid]||KID_INFO.tee; }
+function isUnlocked(id){ return ADMIN||UNLOCKED.hasOwnProperty(id); }      /* /admin sees everyone */
+function unlockDist(id){ var u=KID_INFO[id].unlock; return u<0?0:legStart(u+1); }
+function unlockPlace(id){ return ZONE_NAMES[ROUTE[KID_INFO[id].unlock]].replace(/^The /,"the "); }
+/* everything a distance has earned; returns the ids that are new */
+function earnUnlocks(d){
+  var got=[];
+  for(var id in KID_INFO) if(!UNLOCKED.hasOwnProperty(id)&&d>=unlockDist(id)){ UNLOCKED[id]=1; got.push(id); }
+  return got;
 }
+function kidLine(id){
+  if(id==="random"){
+    var n=0; for(var q in KID_INFO) if(isUnlocked(q)) n++;
+    return n>1?"Anyone \u00b7 a different friend each run":"Finish the Park to meet a new friend";
+  }
+  var k=KID_INFO[id]; if(!k) return "";
+  if(!isUnlocked(id)) return "Locked \u00b7 finish "+unlockPlace(id)+" to meet them";
+  return k.who+" \u00b7 "+k.perk;
+}
+var KID_FILM={};
+function kidFilm(id){
+  var k=KID_INFO[id]; if(!k||!k.tint) return CROSS;
+  if(!KID_FILM[id]){
+    var tc=hexc(k.tint);
+    KID_FILM[id]=CROSS.map(function(c,i){
+      if(i<1||i>5) return c;
+      var m=0.62; return [Math.round(c[0]*(1-m)+tc[0]*m),Math.round(c[1]*(1-m)+tc[1]*m),Math.round(c[2]*(1-m)+tc[2]*m),255];
+    });
+  }
+  return KID_FILM[id];
+}
+function rollKid(){
+  if(kidPick!=="random"&&KID_INFO[kidPick]&&isUnlocked(kidPick)) return kidPick;
+  var pool=KIDS.filter(function(k){ return isUnlocked(k.id); });
+  return (pool.length?pool[Math.floor(Math.random()*pool.length)]:KIDS[0]).id;
+}
+/* whatever a kid brings to a run. Called at the start of one, and again if the kid is
+   changed while the bubble is still on the wand. */
+function applyKid(){ G.lives=kidInfo().lives||0; G.safeT=0; }
 
 /* ================= the ramp ================= */
 /* The park is the tutorial, and it used to be ALL the park was: 40 seconds of one obstacle
@@ -2078,7 +2155,7 @@ var Snd=(function(){
 })();
 
 /* ================= medals ================= */
-var MEDALS=[{m:160,name:"Rooftops"},{m:90,name:"Crosstown"},{m:45,name:"Down the block"},{m:20,name:"First corner"}];
+var MEDALS=[{m:Math.round(LOOP/60),name:"Home again"},{m:160,name:"Rooftops"},{m:90,name:"Crosstown"},{m:45,name:"Down the block"},{m:20,name:"First corner"}];
 function medalFor(px){
   var m=px/60;
   for(var i=0;i<MEDALS.length;i++) if(m>=MEDALS[i].m) return MEDALS[i];
@@ -2107,6 +2184,8 @@ function startRun(){
   G.v=0; G.world=PREVIEW; G.run=PREVIEW; G.obs=[]; G.birds=[]; G.parts=[];
   G.clip=0; G.campY=G.y; G.campT=0;
   G.wind=[]; G.windT=0; G.bestAtStart=G.best; G.passedBest=false;
+  applyKid(); G.newKids=[]; G.noteT=0; G.noteText=""; G.fw=[]; G.fwLeft=0; G.fwT=0;
+  G.lap=Math.floor(PREVIEW/LOOP);
   G.seed=(Math.random()*2147483647)|0; G.nextX=G.world+GW+120;
   G.deadT=0; G.stage=0; G.zone=null; G.zoneDelay=0; G.bannerT=0;
   G.sq=0; G.sqV=0; G.birdT=7+Math.random()*7;
@@ -2155,7 +2234,7 @@ function stepDrifters(dt,t){
   }
 }
 function toTitle(){
-  G.phase="title"; G.attract=0; G.world=0; G.obs=[]; G.birds=[]; G.parts=[]; G.wind=[];
+  G.phase="title"; G.attract=0; G.world=0; G.obs=[]; G.birds=[]; G.parts=[]; G.wind=[]; G.fw=[]; G.fwLeft=0; G.lives=0; G.safeT=0;
   G.run=2600; G.seed=(Math.random()*2147483647)|0; G.kid=rollKid();
   G.nextX=-30;
   for(var i=0;i<8;i++) spawn();
@@ -2190,9 +2269,13 @@ function togglePause(){
   if(hint) hint.classList.remove("show");
   ov.pause.hidden=false; syncFsPause();
 }
-function showBanner(text){
-  banner.textContent=text; banner.classList.add("show"); G.bannerT=1.6;
+function showBanner(text,dur){
+  banner.textContent=text; banner.classList.add("show"); G.bannerT=dur||1.6;
 }
+/* A banner that waits its turn. Unlocks and laps happen ON a zone boundary, and the zone's
+   own name banner fires 0.6s after it - shown at once, "Vivian unlocked!" was replaced by
+   "CITY" before anyone could read it. */
+function noteLater(text,delay,dur){ G.noteText=text; G.noteT=delay; G.noteDur=dur||2.2; }
 
 /* ================= level ================= */
 function addFrom(cls,x,tall){
@@ -2226,7 +2309,7 @@ function spawn(){
   }
   G.nextX+=sp;
 }
-function hit(o){ return hitsAt(o,G.x,G.y,G.R); }
+function hit(o){ return hitsAt(o,G.x,G.y,G.R*(kidInfo().hit||1)); }
 /* the same test for anything round - the player, or a bubble drifting past on the
    title screen, which is the only reason it takes coordinates at all */
 /* The bubble is a circle, so test it as one. Every box used to be checked against a
@@ -2289,10 +2372,42 @@ function clearLane(want){
   }
   return null;
 }
+/* Remy's spare bubble. The pop happens - sound, burst, shake - and then a fresh small
+   bubble is put back mid-screen with a couple of seconds in which nothing can touch it,
+   because whatever just popped you is still right there. */
+function spareLife(){
+  for(var i=0;i<18;i++){
+    var a=Math.PI*2*i/18+Math.random()*0.3, sp=12+Math.random()*30;
+    G.parts.push({x:G.x,y:G.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,c:POP[i%3]});
+  }
+  Snd.pop();
+  game.classList.remove("shake"); void game.offsetWidth; game.classList.add("shake");
+  try{ if(navigator.vibrate) navigator.vibrate(22); }catch(e){}
+  G.R=Math.min(G.R,7); G.y=Math.max(24,Math.min(50,G.y)); G.v=-30; G.sq=0; G.sqV=0; G.clip=0;
+  G.safeT=2.2; G.birds=[]; G.campT=0; G.campY=G.y;
+  showBanner("Extra life!",1.4);
+}
 function pop(why){
+  if(G.phase==="fly"&&why!=="over"){
+    if(G.safeT>0){
+      /* untouchable, but still inside the picture: the ground and the sky push back */
+      if(why==="ground"){ G.y=WALKY-G.R-1; if(G.v>0) G.v=-45; }
+      else if(why==="ceiling"){ G.y=G.R+1; if(G.v<0) G.v=20; G.clip=0; }
+      else if(why==="bird") G.birds=[];
+      return;
+    }
+    if(G.lives>0){ G.lives--; spareLife(); return; }
+  }
   for(var i=0;i<26;i++){
     var a=Math.PI*2*i/26+rnd()*0.3, s=12+rnd()*34;
     G.parts.push({x:G.x,y:G.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,c:POP[i%3]});
+  }
+  /* the distance of the frame you popped on counts: unlocks are checked at the top of a
+     step, so reaching a line and hitting something in the same frame used to miss it */
+  if(PREVIEW===0&&G.newKids){
+    var late=earnUnlocks(G.run);
+    for(var li=0;li<late.length;li++) G.newKids.push(late[li]);
+    if(late.length&&window.__syncWho) window.__syncWho();
   }
   Snd.blowStop(); Snd.wind(false); Snd.pop();
   /* felt, not just seen: a short kick of the picture and a tick from the phone */
@@ -2315,6 +2430,10 @@ function pop(why){
   ov.newbest.hidden=!isBest;
   if(med){ ov.medal.hidden=false; ov.medal.textContent=med.name+" \u00b7 "+med.m+" m"; }
   else ov.medal.hidden=true;
+  if(G.newKids&&G.newKids.length){
+    ov.unlock.hidden=false;
+    ov.unlock.textContent="New friend: "+G.newKids.map(function(id){ return KID_INFO[id].who; }).join(" and ");
+  } else ov.unlock.hidden=true;
   if(isBest&&G.run>60) Snd.best();
   if(PREVIEW===0) askInitials(toScore(G.run));
 }
@@ -2345,8 +2464,29 @@ function step(dt){
     G.y=Math.min(wandY(),WALKY-G.R-3);
     return;
   }
-  P.s=speedAt(G.run);
-  var k=Math.pow(R_REF/G.R,P.p), a=P.g*k;
+  var ki=kidInfo();
+  P.s=speedAt(G.run)*(ki.speed||1);
+  var k=Math.pow(R_REF/G.R,P.p), a=P.g*k*(ki.g||1);
+  if(G.safeT>0) G.safeT-=dt;
+  if(G.noteT>0){ G.noteT-=dt; if(G.noteT<=0) showBanner(G.noteText,G.noteDur); }
+  /* finishing a place brings a new friend - there and then, mid-run, and kept at once so
+     a crash on the next lamp post cannot take it back */
+  if(PREVIEW===0){
+    var got=earnUnlocks(G.run);
+    if(got.length){
+      for(var gi2=0;gi2<got.length;gi2++) G.newKids.push(got[gi2]);
+      noteLater(KID_INFO[got[0]].who+" unlocked!",2.5,2.2);
+      Snd.best(); queueSave(); if(window.__syncWho) window.__syncWho();
+    }
+  }
+  /* Out over the sea and home again is the whole journey: that is winning. Fireworks -
+     and then the run simply carries on into the next lap, for as long as you can. */
+  var lapNow=Math.floor(G.run/LOOP);
+  if(lapNow>G.lap){
+    G.lap=lapNow; G.fwLeft=7.5; G.fwT=0;
+    noteLater(lapNow===1?"You made it home!":"Lap "+lapNow+"!",2.5,3);
+    Snd.best();
+  }
   G.flyT=(G.flyT||0)+dt;
   if(G.flyT<P.f){ var u=G.flyT/Math.max(0.05,P.f); a*=u*u*(3-2*u); }   /* floating off the wand */
   if(G.hold) a-=P.w*k;
@@ -2365,6 +2505,14 @@ function step(dt){
     G.passedBest=true; showBanner("New best!");
   }
   G.v+=a*dt; G.v-=G.v*P.c*dt; G.y+=G.v*dt;
+  /* While the spare bubble's shield is up, the ground and the sky are walls. This has to
+     happen HERE, each frame: the obstacle loop below returns as soon as it finds a hit,
+     which during the shield is a no-op that still skipped the ground test - so a bubble
+     left alone inside a bench sank straight through the pavement and off the screen. */
+  if(G.safeT>0){
+    if(G.y+G.R>WALKY-1){ G.y=WALKY-1-G.R; if(G.v>0) G.v=-45; }
+    if(G.y<G.R+1){ G.y=G.R+1; if(G.v<0) G.v=20; }
+  }
   G.x+=(LANE-G.x)*Math.min(1,dt*4);
   /* wind shoves the underside: squash wide. Falling free: stretch long.
      Sprung rather than snapped, so starting and stopping the wind rings. */
@@ -2376,12 +2524,12 @@ function step(dt){
   if(RULES.ceiling==="hard"){ if(G.y<G.R+1){ G.y=G.R+1; if(G.v<0) G.v=0; } G.clip=0; }
   else if(RULES.ceiling==="soft"){ if(G.clip>G.R*0.667){ pop("ceiling"); return; } }
   else if(G.y<-G.R){ pop("ceiling"); return; }
-  if(RULES.birds){
+  if(RULES.birds&&!ki.nobirds){
     /* Everything about birds scales with how big you are. A 40px bubble falls at
        15px/s, so in the 1.6s a bird takes to cross it can move 18px - less than its
        own radius. Aimed straight at one, a bird is not a dodge, it is a death. */
     var kResp=Math.pow(R_REF/G.R,P.p);
-    var termFall=P.g*kResp/P.c;
+    var termFall=P.g*kResp/P.c*(ki.g||1);
     /* street traffic: crosses at its own height, but never spawns on top of you */
     G.birdT-=dt;
     if(G.birdT<=0){
@@ -2435,7 +2583,7 @@ function step(dt){
     bd.y=bd.y0+Math.sin(bd.x*0.06)*2.2;
     bd.ft+=dt; if(bd.ft>0.11){ bd.ft=0; bd.f=bd.f?0:1; }
     if(bd.x<-14){ G.birds.splice(bi,1); continue; }
-    if(Math.hypot((bd.x+4)-G.x,(bd.y+3)-G.y)<G.R*0.8+3){ pop("bird"); return; }
+    if(Math.hypot((bd.x+4)-G.x,(bd.y+3)-G.y)<G.R*0.8*(ki.hit||1)+3){ pop("bird"); return; }
   }
   G.world+=P.s*dt; G.run+=P.s*dt;
   G.stage=stageAt(G.run);
@@ -2489,6 +2637,9 @@ function tintNight(d,n){
   }
 }
 var WIND_HI=hexc("#ffffff"), WIND_LO=hexc("#4a6f9c"), SHADOW_C=hexc("#0b1020");
+var REDUCED=!!(window.matchMedia&&matchMedia("(prefers-reduced-motion:reduce)").matches);
+var FW_COLS=["#ff6fbf","#ffd24d","#6fe0ff","#8dff9a","#c79bff","#ff8a5c"].map(hexc), FW_WHITE=hexc("#ffffff");
+var HEART=["01010","11111","11111","01110","00100"], HEART_C=hexc("#ff4f8b"), HEART_E=hexc("#141824");
 function drawWorld(t){
   setNight(nightAt(G.phase==="title"?0:G.run));
   var markHaz=NIGHT>0.004;
@@ -2597,7 +2748,20 @@ function drawWorld(t){
     var br=(G.phase==="fly"?0.012:0.035)*Math.sin(t*5.5);   /* breathing */
     var amp=0.055+G.R*0.002, sq=(G.phase==="fly"?G.sq:0);
     var rx=G.R*(1+amp*sq*0.9+br), ry=G.R*(1-amp*sq-br);
-    drawBubbleE(gimg.data,GW,GH,G.x,G.y,rx,ry,t,Math.max(0,sq)*0.15);
+    /* just respawned: blink, the arcade way of saying "nothing can hurt you yet" */
+    var balpha=(G.safeT>0&&(REDUCED||(Math.floor(t*11)&1)))?(REDUCED?0.6:0.4):undefined;
+    FILM=kidFilm(G.kid);
+    drawBubbleE(gimg.data,GW,GH,G.x,G.y,rx,ry,t,Math.max(0,sq)*0.15,balpha);
+    FILM=CROSS;
+    /* the spare bubble rides along as a small heart, until it is spent */
+    if(G.lives>0){
+      var hx0=Math.round(G.x-G.R-7), hy0=Math.round(G.y-G.R-5);
+      if(hx0<1) hx0=1; if(hy0<1) hy0=1;
+      for(var hr=0;hr<5;hr++) for(var hc=0;hc<5;hc++) if(HEART[hr].charAt(hc)==="1"){
+        var hpx=hx0+hc, hpy=hy0+hr;
+        if(hpx>=0&&hpx<GW&&hpy>=0&&hpy<GH) blendAt(gimg.data,GW,hpx,hpy,HEART_C);
+      }
+    }
   }
   if(G.phase!=="title"){
     var kx=kidX()-G.world;
@@ -2615,6 +2779,14 @@ function drawWorld(t){
     if(px2>=0&&py>=0&&px2<GW&&py<GH) blendAt(gimg.data,GW,px2,py,withA(q.c,Math.round(255*q.life)));
   });
   tintNight(gimg.data,NIGHT);
+  /* after the night pass: fireworks are lights, and the lap ends in the dark */
+  if(G.fw) G.fw.forEach(function(q){
+    var fx=Math.round(q.x), fy=Math.round(q.y), fa2=Math.round(255*Math.min(1,q.life*1.5));
+    if(fx>=0&&fy>=0&&fx<GW&&fy<WALKY) blendAt(gimg.data,GW,fx,fy,withA(q.c,fa2));
+    /* a short tail back along its path, so a shell reads as streaks rather than dots */
+    var tx=Math.round(q.x-q.vx*0.07), ty=Math.round(q.y-q.vy*0.07);
+    if((tx!==fx||ty!==fy)&&tx>=0&&ty>=0&&tx<GW&&ty<WALKY) blendAt(gimg.data,GW,tx,ty,withA(q.c,Math.round(fa2*0.45)));
+  });
   goctx.putImageData(gimg,0,0);
   gctx.imageSmoothingEnabled=false;
   gctx.drawImage(goff,0,0,game.width,game.height);
@@ -2625,7 +2797,7 @@ var ov={title:document.getElementById("ov-title"),ready:document.getElementById(
         dead:document.getElementById("ov-dead"),pause:document.getElementById("ov-pause"),
         dist:document.getElementById("ov-dist"),best:document.getElementById("ov-best"),
         cause:document.getElementById("ov-cause"),medal:document.getElementById("ov-medal"),
-        newbest:document.getElementById("ov-newbest")};
+        newbest:document.getElementById("ov-newbest"),unlock:document.getElementById("ov-unlock")};
 var banner=document.getElementById("banner");
 var hint=document.getElementById("launch-hint");
 var tStats=document.getElementById("t-stats");
@@ -2661,7 +2833,7 @@ function hudTick(){
   hud.b.textContent=(G.best/60).toFixed(1)+" m";
   hud.s.textContent=zoneName(zoneAt(G.run));
   hud.dia.textContent=(G.R*2).toFixed(0)+" px";
-  hud.sp.textContent=Math.round(speedAt(G.run))+" px/s";
+  hud.sp.textContent=Math.round(speedAt(G.run)*(kidInfo().speed||1))+" px/s";
   syncFsPause();
   hud.d.style.color=G.clip>0?"var(--accent)":"";
 }
@@ -2953,12 +3125,29 @@ function periodStart(period){
 function netSignal(){
   try{ return AbortSignal.timeout(NET_TIMEOUT); }catch(e){ return undefined; }
 }
+/* The board says which kid a score was set with. That is a `kid` column on the table, and
+   the game does not assume it is there: the database refuses an unknown column with a 400,
+   and from then on (this visit) the board is read and written the old way, without it.
+   So this code can ship before the column exists, and lights up when it does. */
+var boardKidCol=true;
+/* PostgREST's two ways of saying "there is no such column" - reading and writing */
+async function noSuchColumn(res){
+  if(res.status!==400) return false;
+  try{ var j=await res.clone().json(); return !!j&&(j.code==="42703"||j.code==="PGRST204"); }catch(e){ return false; }
+}
 async function loadScores(period){
   try{
-    var url=SUPA_URL+"/rest/v1/bubble_scores?select=initials,score&order=score.desc&limit="+BOARD_SIZE;
     var since=periodStart(period);
-    if(since) url+="&created_at=gte."+encodeURIComponent(since.toISOString());
-    var res=await fetch(url,{headers:supaHeaders(),signal:netSignal()});
+    function urlFor(withKid){
+      var u=SUPA_URL+"/rest/v1/bubble_scores?select=initials,score"+(withKid?",kid":"")+"&order=score.desc&limit="+BOARD_SIZE;
+      if(since) u+="&created_at=gte."+encodeURIComponent(since.toISOString());
+      return u;
+    }
+    var res=await fetch(urlFor(boardKidCol),{headers:supaHeaders(),signal:netSignal()});
+    if(!res.ok&&boardKidCol&&await noSuchColumn(res)){
+      boardKidCol=false;
+      res=await fetch(urlFor(false),{headers:supaHeaders(),signal:netSignal()});
+    }
     if(!res.ok) return null;
     var rows=await res.json();
     /* Never hand renderBoard something it cannot map over. A proxy, a captive portal
@@ -2968,17 +3157,27 @@ async function loadScores(period){
     return rows.filter(function(r){ return r&&typeof r==="object"&&!BLOCKED[String(r.initials).toUpperCase()]; })
                .map(function(r){
                  return {initials:String(r.initials==null?"":r.initials).slice(0,3).toUpperCase(),
-                         score:Number(r.score)||0};
+                         score:Number(r.score)||0,
+                         kid:(typeof r.kid==="string"&&KID_INFO.hasOwnProperty(r.kid))?r.kid:null};
                });
   }catch(e){ return null; }
 }
-async function submitScore(initials,value){
+async function submitScore(initials,value,kid){
   try{
-    var res=await fetch(SUPA_URL+"/rest/v1/bubble_scores",{
-      method:"POST",headers:supaHeaders(),
-      body:JSON.stringify({initials:initials,score:value}),
-      signal:netSignal()
-    });
+    function post(withKid){
+      var body={initials:initials,score:value};
+      if(withKid) body.kid=kid;
+      return fetch(SUPA_URL+"/rest/v1/bubble_scores",{
+        method:"POST",headers:supaHeaders(),body:JSON.stringify(body),signal:netSignal()
+      });
+    }
+    var withKid=boardKidCol&&!!kid&&KID_INFO.hasOwnProperty(kid);
+    var res=await post(withKid);
+    /* refused with the kid attached: the score matters more than who set it */
+    if(!res.ok&&withKid&&res.status===400){
+      if(await noSuchColumn(res)) boardKidCol=false;
+      res=await post(false);          /* whatever the reason, try once more without it */
+    }
     return res.ok;
   }catch(e){ return false; }
 }
@@ -3004,10 +3203,15 @@ function renderBoard(){
   if(!rows.length){ blistEl.innerHTML='<p class="bmsg">No scores yet. Be first.</p>'; return; }
   blistEl.innerHTML=rows.map(function(r,i){
     return '<div class="brow"><span class="rk">'+(i+1)+'</span>'+
-           '<span class="ini"></span><span class="val">'+fromScore(r.score)+'</span></div>';
+           '<span class="ini"></span><span class="bk"></span><span class="val">'+fromScore(r.score)+'</span></div>';
   }).join("");
   Array.prototype.forEach.call(blistEl.querySelectorAll(".ini"),function(el,i){
     el.textContent=rows[i].initials;     /* never innerHTML: this is other people's text */
+  });
+  /* who it was set with - only ever one of our own six names, looked up from the id */
+  Array.prototype.forEach.call(blistEl.querySelectorAll(".bk"),function(el,i){
+    var k=rows[i].kid&&KID_INFO[rows[i].kid];
+    if(k){ el.textContent=k.who; if(k.tint) el.style.color=k.tint; }
   });
 }
 function refreshBoard(period){
@@ -3100,12 +3304,12 @@ function paintSlots(){
    slow reply from a 90m run, landing on the screen of a 2m run started since, opened
    the initials panel and posted the 2m score to the public board. The reply now only
    counts for the run that asked, and Save posts the score that was actually checked. */
-var pendingScore=0;
+var pendingScore=0, pendingKid=null;
 function askInitials(value){
-  var seq=G.runSeq;
+  var seq=G.runSeq, kidAt=G.kid;       /* the picker is live on the death screen: note who flew NOW */
   qualifies(value).then(function(ok){
     if(!ok||G.phase!=="dead"||seq!==G.runSeq) return;
-    pendingScore=value;
+    pendingScore=value; pendingKid=kidAt;
     nameOpen=true; ov.dead.classList.add("asking");
     iniIdx=[0,1,2].map(function(i){ return Math.max(0,ALPHA.indexOf(lastIni.charAt(i))); });
     iniSlot=0; paintSlots();
@@ -3119,10 +3323,10 @@ document.getElementById("ini-save").addEventListener("click",function(e){ e.stop
 function saveInitials(){
   var v=iniWord();
   if(!iniOK(v)) return;
-  var val=pendingScore;
+  var val=pendingScore, kidWas=pendingKid;
   lastIni=v; queueSave();
   endInitials();
-  submitScore(v,val).then(function(ok){
+  submitScore(v,val,kidWas).then(function(ok){
     if(ok){ boardRows={all:null,month:null,week:null}; if(boardOpen) refreshBoard(boardPeriod); }
   });
 }
@@ -3152,45 +3356,78 @@ window.addEventListener("keydown",function(e){
     var b=document.createElement("button");
     b.type="button"; b.className="who"+(kid?"":" any");
     b.setAttribute("aria-pressed",kidPick===id);
-    b.title=label;
+    b.title=label; b.setAttribute("aria-label",label);
     if(kid){
-      var cv=document.createElement("canvas");
-      cv.width=PW*PZ; cv.height=PH*PZ;
-      var off=document.createElement("canvas"); off.width=PW; off.height=PH;
-      var octx=off.getContext("2d"), img=octx.createImageData(PW,PH);
-      var pp=painter(img.data,PW,PH);
-      for(var y=0;y<PH;y++)for(var x=0;x<PW;x++){
-        var v=y/PH, i=Math.floor(v*5+(bay(x,y)-0.5)*0.85);
-        pp.px(x,y,SKY[Math.max(0,Math.min(4,i))]);
-      }
-      drawWalk(pp,PW,PH,PWALK,0);
-      kid.draw(pp,4,PWALK);
-      octx.putImageData(img,0,0);
-      var ctx=cv.getContext("2d"); ctx.imageSmoothingEnabled=false;
-      ctx.drawImage(off,0,0,cv.width,cv.height);
-      b.appendChild(cv);
+      /* two portraits: the kid, and the same scene with the kid painted as one dark shape
+         for while they are locked. A CSS filter blacked out the sky as well and left a
+         plain black tile; the painter's `force` colours only what the kid draws. */
+      [null,hexc("#151a2c")].forEach(function(force){
+        var cv=document.createElement("canvas");
+        cv.width=PW*PZ; cv.height=PH*PZ; cv.className=force?"lk":"un";
+        var off=document.createElement("canvas"); off.width=PW; off.height=PH;
+        var octx=off.getContext("2d"), img=octx.createImageData(PW,PH);
+        var pp=painter(img.data,PW,PH);
+        for(var y=0;y<PH;y++)for(var x=0;x<PW;x++){
+          var v=y/PH, i=Math.floor(v*5+(bay(x,y)-0.5)*0.85);
+          pp.px(x,y,SKY[Math.max(0,Math.min(4,i))]);
+        }
+        drawWalk(pp,PW,PH,PWALK,0);
+        pp.force=force; kid.draw(pp,4,PWALK); pp.force=null;
+        octx.putImageData(img,0,0);
+        var ctx=cv.getContext("2d"); ctx.imageSmoothingEnabled=false;
+        ctx.drawImage(off,0,0,cv.width,cv.height);
+        b.appendChild(cv);
+      });
     } else b.textContent=label;
     b.addEventListener("click",function(){
+      /* a locked kid says how to meet them, and nothing else changes */
+      if(id!=="random"&&!isUnlocked(id)){ showKidLine(id); return; }
       kidPick=id;
       Array.prototype.forEach.call(host.querySelectorAll("button"),function(o){
         o.setAttribute("aria-pressed",o===b);
       });
-      if(G.phase==="title"||G.phase==="ready"||G.phase==="dead"||G.phase==="blow"){
+      /* paused with the bubble still on the wand counts as on the wand */
+      var onWand=G.phase==="ready"||G.phase==="blow"||(G.phase==="paused"&&(G.prev==="ready"||G.prev==="blow"));
+      if(G.phase==="title"||G.phase==="dead"||onWand){
         G.kid=rollKid();
+        /* only while nothing is in the air: swapping kids mid-flight must not hand out lives */
+        if(onWand){ applyKid(); G.y=Math.min(wandY(),WALKY-G.R-3); }
       }
+      showKidLine(id);
       queueSave();
     });
     host.appendChild(b);
     return b;
   }
+  /* The line that says who a kid is and what they do: under the how-to on the title,
+     and in place of the "best" line on the death screen, where the picker also shows. */
+  var tKid=document.getElementById("t-kid");
+  function showKidLine(id){
+    var text=kidLine(id);
+    if(tKid) tKid.textContent=text;
+    if(G.phase==="dead"&&ov&&ov.best) ov.best.textContent=text;
+    /* the website keeps the picker on screen during a run, where neither line is showing */
+    else if(G.phase!=="title"&&G.phase!=="dead") showBanner(text,2);
+  }
   mk("Anyone","random",null);
-  KIDS.forEach(function(k){ mk(k.name,k.id,k); });
+  KIDS.forEach(function(k){ mk(KID_INFO[k.id]?KID_INFO[k.id].who:k.name,k.id,k); });
   window.__syncWho=function(){
+    /* a saved pick that is locked on this device falls back to Anyone */
+    if(kidPick!=="random"&&!isUnlocked(kidPick)) kidPick="random";
     Array.prototype.forEach.call(host.querySelectorAll("button"),function(o,i){
       var id=(i===0)?"random":KIDS[i-1].id;
+      var locked=(id!=="random")&&!isUnlocked(id);
       o.setAttribute("aria-pressed",id===kidPick);
+      o.classList.toggle("locked",locked);
+      if(id!=="random"){
+        var lab=locked?"Locked: finish "+unlockPlace(id):KID_INFO[id].who;
+        o.setAttribute("aria-label",lab); o.title=lab;         /* the tooltip must not give the name away */
+        if(locked) o.setAttribute("aria-disabled","true"); else o.removeAttribute("aria-disabled");
+      }
     });
+    if(tKid) tKid.textContent=kidLine(kidPick);
   };
+  window.__syncWho();
 })();
 
 var optsEl=document.querySelector("details.opts");
@@ -3232,9 +3469,9 @@ function flushSave(){
   writeStore({
     tune:Object.assign({},P), rules:Object.assign({},RULES),
     rotation:JSON.parse(JSON.stringify(on)), known:allItemIds(), kid:kidPick,
-    best:Math.round(G.best), runs:STATS.runs,
+    best:Math.floor(G.best), runs:STATS.runs,
     bestMedal:STATS.bestMedal?STATS.bestMedal.name:null,
-    sound:soundOn, ini:lastIni, savedAt:new Date().toISOString()
+    sound:soundOn, ini:lastIni, unlocked:Object.keys(UNLOCKED), savedAt:new Date().toISOString()
   });
 }
 function saveBest(){ queueSave(); }
@@ -3244,11 +3481,15 @@ function saveBest(){ queueSave(); }
   if(typeof d.runs==="number") STATS.runs=d.runs;
   if(typeof d.ini==="string"&&/^[A-Z]{3}$/.test(d.ini)) lastIni=d.ini;
   if(d.bestMedal) MEDALS.forEach(function(m){ if(m.name===d.bestMedal) STATS.bestMedal=m; });
+  if(Array.isArray(d.unlocked)) d.unlocked.forEach(function(id){ if(typeof id==="string"&&KID_INFO.hasOwnProperty(id)) UNLOCKED[id]=1; });
+  /* anyone who played before the kids were locked keeps what their best run already earned */
+  earnUnlocks(G.best);
   if(d.kid&&(d.kid==="random"||KIDS.some(function(k){return k.id===d.kid;}))){
     kidPick=d.kid;
     if(window.__syncWho) window.__syncWho();
     G.kid=rollKid();
   }
+  if(window.__syncWho) window.__syncWho();
   if(d.sound===false){
     soundOn=false; btnSound.textContent="Sound off"; btnSound.setAttribute("aria-pressed","false");
   }
@@ -3299,6 +3540,25 @@ function loop(now){
   for(var i=G.parts.length-1;i>=0;i--){
     var q=G.parts[i]; q.x+=q.vx*dt; q.y+=q.vy*dt; q.vy+=110*dt; q.life-=dt*1.8;
     if(q.life<=0) G.parts.splice(i,1);
+  }
+  if(G.fw){
+    if(G.fwLeft>0&&G.phase==="fly"){
+      G.fwLeft-=dt; G.fwT-=dt;
+      if(!REDUCED&&G.fwT<=0&&G.fw.length<520){      /* reduced motion: the banner and medal still say it */
+        G.fwT=0.16+Math.random()*0.16;
+        /* a shell is two rings: a fast outer one in its colour and a slower white core */
+        var fcx=22+Math.random()*(GW-44), fcy=8+Math.random()*34, fcol=FW_COLS[(Math.random()*FW_COLS.length)|0], fn=26;
+        for(var fi=0;fi<fn;fi++){
+          var fa=Math.PI*2*fi/fn+Math.random()*0.15, fs=26+Math.random()*10;
+          G.fw.push({x:fcx,y:fcy,vx:Math.cos(fa)*fs,vy:Math.sin(fa)*fs,life:1,c:fcol});
+          if(fi%2===0) G.fw.push({x:fcx,y:fcy,vx:Math.cos(fa+0.12)*fs*0.5,vy:Math.sin(fa+0.12)*fs*0.5,life:0.85,c:FW_WHITE});
+        }
+      }
+    }
+    if(G.phase!=="paused") for(var fj=G.fw.length-1;fj>=0;fj--){
+      var fq=G.fw[fj]; fq.x+=fq.vx*dt; fq.y+=fq.vy*dt; fq.vy+=26*dt; fq.vx*=(1-1.2*dt); fq.vy*=(1-1.2*dt); fq.life-=dt*0.85;
+      if(fq.life<=0) G.fw.splice(fj,1);
+    }
   }
   if(G.wind) for(var wi=G.wind.length-1;wi>=0;wi--){
     var wq=G.wind[wi]; wq.y-=62*dt; wq.x-=P.s*0.35*dt; wq.life-=dt*3.4;
