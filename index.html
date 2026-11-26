@@ -1769,15 +1769,18 @@ var kidPick="random";   /* "random", or an id to always play as that kid */
             height still comes: with NO birds a good player looped for ever (first real
             playtest: 4.5 laps, 1313 m, against a record of 227 m) */
 var KID_INFO={
-  tee:     {who:"Enzo",   unlock:-1, perk:"The classic bubble",                      tint:null},
-  pigtails:{who:"Vivian", unlock:0,  perk:"Pink bubble \u00b7 flies faster",          tint:"#ff6fbf", speed:1.18},
-  hoodie:  {who:"Remy",   unlock:1,  perk:"Slow and steady \u00b7 one extra life",    tint:"#63d67a", speed:0.86, lives:1},
-  puff:    {who:"Juno",   unlock:2,  perk:"Floaty bubble \u00b7 falls slowly",        tint:"#ffcf4d", g:0.72},
-  longhair:{who:"Evelyn", unlock:3,  perk:"Fewer birds come her way",                 tint:"#a98bff", calm:true},
+  pigtails:{who:"Vivian", unlock:-1, perk:"The classic bubble",                          tint:null},
+  longhair:{who:"Evelyn", unlock:0,  perk:"Pink bubblegum bubble \u00b7 flies faster",    tint:"#ff6fbf", speed:1.18},
+  hoodie:  {who:"Remy",   unlock:1,  perk:"Slow and steady \u00b7 one extra life",        tint:"#63d67a", speed:0.86, lives:1},
+  puff:    {who:"Juno",   unlock:2,  perk:"Floaty bubble \u00b7 falls slowly",            tint:"#ffcf4d", g:0.72},
+  tee:     {who:"Enzo",   unlock:3,  perk:"Fewer birds come his way",                     tint:"#a98bff", calm:true},
   cap:     {who:"Sam",    unlock:4,  perk:"Slippery bubble \u00b7 squeezes past close calls", tint:"#58b9ff", hit:0.8}
 };
-var UNLOCKED={tee:1};
-function kidInfo(id){ return KID_INFO[id||G.kid]||KID_INFO.tee; }
+/* the kid everyone starts with, and the picker's order: the order they are met in */
+var STARTER=(function(){ for(var id in KID_INFO) if(KID_INFO[id].unlock<0) return id; return "pigtails"; })();
+KIDS.sort(function(a,b){ return (KID_INFO[a.id]?KID_INFO[a.id].unlock:99)-(KID_INFO[b.id]?KID_INFO[b.id].unlock:99); });
+var UNLOCKED={}; UNLOCKED[STARTER]=1;
+function kidInfo(id){ return KID_INFO[id||G.kid]||KID_INFO[STARTER]; }
 function isUnlocked(id){ return ADMIN||UNLOCKED.hasOwnProperty(id); }      /* /admin sees everyone */
 function unlockDist(id){ var u=KID_INFO[id].unlock; return u<0?0:legStart(u+1); }
 function unlockPlace(id){ return ZONE_NAMES[ROUTE[KID_INFO[id].unlock]].replace(/^The /,"the "); }

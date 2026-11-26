@@ -873,22 +873,28 @@ the blonde pigtails kid is Vivian, the long brown hair kid is Evelyn, and two bo
 and Remy. Juno and Sam are placeholders he has not ruled on. These are character names
 in a game and are there on purpose - they are not to be "scrubbed".
 
-| id | name | bubble | ability (field) | unlocked by finishing |
+| id (the drawing) | name | bubble | ability (field) | unlocked by finishing |
 |---|---|---|---|---|
-| tee | Enzo | classic | none | starter |
-| pigtails | Vivian | pink | world 18% faster (`speed`) | Park, 2000 px |
+| pigtails | Vivian | classic | none | starter (`STARTER`) |
+| longhair | Evelyn | pink | world 18% faster (`speed`) | Park, 2000 px |
 | hoodie | Remy | green | 14% slower, one spare bubble (`speed`, `lives`) | City, 4000 px |
 | puff | Juno | yellow | gravity x0.72 (`g`) | Boardwalk, 6000 px |
-| longhair | Evelyn | purple | no birds flying through at random; the camping bird still comes (`calm`) | Beach, 8000 px |
+| tee | Enzo | purple | no birds flying through at random; the camping bird still comes (`calm`) | Beach, 8000 px |
 | cap | Sam | blue | collider x0.8 (`hit`) | The crossing, 11400 px |
+
+Erik reshuffled this on 26 Nov 2026 (Vivian became the starter, Evelyn took the pink fast
+bubble, Enzo took "fewer birds"). The ids are the DRAWINGS and never move; only `KID_INFO`
+says who has what. `KIDS` is sorted by unlock order after `KID_INFO`, so the picker shows
+kids in the order they are met and `KIDS[0]` is the starter. Saves from before the
+reshuffle list `tee` as unlocked; that is honoured rather than taken away.
 
 - **`unlock` is a leg index of `ROUTE`** and the distance is `legStart(unlock+1)`, so the
   thresholds follow the route if leg lengths change. Unlocks are earned mid-run in `step`
   (`earnUnlocks`), saved at once, and kept in `UNLOCKED` / the `unlocked` field of
   `bubble.v1`. On load, `earnUnlocks(G.best)` grandfathers anyone who played before kids
   were locked. `/admin` sees everyone (`isUnlocked`); admin preview runs unlock nothing.
-- **Enzo must stay exactly the old game.** Every multiplier defaults to 1; the test
-  `tests/physics.js` compares his flight with the previous commit bit for bit.
+- **The starter must stay exactly the old game.** Every multiplier defaults to 1; the test
+  `tests/physics.js` compares the starter's flight with the pre-kids game bit for bit.
 - **Bubble colour** is a palette swap: `FILM` is `CROSS` or a tinted copy from `kidFilm`,
   swapped in around the player's bubble in `drawWorld` and put back straight after, so the
   title-screen bubbles stay rainbow.
