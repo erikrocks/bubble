@@ -515,7 +515,7 @@ var C={};
     skin:"#e8b88a",skinD:"#c2915f",hair:"#4a3524",
     skin2:"#f2d3b0",skin2D:"#d2a87e",skin3:"#a9713f",skin3D:"#82522a",
     skin4:"#6e4527",skin4D:"#4e2f19",
-    blonde:"#e0be62",blondeD:"#b8963f",black:"#22252f",brown:"#6b4f33",
+    blonde:"#e0be62",blondeD:"#b8963f",streak:"#2f8fe0",streakL:"#6fc0ff",black:"#22252f",brown:"#6b4f33",
     plum:"#8a5fb0",plumL:"#ae84d2",plumD:"#5f3d80",
     grass:"#6d9a55",grassL:"#8cb86c",grassD:"#4c7340",
     sea:"#2a6d9e",seaL:"#4a92c2",seaD:"#17496f",foam:"#e6f3fa",pier:"#5d4c3c",
@@ -636,14 +636,16 @@ function cheeks(p,x,wy,skin,skinD,hy){
   p.px(x+9,wy+hy,C.edge);
 }
 var KIDS=[
-{id:"tee",name:"Tee & jeans",anchor:{dx:15,dy:-19},mini:{hair:"hair",skin:"skin",top:"shirt",leg:"denim"},
- note:"The default. Short hair, red tee, cheeks out. Clearest silhouette of the six.",
+{id:"tee",name:"Tee & jeans",anchor:{dx:15,dy:-19},mini:{hair:"blonde",skin:"skin",top:"shirt",leg:"denim"},
+ note:"Short blonde hair with a blue streak down the middle of the fringe, red tee, cheeks out. Clearest silhouette of the six.",
  draw:function(p,x,wy){
    p.rect(x+4,wy-7,3,6,C.denim); p.rect(x+8,wy-7,3,6,C.denim);
    p.hl(x+3,wy-1,4,C.shoe); p.hl(x+8,wy-1,4,C.shoe);
    p.rect(x+3,wy-15,9,8,C.shirt); p.hl(x+3,wy-15,9,C.shirtL); p.vl(x+3,wy-14,7,C.shirtL);
    p.rect(x+4,wy-21,7,6,C.skin); p.vl(x+4,wy-20,5,C.skinD);
-   p.rect(x+3,wy-23,9,2,C.hair); p.px(x+3,wy-21,C.hair); p.px(x+11,wy-21,C.hair);
+   p.rect(x+3,wy-23,9,2,C.blonde); p.px(x+3,wy-21,C.blonde); p.px(x+11,wy-21,C.blonde);
+   p.hl(x+3,wy-22,2,C.blondeD); p.px(x+11,wy-22,C.blondeD);          /* a little shade at the sides */
+   p.vl(x+7,wy-23,2,C.streak); p.px(x+8,wy-23,C.streakL);            /* the blue streak */
    p.px(x+6,wy-20,C.edge); p.px(x+9,wy-20,C.edge);
    cheeks(p,x,wy,C.skin,C.skinD,-18);
    p.rect(x+2,wy-14,2,6,C.skin);
