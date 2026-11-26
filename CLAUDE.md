@@ -879,7 +879,7 @@ in a game and are there on purpose - they are not to be "scrubbed".
 | pigtails | Vivian | pink | world 18% faster (`speed`) | Park, 2000 px |
 | hoodie | Remy | green | 14% slower, one spare bubble (`speed`, `lives`) | City, 4000 px |
 | puff | Juno | yellow | gravity x0.72 (`g`) | Boardwalk, 6000 px |
-| longhair | Evelyn | purple | no birds at all (`nobirds`) | Beach, 8000 px |
+| longhair | Evelyn | purple | no birds flying through at random; the camping bird still comes (`calm`) | Beach, 8000 px |
 | cap | Sam | blue | collider x0.8 (`hit`) | The crossing, 11400 px |
 
 - **`unlock` is a leg index of `ROUTE`** and the distance is `legStart(unlock+1)`, so the
@@ -914,6 +914,11 @@ in a game and are there on purpose - they are not to be "scrubbed".
 - Fireworks and the shield blink respect `prefers-reduced-motion` (`REDUCED`).
 - A locked portrait is a second canvas drawn with the painter's `force` colour, so only
   the kid goes dark. A CSS filter blacked out the sky too.
+
+**Evelyn was nerfed on 26 Nov 2026** after the first real playtest: a kid reached 4.5 laps
+(1313 m; the record had been 227 m) because she had no birds at all, and past the point
+where spacing, pairs and speed stop tightening the camping bird is the only thing left
+that ends a good player's run. Never give a kid an ability that removes it.
 
 **Balance, not settled.** A lookahead bot (superhuman at dodging, so direction only):
 Evelyn never died, because birds - including the one sent when you sit still - are what

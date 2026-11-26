@@ -1765,13 +1765,15 @@ var kidPick="random";   /* "random", or an id to always play as that kid */
    Every number that changes play is here and nowhere else:
      speed  multiplies how fast the world goes by      g    multiplies gravity
      lives  spare bubbles                              hit  multiplies the bubble's collider
-     nobirds  no birds are sent at all */
+     calm   no birds fly through at random. The one sent for a bubble that sits at one
+            height still comes: with NO birds a good player looped for ever (first real
+            playtest: 4.5 laps, 1313 m, against a record of 227 m) */
 var KID_INFO={
   tee:     {who:"Enzo",   unlock:-1, perk:"The classic bubble",                      tint:null},
   pigtails:{who:"Vivian", unlock:0,  perk:"Pink bubble \u00b7 flies faster",          tint:"#ff6fbf", speed:1.18},
   hoodie:  {who:"Remy",   unlock:1,  perk:"Slow and steady \u00b7 one extra life",    tint:"#63d67a", speed:0.86, lives:1},
   puff:    {who:"Juno",   unlock:2,  perk:"Floaty bubble \u00b7 falls slowly",        tint:"#ffcf4d", g:0.72},
-  longhair:{who:"Evelyn", unlock:3,  perk:"Birds leave her alone",                    tint:"#a98bff", nobirds:true},
+  longhair:{who:"Evelyn", unlock:3,  perk:"Fewer birds come her way",                 tint:"#a98bff", calm:true},
   cap:     {who:"Sam",    unlock:4,  perk:"Slippery bubble \u00b7 squeezes past close calls", tint:"#58b9ff", hit:0.8}
 };
 var UNLOCKED={tee:1};
@@ -2524,7 +2526,7 @@ function step(dt){
   if(RULES.ceiling==="hard"){ if(G.y<G.R+1){ G.y=G.R+1; if(G.v<0) G.v=0; } G.clip=0; }
   else if(RULES.ceiling==="soft"){ if(G.clip>G.R*0.667){ pop("ceiling"); return; } }
   else if(G.y<-G.R){ pop("ceiling"); return; }
-  if(RULES.birds&&!ki.nobirds){
+  if(RULES.birds){
     /* Everything about birds scales with how big you are. A 40px bubble falls at
        15px/s, so in the 1.6s a bird takes to cross it can move 18px - less than its
        own radius. Aimed straight at one, a bird is not a dodge, it is a death. */
@@ -2534,7 +2536,7 @@ function step(dt){
     G.birdT-=dt;
     if(G.birdT<=0){
       G.birdT=9+rnd()*8;
-      if(stageAt(G.run)>=1&&G.birds.length<2){
+      if(!ki.calm&&stageAt(G.run)>=1&&G.birds.length<2){
         var ay=clearLane(6+rnd()*(GH*0.58));
         if(ay!==null){
           G.birds.push({x:GW+8,y:ay,y0:ay,vx:-(P.s+28+rnd()*26),f:0,ft:0,kind:birdKind(zoneAt(G.run))});
