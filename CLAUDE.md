@@ -870,7 +870,7 @@ The rest is feel:
 The six kids are now characters. **`KID_INFO` is the single place** that names them and
 says what each does; `KIDS` still holds only the drawings. Erik chose four of the names:
 the blonde pigtails kid is Vivian, the long brown hair kid is Evelyn, and two boys are Enzo
-and Remy. Juno and Sam are placeholders he has not ruled on. These are character names
+and Remy, and (26 Nov) the puffs kid is Ana and the ball-cap kid is Erik. These are character names
 in a game and are there on purpose - they are not to be "scrubbed".
 
 | id (the drawing) | name | bubble | ability (field) | unlocked by finishing |
@@ -878,9 +878,9 @@ in a game and are there on purpose - they are not to be "scrubbed".
 | pigtails | Vivian | classic | none | starter (`STARTER`) |
 | longhair | Evelyn | pink | world 18% faster (`speed`) | Park, 2000 px |
 | hoodie | Remy | green | 14% slower, one spare bubble (`speed`, `lives`) | City, 4000 px |
-| puff | Juno | yellow | gravity x0.72 (`g`) | Boardwalk, 6000 px |
+| puff | Ana | yellow | gravity x0.72 (`g`) | Boardwalk, 6000 px |
 | tee | Enzo | purple | no birds flying through at random; the camping bird still comes (`calm`) | Beach, 8000 px |
-| cap | Sam | blue | collider x0.8 (`hit`) | The crossing, 11400 px |
+| cap | Erik | blue | collider x0.8 (`hit`) | The crossing, 11400 px |
 
 Erik reshuffled this on 26 Nov 2026 (Vivian became the starter, Evelyn took the pink fast
 bubble, Enzo took "fewer birds"). The ids are the DRAWINGS and never move; only `KID_INFO`
@@ -936,7 +936,7 @@ hard enough for people is a question only people can answer.
 **Balance, not settled.** A lookahead bot (superhuman at dodging, so direction only):
 Evelyn never died, because birds - including the one sent when you sit still - are what
 ends a perfect player's run; Remy's respawn hands a big-bubble player an easy small one;
-Juno did worse than Enzo with big bubbles, since slow falling is slow diving. Tune from
+Ana (then "Juno") did worse than the starter with big bubbles, since slow falling is slow diving. Tune from
 `KID_INFO` once real people have played them.
 
 ## Winning: a lap (24 Nov 2026)
