@@ -920,6 +920,13 @@ in a game and are there on purpose - they are not to be "scrubbed".
 where spacing, pairs and speed stop tightening the camping bird is the only thing left
 that ends a good player's run. Never give a kid an ability that removes it.
 
+**Laps get harder (26 Nov 2026).** `speedAt` multiplies by `1+0.05*min(8,lap)`, pair chance
+gains 0.05 per lap (5 laps), and camping patience loses 0.2s per lap (4 laps). Gaps and
+spacing do NOT shrink, on purpose. A "Faster now!" banner follows the lap banner. QA's
+lookahead bot (`tests/bot_laps.js`) finished 7-10 of 12 attempts at every lap from 1 to 8,
+so every lap stays passable - and, being a bot, it barely notices the speed. Whether it is
+hard enough for people is a question only people can answer.
+
 **Balance, not settled.** A lookahead bot (superhuman at dodging, so direction only):
 Evelyn never died, because birds - including the one sent when you sit still - are what
 ends a perfect player's run; Remy's respawn hands a big-bubble player an easy small one;
