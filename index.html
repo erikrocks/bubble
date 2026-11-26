@@ -1773,14 +1773,19 @@ var kidPick="random";   /* "random", or an id to always play as that kid */
 var KID_INFO={
   pigtails:{who:"Vivian", unlock:-1, perk:"The classic bubble",                          tint:null},
   longhair:{who:"Evelyn", unlock:0,  perk:"Pink bubblegum bubble \u00b7 flies faster",    tint:"#ff6fbf", speed:1.18},
-  hoodie:  {who:"Remy",   unlock:1,  perk:"Slow and steady \u00b7 one extra life",        tint:"#63d67a", speed:0.86, lives:1},
+  cap:     {who:"Remy",   unlock:1,  perk:"Slow and steady \u00b7 one extra life",        tint:"#63d67a", speed:0.86, lives:1},
   puff:    {who:"Ana",    unlock:2,  perk:"Floaty bubble \u00b7 falls slowly",            tint:"#ffcf4d", g:0.72},
   tee:     {who:"Enzo",   unlock:3,  perk:"Fewer birds come his way",                     tint:"#a98bff", calm:true},
-  cap:     {who:"Erik",   unlock:4,  perk:"Slippery bubble \u00b7 squeezes past close calls", tint:"#58b9ff", hit:0.8}
+  hoodie:  {who:"Erik",   unlock:4,  perk:"Slippery bubble \u00b7 squeezes past close calls", tint:"#58b9ff", hit:0.8}
 };
 /* the kid everyone starts with, and the picker's order: the order they are met in */
 var STARTER=(function(){ for(var id in KID_INFO) if(KID_INFO[id].unlock<0) return id; return "pigtails"; })();
 KIDS.sort(function(a,b){ return (KID_INFO[a.id]?KID_INFO[a.id].unlock:99)-(KID_INFO[b.id]?KID_INFO[b.id].unlock:99); });
+/* Unlocks are saved by drawing id, and Erik has reshuffled who owns which drawing more
+   than once. ROSTER numbers the arrangement: a save from a different one has its unlock
+   LIST ignored and is rebuilt from its best distance instead, so nobody keeps a late kid
+   for free because the drawing used to be an early one. Bump it on any reshuffle. */
+var ROSTER=3;
 var UNLOCKED={}; UNLOCKED[STARTER]=1;
 function kidInfo(id){ return KID_INFO[id||G.kid]||KID_INFO[STARTER]; }
 function isUnlocked(id){ return ADMIN||UNLOCKED.hasOwnProperty(id); }      /* /admin sees everyone */
@@ -3488,7 +3493,7 @@ function flushSave(){
     rotation:JSON.parse(JSON.stringify(on)), known:allItemIds(), kid:kidPick,
     best:Math.floor(G.best), runs:STATS.runs,
     bestMedal:STATS.bestMedal?STATS.bestMedal.name:null,
-    sound:soundOn, ini:lastIni, unlocked:Object.keys(UNLOCKED), savedAt:new Date().toISOString()
+    sound:soundOn, ini:lastIni, unlocked:Object.keys(UNLOCKED), roster:ROSTER, savedAt:new Date().toISOString()
   });
 }
 function saveBest(){ queueSave(); }
@@ -3498,7 +3503,7 @@ function saveBest(){ queueSave(); }
   if(typeof d.runs==="number") STATS.runs=d.runs;
   if(typeof d.ini==="string"&&/^[A-Z]{3}$/.test(d.ini)) lastIni=d.ini;
   if(d.bestMedal) MEDALS.forEach(function(m){ if(m.name===d.bestMedal) STATS.bestMedal=m; });
-  if(Array.isArray(d.unlocked)) d.unlocked.forEach(function(id){ if(typeof id==="string"&&KID_INFO.hasOwnProperty(id)) UNLOCKED[id]=1; });
+  if(d.roster===ROSTER&&Array.isArray(d.unlocked)) d.unlocked.forEach(function(id){ if(typeof id==="string"&&KID_INFO.hasOwnProperty(id)) UNLOCKED[id]=1; });
   /* anyone who played before the kids were locked keeps what their best run already earned */
   earnUnlocks(G.best);
   if(d.kid&&(d.kid==="random"||KIDS.some(function(k){return k.id===d.kid;}))){

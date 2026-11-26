@@ -877,16 +877,19 @@ in a game and are there on purpose - they are not to be "scrubbed".
 |---|---|---|---|---|
 | pigtails | Vivian | classic | none | starter (`STARTER`) |
 | longhair | Evelyn | pink | world 18% faster (`speed`) | Park, 2000 px |
-| hoodie | Remy | green | 14% slower, one spare bubble (`speed`, `lives`) | City, 4000 px |
+| cap | Remy | green | 14% slower, one spare bubble (`speed`, `lives`) | City, 4000 px |
 | puff | Ana | yellow | gravity x0.72 (`g`) | Boardwalk, 6000 px |
 | tee | Enzo | purple | no birds flying through at random; the camping bird still comes (`calm`) | Beach, 8000 px |
-| cap | Erik | blue | collider x0.8 (`hit`) | The crossing, 11400 px |
+| hoodie | Erik | blue | collider x0.8 (`hit`) | The crossing, 11400 px |
 
 Erik reshuffled this on 26 Nov 2026 (Vivian became the starter, Evelyn took the pink fast
 bubble, Enzo took "fewer birds"). The ids are the DRAWINGS and never move; only `KID_INFO`
 says who has what. `KIDS` is sorted by unlock order after `KID_INFO`, so the picker shows
 kids in the order they are met and `KIDS[0]` is the starter. Saves from before the
-reshuffle list `tee` as unlocked; that is honoured rather than taken away.
+reshuffle list unlocks by drawing id, which no longer means the same kid. `ROSTER` numbers
+the arrangement (3 since Remy and Erik swapped drawings, 26 Nov): a save with a different
+number has its unlock list ignored and rebuilt from its best distance. **Bump `ROSTER` on
+every reshuffle.** Enzo's drawing also changed that day: blonde hair with a blue streak.
 
 - **`unlock` is a leg index of `ROUTE`** and the distance is `legStart(unlock+1)`, so the
   thresholds follow the route if leg lengths change. Unlocks are earned mid-run in `step`
